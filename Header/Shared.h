@@ -1,4 +1,5 @@
 #pragma once
+#pragma comment(lib, "ws2_32.lib")
 #ifdef _WIN32
 	#define WIN32_LEAN_AND_MEAN
 	#define NOMINMAX
