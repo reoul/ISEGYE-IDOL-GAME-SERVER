@@ -1,7 +1,7 @@
-#include "../Header/Shared.h"
+#include "../Header/ServerShared.h"
 
 void OutputMemoryBitStream::WriteBits( uint8_t inData,
-									  uint32_t inBitCount )
+                                       uint32_t inBitCount )
 {
 	uint32_t nextBitHead = mBitHead + static_cast< uint32_t >( inBitCount );
 	
