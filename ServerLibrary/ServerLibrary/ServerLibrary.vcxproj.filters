@@ -50,6 +50,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="SocketAddress.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
