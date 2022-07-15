@@ -1,4 +1,4 @@
-#include "../Header/Shared.h"
+#include "../Header/ServerShared.h"
 
 void OutputMemoryStream::ReallocBuffer( uint32_t inNewLength )
 {
