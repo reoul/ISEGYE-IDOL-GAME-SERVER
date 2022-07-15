@@ -32,6 +32,7 @@
     <ClInclude Include="UDPSocket.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryBitStream.cpp" />
     <ClCompile Include="MemoryStream.cpp" />
     <ClCompile Include="SocketAddress.cpp" />
