@@ -1,4 +1,4 @@
-#include "Shared.h"
+#include "../Header/Shared.h"
 
 int UDPSocket::Bind( const SocketAddress& inBindAddress )
 {

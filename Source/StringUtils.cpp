@@ -1,4 +1,4 @@
-#include "Shared.h"
+#include "../Header/Shared.h"
 
 #if !_WIN32
 extern const char** __argv;
