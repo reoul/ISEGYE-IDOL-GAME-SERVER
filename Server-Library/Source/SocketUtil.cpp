@@ -1,6 +1,4 @@
-#include "Shared.h"
-
-
+#include "../Header/Shared.h"
 
 bool SocketUtil::StaticInit()
 {

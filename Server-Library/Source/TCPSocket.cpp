@@ -1,5 +1,4 @@
-#include "Shared.h"
-
+#include "../Header/Shared.h"
 
 int TCPSocket::Connect( const SocketAddress& inAddress )
 {

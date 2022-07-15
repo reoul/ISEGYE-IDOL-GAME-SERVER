@@ -1,5 +1,4 @@
-#include "Shared.h"
-
+#include "../Header/Shared.h"
 
 SocketAddressPtr SocketAddressFactory::CreateIPv4FromString( const string& inString )
 {

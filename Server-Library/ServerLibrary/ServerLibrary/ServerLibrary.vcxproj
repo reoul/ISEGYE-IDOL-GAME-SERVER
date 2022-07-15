@@ -19,28 +19,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ByteSwap.h" />
-    <ClInclude Include="LinkingContext.h" />
-    <ClInclude Include="MemoryBitStream.h" />
-    <ClInclude Include="MemoryStream.h" />
-    <ClInclude Include="Shared.h" />
-    <ClInclude Include="SocketAddress.h" />
-    <ClInclude Include="SocketAddressFactory.h" />
-    <ClInclude Include="SocketUtil.h" />
-    <ClInclude Include="StringUtils.h" />
-    <ClInclude Include="TCPSocket.h" />
-    <ClInclude Include="UDPSocket.h" />
+    <ClCompile Include="..\..\Source\MemoryBitStream.cpp" />
+    <ClCompile Include="..\..\Source\MemoryStream.cpp" />
+    <ClCompile Include="..\..\Source\SocketAddress.cpp" />
+    <ClCompile Include="..\..\Source\SocketAddressFactory.cpp" />
+    <ClCompile Include="..\..\Source\SocketUtil.cpp" />
+    <ClCompile Include="..\..\Source\StringUtils.cpp" />
+    <ClCompile Include="..\..\Source\TCPSocket.cpp" />
+    <ClCompile Include="..\..\Source\UDPSocket.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="MemoryBitStream.cpp" />
-    <ClCompile Include="MemoryStream.cpp" />
-    <ClCompile Include="SocketAddress.cpp" />
-    <ClCompile Include="SocketAddressFactory.cpp" />
-    <ClCompile Include="SocketUtil.cpp" />
-    <ClCompile Include="StringUtils.cpp" />
-    <ClCompile Include="TCPSocket.cpp" />
-    <ClCompile Include="UDPSocket.cpp" />
+    <ClInclude Include="..\..\Header\ByteSwap.h" />
+    <ClInclude Include="..\..\Header\LinkingContext.h" />
+    <ClInclude Include="..\..\Header\MemoryBitStream.h" />
+    <ClInclude Include="..\..\Header\MemoryStream.h" />
+    <ClInclude Include="..\..\Header\Shared.h" />
+    <ClInclude Include="..\..\Header\SocketAddress.h" />
+    <ClInclude Include="..\..\Header\SocketAddressFactory.h" />
+    <ClInclude Include="..\..\Header\SocketUtil.h" />
+    <ClInclude Include="..\..\Header\StringUtils.h" />
+    <ClInclude Include="..\..\Header\TCPSocket.h" />
+    <ClInclude Include="..\..\Header\UDPSocket.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

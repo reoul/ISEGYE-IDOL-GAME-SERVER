@@ -259,3 +259,6 @@ FakesAssemblies/
 
 # Visual Studio
 .vs/
+
+# Project Folder
+#ServerLibrary/
