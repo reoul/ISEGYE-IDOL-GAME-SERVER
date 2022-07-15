@@ -40,7 +40,7 @@ TCPSocketPtr TCPSocket::Accept( SocketAddress& inFromAddress )
 
 int32_t	TCPSocket::Send( const void* inData, size_t inLen )
 {
-	int bytesSentCount = send( mSocket, static_cast< const char* >( inData ), inLen, 0 );
+	int bytesSentCount = send( mSocket, static_cast< const char* >( inData ), static_cast<int>(inLen), 0 );
 	if( bytesSentCount < 0 )
 	{
 		SocketUtil::ReportError( "TCPSocket::Send" );
@@ -51,7 +51,7 @@ int32_t	TCPSocket::Send( const void* inData, size_t inLen )
 
 int32_t	TCPSocket::Receive( void* inData, size_t inLen )
 {
-	int bytesReceivedCount = recv( mSocket, static_cast< char* >( inData ), inLen, 0 );
+	int bytesReceivedCount = recv( mSocket, static_cast< char* >( inData ), static_cast<int>(inLen), 0 );
 	if( bytesReceivedCount < 0 )
 	{
 		SocketUtil::ReportError( "TCPSocket::Receive" );

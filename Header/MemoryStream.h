@@ -15,6 +15,7 @@ public:
 	OutputMemoryStream()
 		: mBuffer(nullptr)
 		, mHead(0)
+		, mCapacity(0)
 		, mLinkingContext(nullptr)
 	{
 		ReallocBuffer(32);
