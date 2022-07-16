@@ -60,6 +60,11 @@ int32_t	TCPSocket::Receive( void* inData, size_t inLen )
 	return bytesReceivedCount;
 }
 
+const SOCKET TCPSocket::GetSocket() const
+{
+	return mSocket;
+}
+
 int TCPSocket::Bind( const SocketAddress& inBindAddress )
 {
 	int error = bind( mSocket, &inBindAddress.mSockAddr, inBindAddress.GetSize() );

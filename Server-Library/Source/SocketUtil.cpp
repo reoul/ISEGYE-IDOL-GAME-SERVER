@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "../Header/ServerShared.h"
 
 bool SocketUtil::StaticInit()
@@ -85,17 +87,17 @@ TCPSocketPtr SocketUtil::CreateTCPSocket( SocketAddressFamily inFamily )
 	}
 }
 
-fd_set* SocketUtil::FillSetFromVector( fd_set& outSet, const vector< TCPSocketPtr >* inSockets, int& ioNaxNfds )
+fd_set* SocketUtil::FillSetFromVector( fd_set& outSet, const vector< TCPNetworkUserInfo >* inUserInfo, int& ioNaxNfds )
 {
-	if( inSockets )
+	if( inUserInfo )
 	{
 		FD_ZERO( &outSet );
 		
-		for( const TCPSocketPtr& socket : *inSockets )
+		for( const auto& userInfo : *inUserInfo )
 		{
-			FD_SET( socket->mSocket, &outSet );
+			FD_SET( userInfo.GetNetworkID(), &outSet);
 #if !_WIN32
-			ioNaxNfds = std::max( ioNaxNfds, socket->mSocket );
+			ioNaxNfds = std::max( ioNaxNfds, socket.mTcpSocketPtr->mSocket );
 #endif
 		}
 		return &outSet;
@@ -106,39 +108,39 @@ fd_set* SocketUtil::FillSetFromVector( fd_set& outSet, const vector< TCPSocketPt
 	}
 }
 
-void SocketUtil::FillVectorFromSet( vector< TCPSocketPtr >* outSockets, const vector< TCPSocketPtr >* inSockets, const fd_set& inSet )
+void SocketUtil::FillVectorFromSet( vector< TCPNetworkUserInfo >* outUserInfo, const vector< TCPNetworkUserInfo >* inUserInfo, const fd_set& inSet )
 {
-	if( inSockets && outSockets )
+	if( inUserInfo && outUserInfo )
 	{
-		outSockets->clear();
-		for( const TCPSocketPtr& socket : *inSockets )
+		outUserInfo->clear();
+		for( const auto& userInfo : *inUserInfo )
 		{
-			if( FD_ISSET( socket->mSocket, &inSet ) )
+			if( FD_ISSET( userInfo.GetNetworkID(), &inSet))
 			{
-				outSockets->push_back( socket );
+				outUserInfo->push_back( userInfo );
 			}
 		}
 	}
 }
 
-int SocketUtil::Select( const vector< TCPSocketPtr >* inReadSet,
-					   vector< TCPSocketPtr >* outReadSet,
-					   const vector< TCPSocketPtr >* inWriteSet,
-					   vector< TCPSocketPtr >* outWriteSet,
-					   const vector< TCPSocketPtr >* inExceptSet,
-					   vector< TCPSocketPtr >* outExceptSet )
+int SocketUtil::Select( const vector< TCPNetworkUserInfo >* inReadSet,
+					   vector< TCPNetworkUserInfo >* outReadSet,
+					   const vector< TCPNetworkUserInfo >* inWriteSet,
+					   vector< TCPNetworkUserInfo >* outWriteSet,
+					   const vector< TCPNetworkUserInfo >* inExceptSet,
+					   vector< TCPNetworkUserInfo >* outExceptSet )
 {
 	//build up some sets from our vectors
 	fd_set read, write, except;
-	
+
 	int nfds = 0;
 	
 	fd_set *readPtr = FillSetFromVector( read, inReadSet, nfds );
 	fd_set *writePtr = FillSetFromVector( write, inWriteSet, nfds );
 	fd_set *exceptPtr = FillSetFromVector( except, inExceptSet, nfds );
-	
+
 	int toRet = select( nfds + 1, readPtr, writePtr, exceptPtr, nullptr );
-	
+
 	if( toRet > 0 )
 	{
 		FillVectorFromSet( outReadSet, inReadSet, read );

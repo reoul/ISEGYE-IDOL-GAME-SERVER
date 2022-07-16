@@ -1,5 +1,9 @@
-#pragma once
+﻿#pragma once
 #pragma comment(lib, "ws2_32.lib")
+
+// 접속 가능한 소켓 최대 수 (지정 안하면 기본 64)
+#define FD_SETSIZE      8192
+
 #ifdef _WIN32
 	#define WIN32_LEAN_AND_MEAN
 	#define NOMINMAX
@@ -62,3 +66,4 @@ class GameObject;
 #include "ByteSwap.h"
 #include "MemoryStream.h"
 #include "MemoryBitStream.h"
+#include "TCPNetworkUserInfo.h"
