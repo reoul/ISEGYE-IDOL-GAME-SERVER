@@ -140,6 +140,7 @@
     <ClCompile Include="..\..\Server-Library\Source\TCPSocket.cpp" />
     <ClCompile Include="..\..\Server-Library\Source\UDPSocket.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Room.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Server-Library\Header\ByteSwap.h" />
@@ -154,6 +155,9 @@
     <ClInclude Include="..\..\Server-Library\Header\StringUtils.h" />
     <ClInclude Include="..\..\Server-Library\Header\TCPSocket.h" />
     <ClInclude Include="..\..\Server-Library\Header\UDPSocket.h" />
+    <ClInclude Include="PacketStruct.h" />
+    <ClInclude Include="Room.h" />
+    <ClInclude Include="SettingData.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
