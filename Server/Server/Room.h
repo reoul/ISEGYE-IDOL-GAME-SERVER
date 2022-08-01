@@ -1,6 +1,6 @@
 #pragma once
 #include "ServerShared.h"
-#include "PacketStruct.h"
+#include "ServerStruct.h"
 
 class Room
 {

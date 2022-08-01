@@ -95,7 +95,7 @@
     <ClInclude Include="SettingData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PacketStruct.h">
+    <ClInclude Include="ServerStruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
