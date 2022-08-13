@@ -1,4 +1,5 @@
-﻿
+﻿#pragma warning(disable:4996)
+
 #include <iostream>
 #include <iomanip>
 #include <mutex>
@@ -6,40 +7,22 @@
 
 #include "ServerShared.h"
 #include "Room.h"
+#include "ServerQueue.h"
 #include "SettingData.h"
 #include "ServerStruct.h"
+#include "PacketStruct.h"
 #include <MSWSock.h>
 
 using namespace std;
 
 Room gRoom(ROOM_MAX_PLAYER);
-CLIENT g_clients[MAX_USER];
+Client g_clients[MAX_USER];
 HANDLE g_hIocp;
 SOCKET g_hListenSocket;
-bool g_isRunningServer = true;
-
-void ProcessNewClient(TCPNetworkUserInfo networkUserInfo)
-{
-	cout << "새로운 클라이언트 " << networkUserInfo << " 가 연결 되었습니다." << endl;
-}
-
-#pragma pack(push, 1)
-struct sc_packet_login_ok
-{
-	char size;
-	char type;
-	int id;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct cs_packet_login
-{
-	char size;
-	char type;
-	int id;
-};
-#pragma pack(pop)
+bool g_bIsRunningServer = true;
+ServerQueue g_serverQueue;
+int32_t g_roomIndex = 0;
+int g_count = 0;
 
 //int main()
 //{
@@ -91,7 +74,7 @@ struct cs_packet_login
 //		if (str == "send")
 //		{
 //			TestPacket tp(12, 456, 789);
-//			gRoom.Send(tp);
+//			gRoom.SendAllPlayer(tp);
 //		}
 //	}
 //	SocketUtil::CleanUp();
@@ -100,54 +83,195 @@ struct cs_packet_login
 //	return 0;
 //}
 
+void ServerInit();
+void SendPacket(int userID, void* p);
+void ProcessPacket(int userID, char* buf);
+void PacketConstruct(int userID, int ioByteLength);
+void SendDisconnect(int userID);
+void Disconnect(int userID);
+void WorkerThread();
+void NewClientEvent(int32_t userID);
+
+int main()
+{
+	setlocale(LC_ALL, "KOREAN");
+	SocketUtil::StaticInit();
+
+	ServerInit();
+
+	SOCKET clientSocket;
+	clientSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	Exover accept_over;
+	accept_over.c_socket = clientSocket;
+	ZeroMemory(&accept_over, sizeof(accept_over.over));
+	accept_over.type = OperationType::Accept;
+	AcceptEx(g_hListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
+
+	cout << "start server" << endl;
+
+	vector<thread> worker_threads;
+	for (int i = 0; i < 4; ++i)
+	{
+		worker_threads.emplace_back(WorkerThread);
+	}
+
+	string str;
+	while (true)
+	{
+		cin >> str;
+		if (str == "exit")
+		{
+			g_bIsRunningServer = false;
+			for (int i = 0; i < MAX_USER; ++i)
+			{
+				if (g_clients[i].status == ST_ACTIVE)
+				{
+					SendDisconnect(i);
+				}
+			}
+			break;
+		}
+		if (str == "list")
+		{
+			int cnt = 0;
+			for (int i = 0; i < MAX_USER; ++i)
+			{
+				if (g_clients[i].status == ST_ACTIVE)
+				{
+					wcout << setw(11) << g_clients[i].name;
+					if (++cnt % 7 == 0)
+					{
+						wcout << endl;
+					}
+				}
+			}
+			wcout << endl << L"접속 인원 : " << cnt << endl;
+		}
+		if (str == "disconnect")
+		{
+			for (int i = 0; i < MAX_USER; ++i)
+			{
+				if (g_clients[i].status == ST_ACTIVE)
+				{
+					SendDisconnect(i);
+				}
+			}
+		}
+	}
+
+	for (auto& th : worker_threads)
+	{
+		th.join();
+	}
+	return 0;
+}
+
+void ServerInit()
+{
+	for (int i = 0; i < MAX_USER; ++i)
+	{
+		g_clients[i].networkID = i;
+	}
+
+	g_hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
+	g_hListenSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	if (g_hListenSocket == INVALID_SOCKET)
+	{
+		cout << "ListenSocket Create Fail" << endl;
+	}
+
+	sockaddr_in serverAddr;
+	memset(&serverAddr, 0, sizeof(serverAddr));
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(SERVER_PORT);
+	serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+
+	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_hListenSocket), g_hIocp, 9957, 0);
+
+	if (bind(g_hListenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
+		cout << "bind error!" << endl;
+		closesocket(g_hListenSocket);
+	}
+
+	if (listen(g_hListenSocket, SOMAXCONN) == SOCKET_ERROR) {
+		cout << "listen error!" << endl;
+		closesocket(g_hListenSocket);
+	}
+}
+
 void SendPacket(int userID, void* p)
 {
 	char* buf = reinterpret_cast<char*>(p);
 
-	CLIENT& user = g_clients[userID];
+	Client& user = g_clients[userID];
 
 	//WSASend의 두번째 인자의 over는 recv용이라 쓰면 안된다. 새로 만들어야 한다.
-	EXOVER* exover = new EXOVER;
+	Exover* exover = new Exover;
 	exover->type = OperationType::Send;
 	ZeroMemory(&exover->over, sizeof(exover->over));
 	exover->wsabuf.buf = exover->io_buf;
-	exover->wsabuf.len = buf[0];
-	memcpy(exover->io_buf, buf, buf[0]);
+	size_t length = reinterpret_cast<uint16_t*>(buf)[0];
+	exover->wsabuf.len = length;
+	memcpy(exover->io_buf, buf, length);
 
 	WSASend(user.socket, &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
 }
 
 void ProcessPacket(int userID, char* buf)
 {
-	switch (buf[1]) //[0]은 size
+	switch (static_cast<PacketType>(buf[2])) //[0,1]은 size
 	{
-		/*case C2S_LOGIN:
+	case PacketType::cs_startMatching:
+	{
+		cs_startMatchingPacket* packet = reinterpret_cast<cs_startMatchingPacket*>(buf);
+		wcscpy(g_clients[packet->networkID].name, packet->name);
+		
+		g_serverQueue.Lock();
+		g_serverQueue.AddClient(&g_clients[packet->networkID]);
+		shared_ptr<Room> room = g_serverQueue.TryCreateRoomOrNullPtr();
+		g_serverQueue.UnLock();
+
+		if (room != nullptr) // 방을 만들 수 있다면
 		{
-			cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(buf);
-			strcpy_s(g_clients[userID].name, packet->name);
-			g_clients[userID].name[MAX_ID_LEN] = NULL;
-			send_login_ok_packet(userID);
-			enter_game(userID);
-			break;
+			sc_connectRoomPacket connectRoomPacket(room);
+			room->SendAllPlayer(&connectRoomPacket);
 		}
-		case C2S_MOVE:
-		{	cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(buf);
-		do_move(userID, packet->direction);
+
+		/*cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(buf);
+		strcpy_s(g_clients[userID].name, packet->name);
+		g_clients[userID].name[MAX_ID_LEN] = NULL;
+		send_login_ok_packet(userID);
+		enter_game(userID);*/
+	}
+	break;
+	case PacketType::cs_sc_addNewItem:
+	{
+		auto packet = reinterpret_cast<cs_AddNewItemPacket*>(buf);
+		wcout << packet->networkID << L" 번 유저가 새로운 아이템 " << packet->itemCode << L" 을 추가하였습니다" << endl;
+		g_clients[packet->networkID].room->SendAllPlayer(packet);
+	}
+	break;
+	case PacketType::cs_sc_changeCharacter:
+	{
+		auto packet = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
+		cout << packet->networkID << " 번 유저가 캐릭터를 " << static_cast<int>(packet->characterType) << " 으로 변경하였습니다" << endl;
+		g_clients[packet->networkID].room->SendAnotherPlayer(&g_clients[userID], packet);
+	}
+	break;
+	case PacketType::cs_sc_changeItemSlot:
+	{
+		auto* packet = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
+		cout << packet->networkID << " 번 유저가 슬롯 " << packet->slot1 << " <-> " << packet->slot2 << " 변경하였습니다" << endl;
+		g_clients[packet->networkID].room->SendAllPlayer(packet);
+	}
+	break;
+	default:
+		cout << "unknown packet type error \n";
+		DebugBreak();
+		//exit(-1);
 		break;
-		}
-		default:
-			cout << "unknown packet type error \n";
-			DebugBreak();
-			exit(-1);*/
 	}
 }
-
-struct cs_test_data
-{
-	int a;
-	int b;
-	int c;
-};
 
 /**
  * \brief 들어온 패킷을 가공
@@ -156,17 +280,17 @@ struct cs_test_data
  */
 void PacketConstruct(int userID, int ioByteLength)
 {
-	CLIENT& curUser = g_clients[userID];
-	EXOVER& recvOver = curUser.recvOver;
+	Client& curUser = g_clients[userID];
+	Exover& recvOver = curUser.recvOver;
 
 	int restByte = ioByteLength;		//이만큼 남은걸 처리해줘야 한다
 	char* p = recvOver.io_buf;			//처리해야할 데이터의 포인터가 필요하다
 	int packetSize = 0;				//이게 0이라는 것은 이전에 처리하던 패킷이 없다는 것 
 
-	// 이전에 받아논 패킷이 있다면
+	// 이전에 받아둔 패킷이 있다면
 	if (curUser.prevSize != 0)
 	{
-		packetSize = curUser.packetBuf[0]; //재조립을 기다기는 패킷 사이즈
+		packetSize = reinterpret_cast<uint16_t*>(curUser.packetBuf)[0]; //재조립을 기다기는 패킷 사이즈
 	}
 
 	/*cout << rest_byte << " ";
@@ -186,7 +310,7 @@ void PacketConstruct(int userID, int ioByteLength)
 		if (0 == packetSize)
 		{
 			// 지금 들어온 패킷의 사이즈를 넣는다
-			packetSize = p[0];
+			packetSize = reinterpret_cast<uint16_t*>(p)[0];
 		}
 
 		// 나머지 데이터로 패킷을 만들 수 있나 없나 확인
@@ -214,24 +338,42 @@ void PacketConstruct(int userID, int ioByteLength)
 	}
 }
 
+void SendDisconnect(int userID)
+{
+	sc_disconnectPacket packet(userID);
+	SendPacket(userID, &packet);
+}
+
 void Disconnect(int userID)
 {
+	if (g_clients[userID].status == ST_FREE)
+	{
+		return;
+	}
+	g_serverQueue.Lock();
+	g_serverQueue.RemoveClient(&g_clients[userID]);
+	g_serverQueue.UnLock();
+
 	g_clients[userID].cLock.lock();
 	g_clients[userID].status = ST_ALLOCATED;	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
 
-	//send_leave_packet(userID, userID); //나는 나에게 보내기
 	closesocket(g_clients[userID].socket);
-
+	g_clients[userID].socket = INVALID_SOCKET;
+	g_clients[userID].room = nullptr;
+	wchar_t tmp[MAX_USER_NAME_LENGTH + 1];
+	wcscpy(tmp, g_clients[userID].name);
+	g_clients[userID].name[0] = '\0';
 	/*for (auto& cl : g_clients)
 	{
-		if (cl.id == userID) continue;
-		cl.cLock.lock();
+		if (cl.networkID == userID) continue;
+		cl.mLock.lock();
 		if (ST_ACTIVE == cl.status)
-			send_leave_packet(cl.id, userID);
-		cl.cLock.unlock();
+			send_leave_packet(cl.networkID, userID);
+		cl.mLock.unlock();
 	}*/
 	g_clients[userID].status = ST_FREE;	//다 처리했으면 FREE
 	g_clients[userID].cLock.unlock();
+	wcout << L"[" << tmp << L"] 유저가 접속 해제하였습니다" << endl;
 }
 
 void WorkerThread()
@@ -245,7 +387,7 @@ void WorkerThread()
 		DWORD errorCode = GetLastError();
 
 		// 서버가 끝낸 상태
-		if (!g_isRunningServer)
+		if (!g_bIsRunningServer)
 		{
 			break;
 		}
@@ -255,10 +397,8 @@ void WorkerThread()
 			continue;
 		}
 
-		EXOVER* exover = reinterpret_cast<EXOVER*>(over);
+		Exover* exover = reinterpret_cast<Exover*>(over);
 		int user_id = static_cast<int>(key);
-
-		cout << user_id << endl;
 
 		switch (exover->type)
 		{
@@ -266,14 +406,14 @@ void WorkerThread()
 		{
 			if (0 == io_byte)
 			{
-				cout << "연결 해제" << endl;
 				Disconnect(user_id);
+
 				if (OperationType::Send == exover->type)
 					delete exover;
 			}
 			else
 			{
-				CLIENT& cl = g_clients[user_id]; //타이핑 줄이기 위해
+				Client& cl = g_clients[user_id]; //타이핑 줄이기 위해
 				//cout << *reinterpret_cast<int*>(exover->io_buf) << "의 데이터가 입력되었습니다. 크기는 " << io_byte << endl;
 				/*if (*reinterpret_cast<int*>(exover->io_buf) % 5 == 0)
 				{
@@ -288,8 +428,10 @@ void WorkerThread()
 		}
 		case OperationType::Send:			//구조체 delete
 			if (0 == io_byte)
+			{
 				Disconnect(user_id);
-
+			}
+			cout << io_byte << " byte 데이터 전송" << endl;
 			delete exover;
 			break;
 		case OperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
@@ -305,7 +447,6 @@ void WorkerThread()
 					break;
 				}
 			}
-			cout << userID << "번으로 할당 되었습니다" << endl;
 
 			//main에서 소켓을 worker스레드로 옮겨오기 위해 listen소켓은 전역변수로, client소켓은 멤버로 가져왔다.
 			SOCKET clientSocket = exover->c_socket;
@@ -322,7 +463,7 @@ void WorkerThread()
 				}
 				else
 				{
-					//g_clients[user_id].id = user_id; 멀쓰에서 하는게 아니고 초기화 할때 한번 해줘야 함 처음에 한번.
+					//g_clients[user_id].networkID = user_id; 멀쓰에서 하는게 아니고 초기화 할때 한번 해줘야 함 처음에 한번.
 					g_clients[userID].prevSize = 0; //이전에 받아둔 조각이 없으니 0
 					g_clients[userID].socket = clientSocket;
 
@@ -331,8 +472,9 @@ void WorkerThread()
 					g_clients[userID].recvOver.wsabuf.buf = g_clients[userID].recvOver.io_buf;
 					g_clients[userID].recvOver.wsabuf.len = MAX_BUF_SIZE;
 
-					cout << user_id << endl;
-					cout << userID << " 연결에 성공하였습니다" << endl;
+					NewClientEvent(userID);
+
+					g_clients[userID].status = ST_ACTIVE;
 
 					DWORD flags = 0;
 					WSARecv(clientSocket, &g_clients[userID].recvOver.wsabuf, 1, NULL, &flags, &g_clients[userID].recvOver.over, NULL);
@@ -350,64 +492,10 @@ void WorkerThread()
 	}
 }
 
-int main()
+void NewClientEvent(int32_t userID)
 {
-	SocketUtil::StaticInit();
-
-	g_hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
-	g_hListenSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	if (g_hListenSocket == INVALID_SOCKET)
-	{
-		cout << "ListenSocket Create Fail" << endl;
-	}
-
-	sockaddr_in serverAddr;
-	memset(&serverAddr, 0, sizeof(serverAddr));
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(SERVER_PORT);
-	serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
-
-	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_hListenSocket), g_hIocp, 9957, 0);
-
-	if (bind(g_hListenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
-		cout << "bind error!" << endl;
-		closesocket(g_hListenSocket);
-	}
-
-	if (listen(g_hListenSocket, SOMAXCONN) == SOCKET_ERROR) {
-		cout << "listen error!" << endl;
-		closesocket(g_hListenSocket);
-	}
-
-	SOCKET clientSocket;
-	clientSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	EXOVER accept_over;
-	accept_over.c_socket = clientSocket;
-	ZeroMemory(&accept_over, sizeof(accept_over.over));
-	accept_over.type = OperationType::Accept;
-	AcceptEx(g_hListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
-
-	cout << "start server" << endl;
-	vector<thread> worker_threads;
-	for (int i = 0; i < 4; ++i)
-	{
-		worker_threads.emplace_back(WorkerThread);
-	}
-
-	string str;
-	while (true)
-	{
-		cin >> str;
-		if (str == "exit")
-		{
-			g_isRunningServer = false;
-			break;
-		}
-	}
-
-	for (auto& th : worker_threads)
-	{
-		th.join();
-	}
-	return 0;
+	cout << userID << " 번 유저가 접속하였습니다" << endl;
+	sc_connectServerPacket connectServerPacket(userID);
+	SendPacket(userID, &connectServerPacket);
 }
+

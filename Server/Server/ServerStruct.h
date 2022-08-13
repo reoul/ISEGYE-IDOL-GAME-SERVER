@@ -1,7 +1,12 @@
 #pragma once
 #include <cstdint>
 #include <mutex>
+#include <WinSock2.h>
 #include "SettingData.h"
+
+using namespace std;
+
+class Room;
 
 enum class OperationType { Send, Recv, Accept };
 /*
@@ -11,9 +16,10 @@ enum class OperationType { Send, Recv, Accept };
  * ACTIVE : 사용 불가능, 접근 가능
  */
 enum C_STATUS { ST_FREE, ST_ALLOCATED, ST_ACTIVE };
+enum class CharacterType : uint8_t { Woowakgood, Ine, Jingberger, Lilpa, Jururu, Gosegu, Viichan };
 
 //확장 overlapped 구조체
-struct EXOVER
+struct Exover
 {
 	WSAOVERLAPPED	over;
 	OperationType	type;					// send, recv, accpet 중 무엇인지 
@@ -23,27 +29,28 @@ struct EXOVER
 };
 
 //클라이언트 정보 저장 구조체
-struct CLIENT
+struct Client
 {
-	mutex		cLock;
-	SOCKET		socket;
-	int			id;							// 클라이언트 아이디
-	EXOVER		recvOver;					// 확장 overlapped 구조체
-	int			prevSize;					// 이전에 받아놓은 양
-	char		packetBuf[MAX_PACKET_SIZE];	// 조각난 거 받아두기 위한 버퍼
-	C_STATUS	status;						// 접속했나 안했나
-};
-
-struct TestPacket
-{
-	uint32_t type;
-	uint32_t networkID;
-	int data;
-
-	TestPacket(uint32_t t, uint32_t n, int d)
-		: type(t)
-		, networkID(n)
-		, data(d)
+	mutex				cLock;
+	SOCKET				socket;
+	int32_t				networkID;						// 클라이언트 아이디
+	Exover				recvOver;						// 확장 overlapped 구조체
+	int32_t				prevSize;						// 이전에 받아놓은 양
+	char				packetBuf[MAX_PACKET_SIZE];		// 조각난 거 받아두기 위한 버퍼
+	C_STATUS			status;							// 접속했나 안했나
+	shared_ptr<Room>	room;							// 클라이언트가 속한 룸
+	CharacterType		characterType;					// 플레이어 캐릭터
+	wchar_t				name[MAX_USER_NAME_LENGTH]; // 플레이어 이름
+	Client()
+		: socket(NULL)
+		, networkID()
+		, recvOver()
+		, prevSize()
+		, packetBuf{}
+		, status()
+		, room(nullptr)
+		, characterType(CharacterType::Woowakgood)
 	{
+		name[0] = '\0';
 	}
 };

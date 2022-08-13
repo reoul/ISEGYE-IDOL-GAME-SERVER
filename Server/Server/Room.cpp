@@ -1,25 +1,44 @@
 #include "Room.h"
 
-Room::Room(int capacity)
+#include <iostream>
+
+void SendPacket(int userID, void* p);
+
+Room::Room(int roomNumber, int capacity)
 	: mSize(0)
 	, mCapacity(capacity)
+	, mRoomNumber(roomNumber)
+	, mCount(0)
 {
 }
 
-void Room::AddUser(TCPNetworkUserInfo userInfo)
+void Room::AddUser(Client* client)
 {
-	if(mSize++ == mCapacity)
+	if (mSize++ == mCapacity)
 	{
 		return;
 	}
 
-	mUserInfos.push_back(userInfo);
+	mClients.emplace_back(client);
 }
 
-void Room::Send(const TestPacket& tp) const
+void Room::SendAllPlayer(void* p)
 {
-	for (size_t i = 0; i < mSize; ++i)
+	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
-		mUserInfos[i].GetTcpSocketPtr()->Send(&tp, sizeof(tp));
+		SendPacket((*it)->networkID, p);
+	}
+}
+
+void Room::SendAnotherPlayer(Client* client, void* p)
+{
+	for (auto it = mClients.begin(); it != mClients.end(); ++it)
+	{
+		if(client == *it)
+		{
+			continue;
+		}
+
+		SendPacket((*it)->networkID, p);
 	}
 }

@@ -12,7 +12,7 @@ class TCPNetworkUserInfo
 		return os;
 	}
 public:
-	TCPNetworkUserInfo(const TCPSocketPtr socketPtr, int id, const SocketAddress address)
+	TCPNetworkUserInfo(const TCPSocketPtr socketPtr, const SocketAddress address)
 		: mTcpSocketPtr(socketPtr)
 		, mSocketAddress(address)
 	{
