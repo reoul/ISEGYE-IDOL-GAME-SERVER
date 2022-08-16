@@ -1,5 +1,10 @@
 #pragma once
-#include <cstdint>
+#pragma warning(disable:4996)
+#include <memory>
+#include "SettingData.h"
+#include "Room.h"
+
+using namespace std;
 
 enum class CharacterType : uint8_t;
 

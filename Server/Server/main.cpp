@@ -12,76 +12,9 @@
 #include "ServerStruct.h"
 #include "PacketStruct.h"
 #include <MSWSock.h>
+#include "GlobalVariable.h"
 
 using namespace std;
-
-Room gRoom(ROOM_MAX_PLAYER);
-Client g_clients[MAX_USER];
-HANDLE g_hIocp;
-SOCKET g_hListenSocket;
-bool g_bIsRunningServer = true;
-ServerQueue g_serverQueue;
-int32_t g_roomIndex = 0;
-int g_count = 0;
-
-//int main()
-//{
-//	SocketUtil::StaticInit();
-//
-//	gIsRunningServer = true;
-//	auto thread = CreateThread(NULL, 0, ClientThread, 0, 0, NULL);
-//	if (thread != NULL)
-//	{
-//		CloseHandle(thread);
-//	}
-//	else
-//	{
-//		SocketUtil::CleanUp();
-//		return 1;
-//	}
-//
-//	while (gIsRunningServer)
-//	{
-//		string str;
-//		cin >> str;
-//		if (str == "quit")
-//		{
-//			gIsRunningServer = false;
-//		}
-//		if (str == "list")
-//		{
-//			size_t connectCount = gReadBlockSockets.size() - 1;
-//			cout << "접속 인원 수 : " << connectCount << endl;
-//
-//			size_t row = 0;
-//			size_t cnt = 0;
-//			auto it = gReadBlockSockets.begin() + 1;
-//			cout << setw(3) << row;
-//			while (it != gReadBlockSockets.end())
-//			{
-//				cout << setw(10) << it->GetNetworkID();
-//				if (cnt++ > 8)
-//				{
-//					cnt = 0;
-//					cout << "\n";
-//					cout << setw(3) << ++row;
-//				}
-//				++it;
-//			}
-//			cout << endl;
-//			cout << "---------------------------------------------------------------" << endl;
-//		}
-//		if (str == "send")
-//		{
-//			TestPacket tp(12, 456, 789);
-//			gRoom.SendAllPlayer(tp);
-//		}
-//	}
-//	SocketUtil::CleanUp();
-//	string tmp;
-//	cin >> tmp;
-//	return 0;
-//}
 
 void ServerInit();
 void SendPacket(int userID, void* p);
@@ -122,23 +55,20 @@ int main()
 		if (str == "exit")
 		{
 			g_bIsRunningServer = false;
-			for (int i = 0; i < MAX_USER; ++i)
+			for (const Client& client : g_clients)
 			{
-				if (g_clients[i].status == ST_ACTIVE)
-				{
-					SendDisconnect(i);
-				}
+				SendDisconnect(client.networkID);
 			}
 			break;
 		}
 		if (str == "list")
 		{
 			int cnt = 0;
-			for (int i = 0; i < MAX_USER; ++i)
+			for (const Client& client : g_clients)
 			{
-				if (g_clients[i].status == ST_ACTIVE)
+				if (client.status == ST_ACTIVE)
 				{
-					wcout << setw(11) << g_clients[i].name;
+					wcout << setw(11) << client.name;
 					if (++cnt % 7 == 0)
 					{
 						wcout << endl;
@@ -149,12 +79,9 @@ int main()
 		}
 		if (str == "disconnect")
 		{
-			for (int i = 0; i < MAX_USER; ++i)
+			for (const Client& client : g_clients)
 			{
-				if (g_clients[i].status == ST_ACTIVE)
-				{
-					SendDisconnect(i);
-				}
+				SendDisconnect(client.networkID);
 			}
 		}
 	}
@@ -203,74 +130,18 @@ void SendPacket(int userID, void* p)
 {
 	char* buf = reinterpret_cast<char*>(p);
 
-	Client& user = g_clients[userID];
+	Client& client = g_clients[userID];
 
 	//WSASend의 두번째 인자의 over는 recv용이라 쓰면 안된다. 새로 만들어야 한다.
 	Exover* exover = new Exover;
 	exover->type = OperationType::Send;
 	ZeroMemory(&exover->over, sizeof(exover->over));
 	exover->wsabuf.buf = exover->io_buf;
-	size_t length = reinterpret_cast<uint16_t*>(buf)[0];
+	const size_t length = reinterpret_cast<uint16_t*>(buf)[0];
 	exover->wsabuf.len = length;
 	memcpy(exover->io_buf, buf, length);
 
-	WSASend(user.socket, &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
-}
-
-void ProcessPacket(int userID, char* buf)
-{
-	switch (static_cast<PacketType>(buf[2])) //[0,1]은 size
-	{
-	case PacketType::cs_startMatching:
-	{
-		cs_startMatchingPacket* packet = reinterpret_cast<cs_startMatchingPacket*>(buf);
-		wcscpy(g_clients[packet->networkID].name, packet->name);
-		
-		g_serverQueue.Lock();
-		g_serverQueue.AddClient(&g_clients[packet->networkID]);
-		shared_ptr<Room> room = g_serverQueue.TryCreateRoomOrNullPtr();
-		g_serverQueue.UnLock();
-
-		if (room != nullptr) // 방을 만들 수 있다면
-		{
-			sc_connectRoomPacket connectRoomPacket(room);
-			room->SendAllPlayer(&connectRoomPacket);
-		}
-
-		/*cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(buf);
-		strcpy_s(g_clients[userID].name, packet->name);
-		g_clients[userID].name[MAX_ID_LEN] = NULL;
-		send_login_ok_packet(userID);
-		enter_game(userID);*/
-	}
-	break;
-	case PacketType::cs_sc_addNewItem:
-	{
-		auto packet = reinterpret_cast<cs_AddNewItemPacket*>(buf);
-		wcout << packet->networkID << L" 번 유저가 새로운 아이템 " << packet->itemCode << L" 을 추가하였습니다" << endl;
-		g_clients[packet->networkID].room->SendAllPlayer(packet);
-	}
-	break;
-	case PacketType::cs_sc_changeCharacter:
-	{
-		auto packet = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
-		cout << packet->networkID << " 번 유저가 캐릭터를 " << static_cast<int>(packet->characterType) << " 으로 변경하였습니다" << endl;
-		g_clients[packet->networkID].room->SendAnotherPlayer(&g_clients[userID], packet);
-	}
-	break;
-	case PacketType::cs_sc_changeItemSlot:
-	{
-		auto* packet = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
-		cout << packet->networkID << " 번 유저가 슬롯 " << packet->slot1 << " <-> " << packet->slot2 << " 변경하였습니다" << endl;
-		g_clients[packet->networkID].room->SendAllPlayer(packet);
-	}
-	break;
-	default:
-		cout << "unknown packet type error \n";
-		DebugBreak();
-		//exit(-1);
-		break;
-	}
+	WSASend(client.socket, &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
 }
 
 /**
@@ -340,6 +211,11 @@ void PacketConstruct(int userID, int ioByteLength)
 
 void SendDisconnect(int userID)
 {
+	if (g_clients[userID].status != ST_ACTIVE)
+	{
+		return;
+	}
+
 	sc_disconnectPacket packet(userID);
 	SendPacket(userID, &packet);
 }
@@ -360,20 +236,12 @@ void Disconnect(int userID)
 	closesocket(g_clients[userID].socket);
 	g_clients[userID].socket = INVALID_SOCKET;
 	g_clients[userID].room = nullptr;
-	wchar_t tmp[MAX_USER_NAME_LENGTH + 1];
-	wcscpy(tmp, g_clients[userID].name);
+	wchar_t name[MAX_USER_NAME_LENGTH + 1];
+	wcscpy(name, g_clients[userID].name);
 	g_clients[userID].name[0] = '\0';
-	/*for (auto& cl : g_clients)
-	{
-		if (cl.networkID == userID) continue;
-		cl.mLock.lock();
-		if (ST_ACTIVE == cl.status)
-			send_leave_packet(cl.networkID, userID);
-		cl.mLock.unlock();
-	}*/
 	g_clients[userID].status = ST_FREE;	//다 처리했으면 FREE
 	g_clients[userID].cLock.unlock();
-	wcout << L"[" << tmp << L"] 유저가 접속 해제하였습니다" << endl;
+	wcout << L"[" << name << L"] 유저가 접속 해제하였습니다" << endl;
 }
 
 void WorkerThread()
@@ -383,7 +251,7 @@ void WorkerThread()
 		DWORD io_byte;
 		ULONG_PTR key;
 		WSAOVERLAPPED* over;
-		bool ret = GetQueuedCompletionStatus(g_hIocp, &io_byte, &key, &over, 1000);
+		bool sucess = GetQueuedCompletionStatus(g_hIocp, &io_byte, &key, &over, 1000);
 		DWORD errorCode = GetLastError();
 
 		// 서버가 끝낸 상태
@@ -392,7 +260,7 @@ void WorkerThread()
 			break;
 		}
 		// 타임아웃인 경우
-		if (ret == FALSE && over == NULL)
+		if (sucess == FALSE && over == nullptr)
 		{
 			continue;
 		}
@@ -413,16 +281,11 @@ void WorkerThread()
 			}
 			else
 			{
-				Client& cl = g_clients[user_id]; //타이핑 줄이기 위해
-				//cout << *reinterpret_cast<int*>(exover->io_buf) << "의 데이터가 입력되었습니다. 크기는 " << io_byte << endl;
-				/*if (*reinterpret_cast<int*>(exover->io_buf) % 5 == 0)
-				{
-					cout << *reinterpret_cast<int*>(exover->io_buf) << "의 데이터가 입력되었습니다. 크기는 " << io_byte << endl;
-				}*/
+				Client& client = g_clients[user_id];
 				PacketConstruct(user_id, io_byte);
-				ZeroMemory(&cl.recvOver.over, 0, sizeof(cl.m_recv_over.over));
+				ZeroMemory(&client.recvOver.over, sizeof(client.recvOver.over));
 				DWORD flags = 0;
-				WSARecv(cl.socket, &cl.recvOver.wsabuf, 1, NULL, &flags, &cl.recvOver.over, NULL);
+				WSARecv(client.socket, &client.recvOver.wsabuf, 1, NULL, &flags, &client.recvOver.over, NULL);
 			}
 			break;
 		}
@@ -451,12 +314,12 @@ void WorkerThread()
 			//main에서 소켓을 worker스레드로 옮겨오기 위해 listen소켓은 전역변수로, client소켓은 멤버로 가져왔다.
 			SOCKET clientSocket = exover->c_socket;
 
-			if (-1 == userID)
+			if (userID == -1)
 				closesocket(clientSocket); // send_login_fail_packet();
 			else
 			{
-				HANDLE ret = CreateIoCompletionPort(reinterpret_cast<HANDLE>(clientSocket), g_hIocp, userID, 0);
-				if (ret == NULL)
+				const HANDLE result = CreateIoCompletionPort(reinterpret_cast<HANDLE>(clientSocket), g_hIocp, userID, 0);
+				if (result == NULL)
 				{
 					cout << userID << " IOCP에 등록을 실패하였습니다." << endl;
 					closesocket(clientSocket);
@@ -467,7 +330,7 @@ void WorkerThread()
 					g_clients[userID].prevSize = 0; //이전에 받아둔 조각이 없으니 0
 					g_clients[userID].socket = clientSocket;
 
-					ZeroMemory(&g_clients[userID].recvOver.over, 0, sizeof(g_clients[user_id].m_recv_over.over));
+					ZeroMemory(&g_clients[userID].recvOver.over, sizeof(g_clients[user_id].recvOver.over));
 					g_clients[userID].recvOver.type = OperationType::Recv;
 					g_clients[userID].recvOver.wsabuf.buf = g_clients[userID].recvOver.io_buf;
 					g_clients[userID].recvOver.wsabuf.len = MAX_BUF_SIZE;
