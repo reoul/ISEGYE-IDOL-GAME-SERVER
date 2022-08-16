@@ -18,6 +18,7 @@ enum class PacketType : uint8_t
 	cs_sc_changeItemSlot,
 	cs_sc_upgradeItem,
 	cs_sc_changeCharacter,
+	cs_sc_battleItemQueue,
 };
 
 #pragma pack(push, 1)
@@ -68,8 +69,8 @@ struct sc_connectRoomPacket
 		, roomNumber(room->GetRoomNumber())
 		, users{}
 	{
-		vector<Client*> clients = room->GetClients();
-		for (int i = 0; i < clients.size(); ++i)
+		const vector<Client*> clients = room->GetClients();
+		for (size_t i = 0; i < clients.size(); ++i)
 		{
 			users[i].networkID = clients[i]->networkID;
 			wcscpy(users[i].name, clients[i]->name);
@@ -156,6 +157,23 @@ struct cs_sc_changeCharacterPacket
 		, type(PacketType::cs_sc_changeCharacter)
 		, networkID(networkID)
 		, characterType(characterType)
+	{
+	}
+};
+
+struct cs_sc_battleItemQueuePacket
+{
+	const uint16_t size;
+	const PacketType type;
+	const int32_t networkID;
+	const CharacterType characterType;
+	const int8_t itemQueue[30];
+	cs_sc_battleItemQueuePacket(int32_t networkID, CharacterType characterType)
+		: size(sizeof(cs_sc_battleItemQueuePacket))
+		, type(PacketType::cs_sc_battleItemQueue)
+		, networkID(networkID)
+		, characterType(characterType)
+		, itemQueue{}
 	{
 	}
 };

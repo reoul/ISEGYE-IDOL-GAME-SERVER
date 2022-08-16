@@ -6,7 +6,6 @@
 #include <thread>
 
 #include "ServerShared.h"
-#include "Room.h"
 #include "ServerQueue.h"
 #include "SettingData.h"
 #include "ServerStruct.h"
