@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #define ROOM_MAX_PLAYER (8)
 #define MAX_BUF_SIZE (1300)

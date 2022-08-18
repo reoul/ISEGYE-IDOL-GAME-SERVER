@@ -1,4 +1,4 @@
-#include "GlobalVariable.h"
+﻿#include "GlobalVariable.h"
 
 Room gRoom(ROOM_MAX_PLAYER);
 Client g_clients[MAX_USER];

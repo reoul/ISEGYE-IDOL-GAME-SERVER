@@ -1,4 +1,4 @@
-#include "ServerQueueNode.h"
+﻿#include "ServerQueueNode.h"
 
 ServerQueueNode::ServerQueueNode(Client* client)
 	: Next(nullptr)

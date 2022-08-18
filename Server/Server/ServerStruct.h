@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <cstdint>
 #include <mutex>
 #include <WinSock2.h>
@@ -10,44 +10,46 @@ class Room;
 
 enum class OperationType { Send, Recv, Accept };
 /*
- * FREE : ¾Æ¹«µµ »ç¿ëÇÏÁö ¾ÊÀ½, ÇÒ´ç °¡´É, Á¢±Ù ±İÁö
- * ALLOCATED : ¿¹¾àµÇ¾úÀ½, »ç¿ë ºÒ°¡´É, Á¢±Ù ±İÁö
- *		¾ÆÁ÷ login Ã³¸®°¡ ³¡³ªÁö ¾ÊÀº Å¬¶óÀÌ¾ğÆ®ÀÌ´Ï µ¥ÀÌÅÍ¸¦ º¸³»Áö ¸» °Í
- * ACTIVE : »ç¿ë ºÒ°¡´É, Á¢±Ù °¡´É
+ * FREE : ì•„ë¬´ë„ ì‚¬ìš©í•˜ì§€ ì•ŠìŒ, í• ë‹¹ ê°€ëŠ¥, ì ‘ê·¼ ê¸ˆì§€
+ * ALLOCATED : ì˜ˆì•½ë˜ì—ˆìŒ, ì‚¬ìš© ë¶ˆê°€ëŠ¥, ì ‘ê·¼ ê¸ˆì§€
+ *		ì•„ì§ login ì²˜ë¦¬ê°€ ëë‚˜ì§€ ì•Šì€ í´ë¼ì´ì–¸íŠ¸ì´ë‹ˆ ë°ì´í„°ë¥¼ ë³´ë‚´ì§€ ë§ ê²ƒ
+ * ACTIVE : ì‚¬ìš© ë¶ˆê°€ëŠ¥, ì ‘ê·¼ ê°€ëŠ¥
  */
-enum C_STATUS { ST_FREE, ST_ALLOCATED, ST_ACTIVE };
+enum C_STATUS : uint8_t { ST_FREE, ST_ALLOCATED, ST_ACTIVE };
 enum class CharacterType : uint8_t { Woowakgood, Ine, Jingberger, Lilpa, Jururu, Gosegu, Viichan };
 
-//È®Àå overlapped ±¸Á¶Ã¼
+//í™•ì¥ overlapped êµ¬ì¡°ì²´
 struct Exover
 {
 	WSAOVERLAPPED	over;
-	OperationType	type;					// send, recv, accpet Áß ¹«¾ùÀÎÁö 
-	char			io_buf[MAX_BUF_SIZE];	// ¹öÆÛÀÇ À§Ä¡ °ü¸®
-	WSABUF			wsabuf;					// Æ÷ÀÎÅÍ ³ÖÀ» ¹Ù¿¡¾ß Â÷¶ó¸® ¹öÆÛ ÀÚÃ¼¸¦ ³ÖÀÚ. ÇÑ±ºµ¥ °°ÀÌ µÎ¸é È®Àå±¸Á¶Ã¼¸¦ Àç»ç¿ëÇÏ¸é ÀüÃ¼°¡ Àç»ç¿ë µÈ´Ù.
+	OperationType	type;					// send, recv, accpet ì¤‘ ë¬´ì—‡ì¸ì§€ 
+	char			io_buf[MAX_BUF_SIZE];	// ë²„í¼ì˜ ìœ„ì¹˜ ê´€ë¦¬
+	WSABUF			wsabuf;					// í¬ì¸í„° ë„£ì„ ë°”ì—ì•¼ ì°¨ë¼ë¦¬ ë²„í¼ ìì²´ë¥¼ ë„£ì. í•œêµ°ë° ê°™ì´ ë‘ë©´ í™•ì¥êµ¬ì¡°ì²´ë¥¼ ì¬ì‚¬ìš©í•˜ë©´ ì „ì²´ê°€ ì¬ì‚¬ìš© ëœë‹¤.
 	SOCKET			c_socket;
 };
 
-//Å¬¶óÀÌ¾ğÆ® Á¤º¸ ÀúÀå ±¸Á¶Ã¼
+//í´ë¼ì´ì–¸íŠ¸ ì •ë³´ ì €ì¥ êµ¬ì¡°ì²´
 struct Client
 {
 	mutex				cLock;
 	SOCKET				socket;
-	int32_t				networkID;						// Å¬¶óÀÌ¾ğÆ® ¾ÆÀÌµğ
-	Exover				recvOver;						// È®Àå overlapped ±¸Á¶Ã¼
-	int32_t				prevSize;						// ÀÌÀü¿¡ ¹Ş¾Æ³õÀº ¾ç
-	char				packetBuf[MAX_PACKET_SIZE];		// Á¶°¢³­ °Å ¹Ş¾ÆµÎ±â À§ÇÑ ¹öÆÛ
-	C_STATUS			status;							// Á¢¼ÓÇß³ª ¾ÈÇß³ª
-	shared_ptr<Room>	room;							// Å¬¶óÀÌ¾ğÆ®°¡ ¼ÓÇÑ ·ë
-	CharacterType		characterType;					// ÇÃ·¹ÀÌ¾î Ä³¸¯ÅÍ
-	wchar_t				name[MAX_USER_NAME_LENGTH]; // ÇÃ·¹ÀÌ¾î ÀÌ¸§
+	int32_t				networkID;						// í´ë¼ì´ì–¸íŠ¸ ì•„ì´ë””
+	Exover				recvOver;						// í™•ì¥ overlapped êµ¬ì¡°ì²´
+	int32_t				prevSize;						// ì´ì „ì— ë°›ì•„ë†“ì€ ì–‘
+	char				packetBuf[MAX_PACKET_SIZE];		// ì¡°ê°ë‚œ ê±° ë°›ì•„ë‘ê¸° ìœ„í•œ ë²„í¼
+	bool				isAlive;						// í”Œë ˆì´ ë„ì¤‘ì— ì‚´ì•„ìˆëŠ”ì§€(HPê°€ 0ì´ ì•„ë‹Œê²½ìš°)
+	C_STATUS			status;							// ì ‘ì†í–ˆë‚˜ ì•ˆí–ˆë‚˜
+	shared_ptr<Room>	room;							// í´ë¼ì´ì–¸íŠ¸ê°€ ì†í•œ ë£¸
+	CharacterType		characterType;					// í”Œë ˆì´ì–´ ìºë¦­í„°
+	wchar_t				name[MAX_USER_NAME_LENGTH]; // í”Œë ˆì´ì–´ ì´ë¦„
 	Client()
 		: socket(NULL)
-		, networkID()
+		, networkID(0)
 		, recvOver()
-		, prevSize()
+		, prevSize(0)
 		, packetBuf{}
-		, status()
+		, isAlive(false)
+		, status(ST_FREE)
 		, room(nullptr)
 		, characterType(CharacterType::Woowakgood)
 	{
