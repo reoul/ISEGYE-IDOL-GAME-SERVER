@@ -2,6 +2,8 @@
 #include "ServerShared.h"
 #include "ServerStruct.h"
 
+class Client;
+
 class Room
 {
 public:
@@ -11,8 +13,9 @@ public:
 	Room& operator=(const Room&) = delete;
 	void AddClient(Client& client);
 	void RemoveClient(const Client& client);
-	void SendAllClient(void* pPacket);
-	void SendAnotherClient(const Client& client, void* pPacket);
+	void SendAllClient(void* pPacket) const;
+	void SendAnotherClient(const Client& client, void* pPacket) const;
+	void SendRandomItemQueue() const;
 	int GetRoomNumber() const;
 	const vector<Client*>& GetClients() const;
 private:

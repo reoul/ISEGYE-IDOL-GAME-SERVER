@@ -1,6 +1,8 @@
 ﻿#pragma once
 #pragma warning(disable:4996)
 #include <memory>
+
+#include "Client.h"
 #include "SettingData.h"
 #include "Room.h"
 
@@ -73,8 +75,8 @@ struct sc_connectRoomPacket
 		const vector<Client*> clients = room->GetClients();
 		for (size_t i = 0; i < clients.size(); ++i)
 		{
-			users[i].networkID = clients[i]->networkID;
-			wcscpy(users[i].name, clients[i]->name);
+			users[i].networkID = clients[i]->GetNetworkID();
+			wcscpy(users[i].name, clients[i]->GetName());
 		}
 	}
 };

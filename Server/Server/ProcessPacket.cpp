@@ -4,6 +4,7 @@
 #include "Room.h"
 #include "ServerQueue.h"
 #include "GlobalVariable.h"
+#include "Client.h"
 
 void ProcessPacket(int userID, char* buf)
 {
@@ -12,8 +13,8 @@ void ProcessPacket(int userID, char* buf)
 	case PacketType::cs_startMatching:
 	{
 		cs_startMatchingPacket* packet = reinterpret_cast<cs_startMatchingPacket*>(buf);
-		wcscpy(g_clients[packet->networkID].name, packet->name);
-		g_clients[packet->networkID].name[MAX_USER_NAME_LENGTH - 1] = '\0';
+		wcscpy(g_clients[packet->networkID].GetName(), packet->name);
+		g_clients[packet->networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
 
 		g_serverQueue.Lock();
 		g_serverQueue.AddClient(&g_clients[packet->networkID]);
@@ -37,28 +38,28 @@ void ProcessPacket(int userID, char* buf)
 	{
 		auto packet = reinterpret_cast<cs_AddNewItemPacket*>(buf);
 		wcout << packet->networkID << L" 번 유저가 새로운 아이템 " << packet->itemCode << L" 을 추가하였습니다" << endl;
-		g_clients[packet->networkID].room->SendAllClient(packet);
+		g_clients[packet->networkID].GetRoom()->SendAllClient(packet);
 	}
 	break;
 	case PacketType::cs_sc_changeCharacter:
 	{
 		auto packet = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
 		cout << packet->networkID << " 번 유저가 캐릭터를 " << static_cast<int>(packet->characterType) << " 으로 변경하였습니다" << endl;
-		g_clients[packet->networkID].room->SendAnotherClient(g_clients[userID], packet);
+		g_clients[packet->networkID].GetRoom()->SendAnotherClient(g_clients[userID], packet);
 	}
 	break;
 	case PacketType::cs_sc_changeItemSlot:
 	{
 		auto* packet = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
 		cout << packet->networkID << " 번 유저가 슬롯 " << packet->slot1 << " <-> " << packet->slot2 << " 변경하였습니다" << endl;
-		g_clients[packet->networkID].room->SendAllClient(packet);
+		g_clients[packet->networkID].GetRoom()->SendAllClient(packet);
 	}
 	break;
 	case PacketType::cs_sc_battleItemQueue:
 	{
 		cs_sc_battleItemQueuePacket* packet = reinterpret_cast<cs_sc_battleItemQueuePacket*>(buf);
 		const Client& client = g_clients[packet->networkID];
-		client.room->SendAnotherClient(client, packet);
+		client.GetRoom()->SendAnotherClient(client, packet);
 	}
 	break;
 	default:

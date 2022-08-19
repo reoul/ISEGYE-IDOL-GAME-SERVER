@@ -29,35 +29,3 @@ struct Exover
 	SOCKET			c_socket;
 };
 
-//클라이언트 정보 저장 구조체
-struct Client
-{
-	mutex				cLock;
-	SOCKET				socket;
-	int32_t				networkID;						// 클라이언트 아이디
-	Exover				recvOver;						// 확장 overlapped 구조체
-	int32_t				prevSize;						// 이전에 받아놓은 양
-	char				packetBuf[MAX_PACKET_SIZE];		// 조각난 거 받아두기 위한 버퍼
-	bool				isAlive;						// 플레이 도중에 살아있는지(HP가 0이 아닌경우)
-	C_STATUS			status;							// 접속했나 안했나
-	CharacterType		characterType;					// 플레이어 캐릭터
-	shared_ptr<Room>	room;							// 클라이언트가 속한 룸
-	wchar_t				name[MAX_USER_NAME_LENGTH]; // 플레이어 이름
-	Item				usingItems[MAX_USING_ITEM];
-	Item				unUsingItem[MAX_UN_USING_ITEM];
-	Client()
-		: socket(NULL)
-		, networkID(0)
-		, recvOver()
-		, prevSize(0)
-		, packetBuf{}
-		, isAlive(false)
-		, status(ST_FREE)
-		, characterType(CharacterType::Woowakgood)
-		, room(nullptr)
-		, usingItems{}
-		, unUsingItem{}
-	{
-		name[0] = '\0';
-	}
-};

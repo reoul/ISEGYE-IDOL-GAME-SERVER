@@ -1,5 +1,7 @@
 ﻿#include "ServerQueue.h"
 #include <iostream>
+
+#include "Client.h"
 #include "SettingData.h"
 
 ServerQueue::ServerQueue()
@@ -27,7 +29,7 @@ void ServerQueue::AddClient(Client* client)
 	}
 
 	++mSize;
-	wcout << L"[" << client->name << L"] 대기열 등록 완료 " << mSize << L"명" << endl;
+	wcout << L"[" << client->GetName() << L"] 대기열 등록 완료 " << mSize << L"명" << endl;
 }
 
 void ServerQueue::RemoveClient(Client* client)
@@ -53,7 +55,7 @@ void ServerQueue::RemoveClient(Client* client)
 					node->Next->Previous = node->Previous.lock();
 				}
 			}
-			wcout << L"[" << client->name << L"] 대기열 삭제 완료 " << mSize - 1 << L"명" << endl;
+			wcout << L"[" << client->GetName() << L"] 대기열 삭제 완료 " << mSize - 1 << L"명" << endl;
 			--mSize;
 			break;
 		}
@@ -71,7 +73,7 @@ shared_ptr<Room> ServerQueue::TryCreateRoomOrNullPtr()
 		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
 			Client& client = *node->GetClient();
-			client.room = room;
+			client.GetRoom() = room;
 			room->AddClient(client);
 			node = node->Next;
 		}

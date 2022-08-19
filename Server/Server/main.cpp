@@ -12,6 +12,8 @@
 #include "PacketStruct.h"
 #include <MSWSock.h>
 #include "GlobalVariable.h"
+#include "Random.h"
+#include "Client.h"
 
 using namespace std;
 
@@ -26,6 +28,13 @@ void NewClientEvent(int32_t userID);
 
 int main()
 {
+	vector<int> aa {1,2,3,4,5,6};
+	vector<int> bb;
+	copy_n(aa.begin(), 6, back_inserter(bb));
+	copy_n(aa.begin(), 6, back_inserter(bb));
+	copy_n(aa.begin(), 6, back_inserter(bb));
+	copy_n(aa.begin(), 6, back_inserter(bb));
+	copy(bb.begin(), bb.end(), back_inserter(aa));
 	setlocale(LC_ALL, "KOREAN");
 	SocketUtil::StaticInit();
 
@@ -55,7 +64,7 @@ int main()
 			g_bIsRunningServer = false;
 			for (const Client& client : g_clients)
 			{
-				SendDisconnect(client.networkID);
+				SendDisconnect(client.GetNetworkID());
 			}
 			break;
 		}
@@ -64,9 +73,9 @@ int main()
 			int cnt = 0;
 			for (const Client& client : g_clients)
 			{
-				if (client.status == ST_ACTIVE)
+				if (client.GetStatus() == ST_ACTIVE)
 				{
-					wcout << setw(11) << client.name;
+					wcout << setw(11) << client.GetName();
 					if (++cnt % 7 == 0)
 					{
 						wcout << endl;
@@ -79,7 +88,7 @@ int main()
 		{
 			for (const Client& client : g_clients)
 			{
-				SendDisconnect(client.networkID);
+				SendDisconnect(client.GetNetworkID());
 			}
 		}
 	}
@@ -95,7 +104,7 @@ void ServerInit()
 {
 	for (int i = 0; i < MAX_USER; ++i)
 	{
-		g_clients[i].networkID = i;
+		g_clients[i].SetNetworkID(i);
 	}
 
 	g_hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
@@ -139,7 +148,7 @@ void SendPacket(int userID, void* pPacket)
 	exover->wsabuf.len = length;
 	memcpy(exover->io_buf, buf, length);
 
-	WSASend(client.socket, &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
+	WSASend(client.GetSocket(), &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
 }
 
 /**
@@ -150,16 +159,16 @@ void SendPacket(int userID, void* pPacket)
 void PacketConstruct(int userID, int ioByteLength)
 {
 	Client& curUser = g_clients[userID];
-	Exover& recvOver = curUser.recvOver;
+	Exover& recvOver = curUser.GetRecvOver();
 
 	int restByte = ioByteLength;		//이만큼 남은걸 처리해줘야 한다
 	char* p = recvOver.io_buf;			//처리해야할 데이터의 포인터가 필요하다
 	int packetSize = 0;				//이게 0이라는 것은 이전에 처리하던 패킷이 없다는 것 
 
 	// 이전에 받아둔 패킷이 있다면
-	if (curUser.prevSize != 0)
+	if (curUser.GetPrevSize() != 0)
 	{
-		packetSize = reinterpret_cast<uint16_t*>(curUser.packetBuf)[0]; //재조립을 기다기는 패킷 사이즈
+		packetSize = reinterpret_cast<uint16_t*>(curUser.GetPacketBuf())[0]; //재조립을 기다기는 패킷 사이즈
 	}
 
 	/*cout << rest_byte << " ";
@@ -184,23 +193,23 @@ void PacketConstruct(int userID, int ioByteLength)
 
 		// 나머지 데이터로 패킷을 만들 수 있나 없나 확인
 		// 지금 처리해야 하는 패킷의 사이즈가 남은 데이터랑 기존에 더한것보다 작다면(즉 패킷 사이즈 만큼 채울수 있는 데이터가 있다면)
-		if (packetSize <= restByte + curUser.prevSize)
+		if (packetSize <= restByte + curUser.GetPrevSize())
 		{
 			//만들어서 처리한 데이터 크기만큼 패킷 사이즈에서 빼주기
-			memcpy(curUser.packetBuf + curUser.prevSize, p, packetSize - curUser.prevSize);
+			memcpy(curUser.GetPacketBuf() + curUser.GetPrevSize(), p, packetSize - curUser.GetPrevSize());
 
-			p += packetSize - curUser.prevSize;
-			restByte -= packetSize - curUser.prevSize;
+			p += packetSize - curUser.GetPrevSize();
+			restByte -= packetSize - curUser.GetPrevSize();
 			packetSize = 0;														//이 패킷은 이미 처리를 했고 다음 패킷 사이즈는 모름.
 
-			ProcessPacket(userID, curUser.packetBuf);
+			ProcessPacket(userID, curUser.GetPacketBuf());
 
-			curUser.prevSize = 0;
+			curUser.SetPrevSize(0);
 		}
 		else	//패킷 하나를 만들 수 없다면 버퍼에 복사해두고 포인터와 사이즈 증가
 		{
-			memcpy(curUser.packetBuf + curUser.prevSize, p, restByte); //남은 데이터 몽땅 받는데, 지난번에 받은 데이터가 남아있을 경우가 있으니, 그 뒤에 받아야한다.
-			curUser.prevSize += restByte;
+			memcpy(curUser.GetPacketBuf() + curUser.GetPrevSize(), p, restByte); //남은 데이터 몽땅 받는데, 지난번에 받은 데이터가 남아있을 경우가 있으니, 그 뒤에 받아야한다.
+			curUser.SetPrevSize(curUser.GetPrevSize() + restByte);
 			restByte = 0;
 			p += restByte;
 		}
@@ -209,7 +218,7 @@ void PacketConstruct(int userID, int ioByteLength)
 
 void SendDisconnect(int userID)
 {
-	if (g_clients[userID].status != ST_ACTIVE)
+	if (g_clients[userID].GetStatus() != ST_ACTIVE)
 	{
 		return;
 	}
@@ -220,7 +229,7 @@ void SendDisconnect(int userID)
 
 void Disconnect(int userID)
 {
-	if (g_clients[userID].status == ST_FREE)
+	if (g_clients[userID].GetStatus() == ST_FREE)
 	{
 		return;
 	}
@@ -229,16 +238,16 @@ void Disconnect(int userID)
 	g_serverQueue.UnLock();
 
 	g_clients[userID].cLock.lock();
-	g_clients[userID].status = ST_ALLOCATED;	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
+	g_clients[userID].SetStatus(ST_ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
 
-	closesocket(g_clients[userID].socket);
-	g_clients[userID].socket = INVALID_SOCKET;
-	g_clients[userID].room->RemoveClient(g_clients[userID]);
-	g_clients[userID].room = nullptr;
+	closesocket(g_clients[userID].GetSocket());
+	g_clients[userID].GetSocket() = INVALID_SOCKET;
+	g_clients[userID].GetRoom()->RemoveClient(g_clients[userID]);
+	g_clients[userID].GetRoom() = nullptr;
 	wchar_t name[MAX_USER_NAME_LENGTH];
-	wcscpy(name, g_clients[userID].name);
-	g_clients[userID].name[0] = '\0';
-	g_clients[userID].status = ST_FREE;	//다 처리했으면 FREE
+	wcscpy(name, g_clients[userID].GetName());
+	g_clients[userID].GetName()[0] = '\0';
+	g_clients[userID].SetStatus(ST_FREE);	//다 처리했으면 FREE
 	g_clients[userID].cLock.unlock();
 	wcout << L"[" << name << L"] 유저가 접속 해제하였습니다" << endl;
 }
@@ -282,9 +291,9 @@ void WorkerThread()
 			{
 				Client& client = g_clients[user_id];
 				PacketConstruct(user_id, io_byte);
-				ZeroMemory(&client.recvOver.over, sizeof(client.recvOver.over));
+				ZeroMemory(&client.GetRecvOver().over, sizeof(client.GetRecvOver().over));
 				DWORD flags = 0;
-				WSARecv(client.socket, &client.recvOver.wsabuf, 1, NULL, &flags, &client.recvOver.over, NULL);
+				WSARecv(client.GetSocket(), &client.GetRecvOver().wsabuf, 1, NULL, &flags, &client.GetRecvOver().over, NULL);
 			}
 			break;
 		}
@@ -302,9 +311,9 @@ void WorkerThread()
 			for (int i = 0; i < MAX_USER; ++i)
 			{
 				lock_guard<mutex> gl{ g_clients[i].cLock }; //이렇게 하면 unlock이 필요 없다. 이 블록에서 빠져나갈때 unlock을 자동으로 해준다.
-				if (ST_FREE == g_clients[i].status)
+				if (ST_FREE == g_clients[i].GetStatus())
 				{
-					g_clients[i].status = ST_ALLOCATED;
+					g_clients[i].SetStatus(ST_ALLOCATED);
 					userID = i;
 					break;
 				}
@@ -326,20 +335,20 @@ void WorkerThread()
 				else
 				{
 					//g_clients[user_id].networkID = user_id; 멀쓰에서 하는게 아니고 초기화 할때 한번 해줘야 함 처음에 한번.
-					g_clients[userID].prevSize = 0; //이전에 받아둔 조각이 없으니 0
-					g_clients[userID].socket = clientSocket;
+					g_clients[userID].SetPrevSize(0); //이전에 받아둔 조각이 없으니 0
+					g_clients[userID].GetSocket() = clientSocket;
 
-					ZeroMemory(&g_clients[userID].recvOver.over, sizeof(g_clients[user_id].recvOver.over));
-					g_clients[userID].recvOver.type = OperationType::Recv;
-					g_clients[userID].recvOver.wsabuf.buf = g_clients[userID].recvOver.io_buf;
-					g_clients[userID].recvOver.wsabuf.len = MAX_BUF_SIZE;
+					ZeroMemory(&g_clients[userID].GetRecvOver().over, sizeof(g_clients[user_id].GetRecvOver().over));
+					g_clients[userID].GetRecvOver().type = OperationType::Recv;
+					g_clients[userID].GetRecvOver().wsabuf.buf = g_clients[userID].GetRecvOver().io_buf;
+					g_clients[userID].GetRecvOver().wsabuf.len = MAX_BUF_SIZE;
 
 					NewClientEvent(userID);
 
-					g_clients[userID].status = ST_ACTIVE;
+					g_clients[userID].SetStatus(ST_ACTIVE);
 
 					DWORD flags = 0;
-					WSARecv(clientSocket, &g_clients[userID].recvOver.wsabuf, 1, NULL, &flags, &g_clients[userID].recvOver.over, NULL);
+					WSARecv(clientSocket, &g_clients[userID].GetRecvOver().wsabuf, 1, NULL, &flags, &g_clients[userID].GetRecvOver().over, NULL);
 				}
 			}
 			//소켓 초기화 후 다시 accept
