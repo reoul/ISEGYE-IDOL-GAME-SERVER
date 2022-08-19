@@ -1,4 +1,4 @@
-#include "ServerQueue.h"
+ï»¿#include "ServerQueue.h"
 #include <iostream>
 #include "SettingData.h"
 
@@ -21,11 +21,13 @@ void ServerQueue::AddClient(Client* client)
 		{
 			node = node->Next;
 		}
-		node->Next = make_shared<ServerQueueNode>(client);
+		shared_ptr<ServerQueueNode> newClient = make_shared<ServerQueueNode>(client);
+		node->Next = newClient;
+		newClient->Previous = node;
 	}
 
 	++mSize;
-	wcout << L"[" << client->name << L"] ´ë±â¿­ µî·Ï ¿Ï·á" << endl;
+	wcout << L"[" << client->name << L"] ëŒ€ê¸°ì—´ ë“±ë¡ ì™„ë£Œ " << mSize << L"ëª…" << endl;
 }
 
 void ServerQueue::RemoveClient(Client* client)
@@ -46,9 +48,12 @@ void ServerQueue::RemoveClient(Client* client)
 			else
 			{
 				node->Previous.lock()->Next = node->Next;
-				node->Next->Previous = node->Previous.lock();
+				if(node->Next != nullptr)
+				{
+					node->Next->Previous = node->Previous.lock();
+				}
 			}
-			wcout << L"[" << client->name << L"] ´ë±â¿­ »èÁ¦ ¿Ï·á" << endl;
+			wcout << L"[" << client->name << L"] ëŒ€ê¸°ì—´ ì‚­ì œ ì™„ë£Œ " << mSize - 1 << L"ëª…" << endl;
 			--mSize;
 			break;
 		}
@@ -58,26 +63,26 @@ void ServerQueue::RemoveClient(Client* client)
 
 shared_ptr<Room> ServerQueue::TryCreateRoomOrNullPtr()
 {
-	if (mSize >= ROOM_MAX_PLAYER)
+	if (mSize >= MAX_ROOM_PLAYER)
 	{
-		shared_ptr<Room> room = make_shared<Room>(++g_roomIndex, ROOM_MAX_PLAYER);
+		shared_ptr<Room> room = make_shared<Room>(++g_roomIndex, MAX_ROOM_PLAYER);
 
 		auto node = mClientQueue;
-		for (size_t i = 0; i < ROOM_MAX_PLAYER; ++i)
+		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
-			auto pClient = node->GetClient();
-			pClient->room = room;
-			room->AddUser(pClient);
+			Client& client = *node->GetClient();
+			client.room = room;
+			room->AddClient(client);
 			node = node->Next;
 		}
-		wcout << g_roomIndex << L"¹ø RoomÀÌ »ý¼ºµÊ" << endl;
+		wcout << g_roomIndex << L"ë²ˆ Roomì´ ìƒì„±ë¨" << endl;
 		mClientQueue = node;
 		if (node != nullptr)
 		{
 			node->Previous.reset();
 		}
 
-		mSize -= ROOM_MAX_PLAYER;
+		mSize -= MAX_ROOM_PLAYER;
 		return room;
 	}
 	return nullptr;

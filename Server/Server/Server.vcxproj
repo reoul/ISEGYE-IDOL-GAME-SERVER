@@ -147,7 +147,9 @@
     <ClCompile Include="..\..\Server-Library\Source\StringUtils.cpp" />
     <ClCompile Include="..\..\Server-Library\Source\TCPSocket.cpp" />
     <ClCompile Include="..\..\Server-Library\Source\UDPSocket.cpp" />
+    <ClCompile Include="BattleManager.cpp" />
     <ClCompile Include="GlobalVariable.cpp" />
+    <ClCompile Include="Item.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ProcessPacket.cpp" />
     <ClCompile Include="Room.cpp" />
@@ -167,7 +169,9 @@
     <ClInclude Include="..\..\Server-Library\Header\StringUtils.h" />
     <ClInclude Include="..\..\Server-Library\Header\TCPSocket.h" />
     <ClInclude Include="..\..\Server-Library\Header\UDPSocket.h" />
+    <ClInclude Include="BattleManager.h" />
     <ClInclude Include="GlobalVariable.h" />
+    <ClInclude Include="Item.h" />
     <ClInclude Include="PacketStruct.h" />
     <ClInclude Include="ServerQueue.h" />
     <ClInclude Include="ServerQueueNode.h" />

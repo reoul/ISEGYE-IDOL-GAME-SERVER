@@ -16,7 +16,7 @@
 using namespace std;
 
 void ServerInit();
-void SendPacket(int userID, void* p);
+void SendPacket(int userID, void* pPacket);
 void ProcessPacket(int userID, char* buf);
 void PacketConstruct(int userID, int ioByteLength);
 void SendDisconnect(int userID);
@@ -40,7 +40,6 @@ int main()
 	AcceptEx(g_hListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
 
 	cout << "start server" << endl;
-
 	vector<thread> worker_threads;
 	for (int i = 0; i < 4; ++i)
 	{
@@ -125,11 +124,11 @@ void ServerInit()
 	}
 }
 
-void SendPacket(int userID, void* p)
+void SendPacket(int userID, void* pPacket)
 {
-	char* buf = reinterpret_cast<char*>(p);
+	char* buf = reinterpret_cast<char*>(pPacket);
 
-	Client& client = g_clients[userID];
+	const Client& client = g_clients[userID];
 
 	//WSASend의 두번째 인자의 over는 recv용이라 쓰면 안된다. 새로 만들어야 한다.
 	Exover* exover = new Exover;
@@ -234,8 +233,9 @@ void Disconnect(int userID)
 
 	closesocket(g_clients[userID].socket);
 	g_clients[userID].socket = INVALID_SOCKET;
+	g_clients[userID].room->RemoveClient(g_clients[userID]);
 	g_clients[userID].room = nullptr;
-	wchar_t name[MAX_USER_NAME_LENGTH + 1];
+	wchar_t name[MAX_USER_NAME_LENGTH];
 	wcscpy(name, g_clients[userID].name);
 	g_clients[userID].name[0] = '\0';
 	g_clients[userID].status = ST_FREE;	//다 처리했으면 FREE

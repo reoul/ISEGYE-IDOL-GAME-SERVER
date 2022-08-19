@@ -1,44 +1,59 @@
-#include "Room.h"
+﻿#include "Room.h"
 
-#include <iostream>
-
-void SendPacket(int userID, void* p);
+void SendPacket(int userID, void* pPacket);
 
 Room::Room(int roomNumber, int capacity)
 	: mSize(0)
 	, mCapacity(capacity)
 	, mRoomNumber(roomNumber)
-	, mCount(0)
 {
 }
 
-void Room::AddUser(Client* client)
+void Room::AddClient(Client& client)
 {
 	if (mSize++ == mCapacity)
 	{
 		return;
 	}
 
-	mClients.emplace_back(client);
+	mClients.emplace_back(&client);
 }
 
-void Room::SendAllPlayer(void* p)
+void Room::RemoveClient(const Client& client)
 {
-	for (auto it = mClients.begin(); it != mClients.end(); ++it)
+	auto it = mClients.cbegin();
+	for (; it != mClients.cend(); ++it)
 	{
-		SendPacket((*it)->networkID, p);
+		if(*it == &client)
+		{
+			break;
+		}
+	}
+
+	if(it != mClients.cend())
+	{
+		mClients.erase(it);
+		--mSize;
 	}
 }
 
-void Room::SendAnotherPlayer(Client* client, void* p)
+void Room::SendAllClient(void* pPacket)
 {
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
-		if(client == *it)
+		SendPacket((*it)->networkID, pPacket);
+	}
+}
+
+void Room::SendAnotherClient(const Client& client, void* pPacket)
+{
+	for (auto it = mClients.begin(); it != mClients.end(); ++it)
+	{
+		if(&client == *it)
 		{
 			continue;
 		}
 
-		SendPacket((*it)->networkID, p);
+		SendPacket((*it)->networkID, pPacket);
 	}
 }

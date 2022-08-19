@@ -1,6 +1,6 @@
 ﻿#include "GlobalVariable.h"
 
-Room gRoom(ROOM_MAX_PLAYER);
+Room gRoom(MAX_ROOM_PLAYER);
 Client g_clients[MAX_USER];
 HANDLE g_hIocp;
 SOCKET g_hListenSocket;

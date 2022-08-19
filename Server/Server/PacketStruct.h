@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #pragma warning(disable:4996)
 #include <memory>
 #include "SettingData.h"
@@ -19,6 +19,7 @@ enum class PacketType : uint8_t
 	cs_sc_upgradeItem,
 	cs_sc_changeCharacter,
 	cs_sc_battleItemQueue,
+	cs_sc_battleOpponentQueue,
 };
 
 #pragma pack(push, 1)
@@ -62,7 +63,7 @@ struct sc_connectRoomPacket
 	const uint16_t size;
 	const PacketType type;
 	int32_t roomNumber;
-	UserInfo users[ROOM_MAX_PLAYER];
+	UserInfo users[MAX_ROOM_PLAYER];
 	sc_connectRoomPacket(const shared_ptr<Room>& room)
 		: size(sizeof(sc_connectRoomPacket))
 		, type(PacketType::sc_connectRoom)
@@ -166,15 +167,20 @@ struct cs_sc_battleItemQueuePacket
 	const uint16_t size;
 	const PacketType type;
 	const int32_t networkID;
-	const CharacterType characterType;
-	const int8_t itemQueue[30];
-	cs_sc_battleItemQueuePacket(int32_t networkID, CharacterType characterType)
-		: size(sizeof(cs_sc_battleItemQueuePacket))
+	const int8_t itemQueue[60];
+};
+
+// 배틀 상대
+struct sc_battleOpponentQueuePacket
+{
+	const uint16_t size;
+	const PacketType type;
+	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
+	sc_battleOpponentQueuePacket(const int32_t(&playerQueue)[MAX_ROOM_PLAYER])
+		: size(sizeof(sc_battleOpponentQueuePacket))
 		, type(PacketType::cs_sc_battleItemQueue)
-		, networkID(networkID)
-		, characterType(characterType)
-		, itemQueue{}
 	{
+		::copy_n(playerQueue, _countof(playerQueue), battleOpponentQueue);
 	}
 };
 
