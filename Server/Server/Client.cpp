@@ -1,5 +1,8 @@
 ﻿#include "Client.h"
 
+#include <algorithm>
+#include <iterator>
+
 Client::Client()
 	: mSocket(NULL)
 	, mNetworkID(0)
@@ -9,7 +12,7 @@ Client::Client()
 	, mIsAlive(false)
 	, mStatus(ST_FREE)
 	, mCharacterType(CharacterType::Woowakgood)
-	, mRoom(nullptr)
+	, mRoomPtr(nullptr)
 	, mUsingItems{}
 	, mUnUsingItems{}
 {
@@ -19,44 +22,56 @@ Client::Client()
 vector<Item> Client::GetUsingItems() const
 {
 	vector<Item> items;
-	for (const Item& item : mUsingItems)
-	{
-		items.emplace_back(item);
-	}
+	items.reserve(MAX_USING_ITEM);
+	copy_n(mUsingItems, MAX_USING_ITEM, back_inserter(items));
 	return items;
 }
 
-vector<Item> Client::GetValidUsingItems() const
+vector<SlotInfo> Client::GetValidUsingItems() const
 {
-	vector<Item> items;
-	for (const Item& item : mUsingItems)
+	vector<SlotInfo> items;
+	for (size_t i = 0; i < MAX_USING_ITEM; ++i)
 	{
-		if (item.GetType() != EMPTY_ITEM && item.GetType() != LOCK_ITEM)
+		uint8_t type = mUsingItems[i].GetType();
+		if (type < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
 		{
-			items.emplace_back(item);
+			items.emplace_back(SlotInfo(i, mUsingItems[i]));
 		}
 	}
 	return items;
 }
 
+int Client::GetLockSlotCount() const
+{
+	int count = 0;
+	for (const Item& item : mUsingItems)
+	{
+		if (item.GetType() == LOCK_ITEM)
+		{
+			++count;
+		}
+	}
+
+	return count;
+}
+
 vector<Item> Client::GetUnUsingItems() const
 {
 	vector<Item> items;
-	for (const Item& item : mUnUsingItems)
-	{
-		items.emplace_back(item);
-	}
+	items.reserve(MAX_UN_USING_ITEM);
+	copy_n(mUnUsingItems, MAX_UN_USING_ITEM, back_inserter(items));
 	return items;
 }
 
-vector<Item> Client::GetValidUnUsingItems() const
+vector<SlotInfo> Client::GetValidUnUsingItems() const
 {
-	vector<Item> items;
-	for (const Item& item : mUnUsingItems)
+	vector<SlotInfo> items;
+	for (size_t i = 0; i < MAX_UN_USING_ITEM; ++i)
 	{
-		if (item.GetType() != EMPTY_ITEM && item.GetType() != LOCK_ITEM)
+		uint8_t type = mUnUsingItems[i].GetType();
+		if (type < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
 		{
-			items.emplace_back(item);
+			items.emplace_back(SlotInfo(i, mUnUsingItems[i]));
 		}
 	}
 	return items;

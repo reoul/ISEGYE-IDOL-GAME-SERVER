@@ -18,12 +18,12 @@ void ProcessPacket(int userID, char* buf)
 
 		g_serverQueue.Lock();
 		g_serverQueue.AddClient(&g_clients[packet->networkID]);
-		shared_ptr<Room> room = g_serverQueue.TryCreateRoomOrNullPtr();
+		Room* room = g_serverQueue.TryCreateRoomOrNullPtr();
 		g_serverQueue.UnLock();
 
 		if (room != nullptr) // 방을 만들 수 있다면
 		{
-			sc_connectRoomPacket connectRoomPacket(room);
+			sc_connectRoomPacket connectRoomPacket(*room);
 			room->SendAllClient(&connectRoomPacket);
 		}
 
@@ -38,28 +38,28 @@ void ProcessPacket(int userID, char* buf)
 	{
 		auto packet = reinterpret_cast<cs_AddNewItemPacket*>(buf);
 		wcout << packet->networkID << L" 번 유저가 새로운 아이템 " << packet->itemCode << L" 을 추가하였습니다" << endl;
-		g_clients[packet->networkID].GetRoom()->SendAllClient(packet);
+		g_clients[packet->networkID].GetRoomPtr()->SendAllClient(packet);
 	}
 	break;
 	case PacketType::cs_sc_changeCharacter:
 	{
 		auto packet = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
 		cout << packet->networkID << " 번 유저가 캐릭터를 " << static_cast<int>(packet->characterType) << " 으로 변경하였습니다" << endl;
-		g_clients[packet->networkID].GetRoom()->SendAnotherClient(g_clients[userID], packet);
+		g_clients[packet->networkID].GetRoomPtr()->SendAnotherClient(g_clients[userID], packet);
 	}
 	break;
 	case PacketType::cs_sc_changeItemSlot:
 	{
 		auto* packet = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
 		cout << packet->networkID << " 번 유저가 슬롯 " << packet->slot1 << " <-> " << packet->slot2 << " 변경하였습니다" << endl;
-		g_clients[packet->networkID].GetRoom()->SendAllClient(packet);
+		g_clients[packet->networkID].GetRoomPtr()->SendAllClient(packet);
 	}
 	break;
-	case PacketType::cs_sc_battleItemQueue:
+	case PacketType::sc_battleItemQueue:
 	{
-		cs_sc_battleItemQueuePacket* packet = reinterpret_cast<cs_sc_battleItemQueuePacket*>(buf);
-		const Client& client = g_clients[packet->networkID];
-		client.GetRoom()->SendAnotherClient(client, packet);
+		sc_battleItemQueuePacket* packet = reinterpret_cast<sc_battleItemQueuePacket*>(buf);
+		//const Client& client = g_clients[packet->networkID];
+		//client.GetRoomPtr()->SendAnotherClient(client, packet);
 	}
 	break;
 	default:

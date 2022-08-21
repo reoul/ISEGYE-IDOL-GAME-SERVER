@@ -3,6 +3,7 @@
 
 #include "Client.h"
 #include "SettingData.h"
+#include "GlobalVariable.h"
 
 ServerQueue::ServerQueue()
 	: mClientQueue(nullptr)
@@ -63,18 +64,18 @@ void ServerQueue::RemoveClient(Client* client)
 	}
 }
 
-shared_ptr<Room> ServerQueue::TryCreateRoomOrNullPtr()
+Room* ServerQueue::TryCreateRoomOrNullPtr()
 {
 	if (mSize >= MAX_ROOM_PLAYER)
 	{
-		shared_ptr<Room> room = make_shared<Room>(++g_roomIndex, MAX_ROOM_PLAYER);
+		Room& room = g_roomManager.GetUnUsedRoom();
 
 		auto node = mClientQueue;
 		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
 			Client& client = *node->GetClient();
-			client.GetRoom() = room;
-			room->AddClient(client);
+			client.SetRoom(&room);
+			room.AddClient(client);
 			node = node->Next;
 		}
 		wcout << g_roomIndex << L"번 Room이 생성됨" << endl;
@@ -85,7 +86,7 @@ shared_ptr<Room> ServerQueue::TryCreateRoomOrNullPtr()
 		}
 
 		mSize -= MAX_ROOM_PLAYER;
-		return room;
+		return &room;
 	}
 	return nullptr;
 }

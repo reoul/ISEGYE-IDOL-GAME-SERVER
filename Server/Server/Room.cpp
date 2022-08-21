@@ -1,24 +1,27 @@
 ﻿#include "Room.h"
 
 #include "Client.h"
+#include "ExtensionMethod.h"
 #include "Random.h"
+#include "PacketStruct.h"
 
 void SendPacket(int userID, void* pPacket);
 
-Room::Room(int roomNumber, int capacity)
+Room::Room()
 	: mSize(0)
-	, mCapacity(capacity)
-	, mRoomNumber(roomNumber)
+	, mIsRun(false)
+	, mCapacity(MAX_ROOM_PLAYER)
 {
 }
 
 void Room::AddClient(Client& client)
 {
-	if (mSize++ == mCapacity)
+	if (mSize == mCapacity)
 	{
 		return;
 	}
 
+	++mSize;
 	mClients.emplace_back(&client);
 }
 
@@ -61,76 +64,86 @@ void Room::SendAnotherClient(const Client& client, void* pPacket) const
 	}
 }
 
-struct SlotInfo
+vector<int32_t> Room::GetRandomItemQueue() const
 {
-	int itemIndex;
-	int activePercent;
-	SlotInfo(int index, int percent)
-		: itemIndex(index)
-		, activePercent(percent)
-	{
-	}
-};
-
-void Room::SendRandomItemQueue() const
-{
-	int sum = 0;
-	const int LOOP_NUM = 5;
 	vector<SlotInfo> items;
-	items.reserve(MAX_USING_ITEM * LOOP_NUM);
+	items.reserve(MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT);
+	
+	vector<int32_t> itemQueue;
+	itemQueue.reserve(BATTLE_ITEM_QUEUE_LENGTH);
 
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
-		for (size_t i = 0; i < MAX_USING_ITEM; ++i)
+		itemQueue.emplace_back((*it)->GetNetworkID());
+		items = (*it)->GetValidUsingItems();
+
+		const size_t length = items.size();
+		assert(length <= MAX_USING_ITEM);
+
+		int sum = 0;
+		for (const SlotInfo& slotInfo : items)
 		{
-			/*const Item& item = (*it)->GetUsingItems()[i];
-			const uint8_t itemType = item.GetType();
-			if (itemType != EMPTY_ITEM && itemType != LOCK_ITEM)
-			{
-				sum += item.GetActivePercent();
-				items.emplace_back((SlotInfo(i, item.GetActivePercent())));
-			}*/
+			sum += slotInfo.item.GetActivePercent();
 		}
 
-		const int length = items.size();
-
-		vector<SlotInfo> tmpItems;
-		tmpItems.reserve(24);
-		for (size_t i = 0; i < LOOP_NUM - 1; ++i)		// 총 5번 루프를 돌게 복사
-		{
-			copy(items.begin(), items.end(), back_inserter(tmpItems));
-		}
-		copy(tmpItems.begin(), tmpItems.end(), back_inserter(items));
+		CopySelf(items, BATTLE_ITEM_QUEUE_LOOP_COUNT - 1);
 
 		{
 			int loopSum = sum;
-			int loopLength = length;
+			size_t loopLength = length;
 			while (!items.empty())
 			{
 				Random<int> gen(0, loopSum - 1);
 				int rand = gen();
-				auto iterator = items.begin();
-				for (int i = 0; i < loopLength; ++i)
+
+				auto iter = items.begin();
+				for (size_t i = 0; i < loopLength; ++i)
 				{
-					rand -= iterator->activePercent;
+					const int itemActivePercent = iter->item.GetActivePercent();
+					rand -= itemActivePercent;
 					if (rand < 0)
 					{
 						--loopLength;
-						loopSum -= iterator->activePercent;
-						items.erase(iterator);
+						loopSum -= itemActivePercent;
+						itemQueue.emplace_back(iter->index);
+						itemQueue.emplace_back(ACTIVATE_ITEM);
+						items.erase(iter);
 						break;
 					}
 				}
 
-				if(loopLength == 0)
+				if (loopLength == 0)
 				{
-					
+					loopSum = sum;
+					loopLength = length;
+
+					const int lockSlotCnt = (*it)->GetLockSlotCount();
+					for (size_t i = 0; i < MAX_USING_ITEM - length - lockSlotCnt; ++i)
+					{
+						itemQueue.emplace_back(EMPTY_ITEM);
+						itemQueue.emplace_back(ACTIVATE_ITEM);
+					}
+
+					for (size_t i = 0; i < lockSlotCnt; ++i)
+					{
+						itemQueue.emplace_back(LOCK_ITEM);
+						itemQueue.emplace_back(DISABLE_ITEM);
+					}
 				}
 			}
 		}
 
-
 		items.clear();
-		sum = 0;
 	}
+
+	assert(itemQueue.size() == BATTLE_ITEM_QUEUE_LENGTH);
+
+	return itemQueue;
+}
+
+void Room::SendRandomItemQueue() const
+{
+	const vector<int32_t> itemQueue = GetRandomItemQueue();
+	sc_battleItemQueuePacket packet(itemQueue);
+	SendAllClient(&packet);
 }

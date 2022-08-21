@@ -7,7 +7,7 @@ class Client;
 class Room
 {
 public:
-	Room(int roomNumber, int capacity = MAX_ROOM_PLAYER);
+	Room();
 	~Room() = default;
 	Room(const Room&) = delete;
 	Room& operator=(const Room&) = delete;
@@ -15,22 +15,29 @@ public:
 	void RemoveClient(const Client& client);
 	void SendAllClient(void* pPacket) const;
 	void SendAnotherClient(const Client& client, void* pPacket) const;
+	vector<int32_t> GetRandomItemQueue() const;
 	void SendRandomItemQueue() const;
-	int GetRoomNumber() const;
 	const vector<Client*>& GetClients() const;
+	bool IsRun();
+	void SetIsRun(bool isRun);
 private:
 	vector<Client*> mClients;
 	size_t mSize;
+	bool mIsRun;
 	const size_t mCapacity;
-	int mRoomNumber;
 };
-
-inline int Room::GetRoomNumber() const
-{
-	return mRoomNumber;
-}
 
 inline const vector<Client*>& Room::GetClients() const
 {
 	return mClients;
+}
+
+inline bool Room::IsRun()
+{
+	return mIsRun;
+}
+
+inline void Room::SetIsRun(bool isRun)
+{
+	mIsRun = isRun;
 }

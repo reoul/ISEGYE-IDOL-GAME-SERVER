@@ -28,13 +28,6 @@ void NewClientEvent(int32_t userID);
 
 int main()
 {
-	vector<int> aa {1,2,3,4,5,6};
-	vector<int> bb;
-	copy_n(aa.begin(), 6, back_inserter(bb));
-	copy_n(aa.begin(), 6, back_inserter(bb));
-	copy_n(aa.begin(), 6, back_inserter(bb));
-	copy_n(aa.begin(), 6, back_inserter(bb));
-	copy(bb.begin(), bb.end(), back_inserter(aa));
 	setlocale(LC_ALL, "KOREAN");
 	SocketUtil::StaticInit();
 
@@ -242,8 +235,8 @@ void Disconnect(int userID)
 
 	closesocket(g_clients[userID].GetSocket());
 	g_clients[userID].GetSocket() = INVALID_SOCKET;
-	g_clients[userID].GetRoom()->RemoveClient(g_clients[userID]);
-	g_clients[userID].GetRoom() = nullptr;
+	g_clients[userID].GetRoomPtr()->RemoveClient(g_clients[userID]);
+	g_clients[userID].SetRoom(nullptr);
 	wchar_t name[MAX_USER_NAME_LENGTH];
 	wcscpy(name, g_clients[userID].GetName());
 	g_clients[userID].GetName()[0] = '\0';

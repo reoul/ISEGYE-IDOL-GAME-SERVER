@@ -16,7 +16,7 @@ public:
 	ServerQueue& operator=(const ServerQueue&) = delete;
 	void AddClient(Client* client);
 	void RemoveClient(Client* client);
-	shared_ptr<Room> TryCreateRoomOrNullPtr();
+	Room* TryCreateRoomOrNullPtr();
 	void Lock();
 	void UnLock();
 private:
