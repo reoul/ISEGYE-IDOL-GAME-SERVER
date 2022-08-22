@@ -209,9 +209,10 @@ void Disconnect(int userID)
 	g_clients[userID].SetStatus(ST_ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
 
 	closesocket(g_clients[userID].GetSocket());
-	g_clients[userID].GetSocket() = INVALID_SOCKET;
+	g_clients[userID].SetSocket(INVALID_SOCKET);
 	if (g_clients[userID].GetRoomPtr() != nullptr)
 	{
+		lock_guard<mutex> lg(g_clients[userID].GetRoomPtr()->cLock);
 		g_clients[userID].GetRoomPtr()->RemoveClient(g_clients[userID]);
 		g_clients[userID].SetRoom(nullptr);
 	}
@@ -307,7 +308,7 @@ void WorkerThread()
 				{
 					//g_clients[user_id].networkID = user_id; 멀쓰에서 하는게 아니고 초기화 할때 한번 해줘야 함 처음에 한번.
 					g_clients[userID].SetPrevSize(0); //이전에 받아둔 조각이 없으니 0
-					g_clients[userID].GetSocket() = clientSocket;
+					g_clients[userID].SetSocket(clientSocket);
 
 					ZeroMemory(&g_clients[userID].GetRecvOver().over, sizeof(g_clients[user_id].GetRecvOver().over));
 					g_clients[userID].GetRecvOver().type = OperationType::Recv;
