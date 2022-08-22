@@ -177,10 +177,9 @@ void Room::TrySendRandomItemQueue()
 
 	if(mBattleReadyCount >= mSize)
 	{
-		cout << "통과 " << mBattleReadyCount << " " << mSize << endl;
 		{
-			mBattleReadyCount = 0;
 			lock_guard<mutex> lg(cLock);
+			mBattleReadyCount = 0;
 		}
 		SendRandomItemQueue();
 	}
@@ -190,15 +189,11 @@ void Room::BattleReady()
 {
 	lock_guard<mutex> lg(cLock);
 	++mBattleReadyCount;
-	//cout << "아무거나" << endl;
-	cout << mBattleReadyCount << endl;
 }
 
 void Room::SendRandomItemQueue() const
 {
 	const vector<int32_t> itemQueue = GetRandomItemQueue();
-	cout << "999999" << endl;
 	sc_battleItemQueuePacket packet(itemQueue);
-	wcout << L"랜덤 아이템 순서 보냄" << endl;
 	SendAllClient(&packet);
 }

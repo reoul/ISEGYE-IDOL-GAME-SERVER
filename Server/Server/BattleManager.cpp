@@ -2,8 +2,6 @@
 #include <vector>
 
 BattleManager::BattleManager(const std::vector<Client*> clients)
-	: mBattleInfo{}
-	, mReady{}
 {
 	for (size_t player = 0; player < MAX_ROOM_PLAYER; ++player)
 	{
@@ -14,7 +12,7 @@ BattleManager::BattleManager(const std::vector<Client*> clients)
 				continue;
 			}
 
-			mBattleInfo[player][another].pClient = clients[another];
+			//mBattleInfo[player][another].pClient = clients[another];
 		}
 	}
 }
@@ -22,11 +20,11 @@ BattleManager::BattleManager(const std::vector<Client*> clients)
 std::vector<int32_t> BattleManager::GetBattleOpponent()
 {
 	std::vector<int32_t> list;
-	size_t cnt = 0;
+	/*size_t cnt = 0;
 	for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 	{
 		if(m)
 	}
-	for(size_t i = 0; i < )
+	for(size_t i = 0; i < )*/
 	return list;
 }

@@ -38,6 +38,7 @@ public:
 	void					SwapItem(uint8_t index1, uint8_t index2);
 	void					AddItem(uint8_t type);
 	void					TrySetDefaultUsingItem();
+	void					AddDefaultItem();
 private:
 	SOCKET					mSocket;
 	int32_t					mNetworkID;						// 클라이언트 아이디

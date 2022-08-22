@@ -76,6 +76,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 			Client& client = *node->GetClient();
 			client.SetRoom(&room);
 			room.AddClient(client);
+			client.AddDefaultItem();
 			node = node->Next;
 		}
 		wcout << g_roomIndex << L"번 Room이 생성됨" << endl;

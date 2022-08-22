@@ -62,9 +62,6 @@ void ProcessPacket(int userID, char* buf)
 		cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
 		g_clients[pPacket->networkID].TrySetDefaultUsingItem();
 		g_clients[pPacket->networkID].GetRoomPtr()->BattleReady();
-		//g_clients[pPacket->networkID].GetRoomPtr()->mBattleReadyCount++;
-		//g_roomManager.mRooms[0].mBattleReadyCount++;
-		cout << "출력" << endl;
 	}
 	break;
 	default:

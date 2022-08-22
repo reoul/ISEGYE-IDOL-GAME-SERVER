@@ -1,6 +1,7 @@
 ﻿#include "Client.h"
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include "PacketStruct.h"
 
@@ -72,7 +73,7 @@ vector<SlotInfo> Client::GetValidUnUsingItems() const
 		const uint8_t type = mUnUsingItems[i].GetType();
 		if (type < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
 		{
-			items.emplace_back(SlotInfo(i, mUnUsingItems[i]));
+			items.emplace_back(SlotInfo(i + MAX_USING_ITEM, mUnUsingItems[i]));
 		}
 	}
 	return items;
@@ -111,8 +112,8 @@ void Client::TrySetDefaultUsingItem()
 		{
 			const uint8_t slot2 = validUnUsingItems[0].index;
 			SwapItem(slot1, slot2);
-			cs_sc_changeItemSlotPacket packet(mNetworkID, slot1, slot2);
-			mRoomPtr->SendAllClient(&packet);
+			//cs_sc_changeItemSlotPacket packet(mNetworkID, slot1, slot2);
+			//mRoomPtr->SendAllClient(&packet);
 
 			validUnUsingItems.erase(validUnUsingItems.begin());
 			if (validUnUsingItems.empty())
@@ -121,4 +122,10 @@ void Client::TrySetDefaultUsingItem()
 			}
 		}
 	}
+}
+
+void Client::AddDefaultItem()
+{
+	AddItem(1);
+	AddItem(6);
 }
