@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include "PacketStruct.h"
 
 Client::Client()
 	: mSocket(NULL)
@@ -103,4 +104,21 @@ void Client::AddItem(uint8_t type)
 void Client::TrySetDefaultUsingItem()
 {
 	vector<SlotInfo> validUnUsingItems = GetValidUnUsingItems();
+
+	if (!validUnUsingItems.empty() && GetValidUsingItems().empty())
+	{
+		for (uint8_t slot1 = 0; slot1 < MAX_USING_ITEM; ++slot1)
+		{
+			const uint8_t slot2 = validUnUsingItems[0].index;
+			SwapItem(slot1, slot2);
+			cs_sc_changeItemSlotPacket packet(mNetworkID, slot1, slot2);
+			mRoomPtr->SendAllClient(&packet);
+
+			validUnUsingItems.erase(validUnUsingItems.begin());
+			if (validUnUsingItems.empty())
+			{
+				break;
+			}
+		}
+	}
 }
