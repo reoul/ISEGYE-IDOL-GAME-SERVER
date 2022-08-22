@@ -13,8 +13,8 @@ public:
 	std::mutex				cLock;
 	Client();
 
-	SOCKET&					GetSocket();
 	const SOCKET&			GetSocket() const;
+	void					SetSocket(SOCKET socket);
 	int32_t					GetNetworkID() const;
 	void					SetNetworkID(int32_t networkID);
 	Exover&					GetRecvOver();
@@ -54,14 +54,14 @@ private:
 	Item					mUnUsingItems[MAX_UN_USING_ITEM];
 };
 
-inline SOCKET& Client::GetSocket()
+inline const SOCKET& Client::GetSocket() const
 {
 	return mSocket;
 }
 
-inline const SOCKET& Client::GetSocket() const
+inline void Client::SetSocket(SOCKET socket)
 {
-	return mSocket;
+	mSocket = socket;
 }
 
 inline int32_t Client::GetNetworkID() const
