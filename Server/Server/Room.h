@@ -19,6 +19,7 @@ public:
 	vector<int32_t> GetRandomItemQueue() const;
 	void TrySendRandomItemQueue();
 	const vector<Client*>& GetClients() const;
+	vector<Client*>& GetClients();
 	bool IsRun() const;
 	void SetIsRun(bool isRun);
 	void BattleReady();
@@ -35,6 +36,12 @@ inline const vector<Client*>& Room::GetClients() const
 {
 	return mClients;
 }
+
+inline vector<Client*>& Room::GetClients()
+{
+	return mClients;
+}
+
 
 inline bool Room::IsRun() const
 {

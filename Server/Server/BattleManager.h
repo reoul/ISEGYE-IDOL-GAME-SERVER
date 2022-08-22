@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <memory>
 #include <vector>
+#include <queue>
 
 #include "SettingData.h"
 
@@ -14,7 +15,7 @@ public:
 	BattleManager(const BattleManager&) = delete;
 	~BattleManager() = default;
 
-	std::array<int32_t, MAX_ROOM_PLAYER> GetBattleOpponent();
+	std::vector<int32_t> GetBattleOpponent();
 	
 private:
 	struct BattleInfo
@@ -29,6 +30,5 @@ private:
 		{
 		}
 	};
-	BattleInfo	mBattleInfo[MAX_ROOM_PLAYER][MAX_ROOM_PLAYER - 1];
-	bool		mReady[MAX_ROOM_PLAYER];
+	//std::queue<BattleInfo>
 };

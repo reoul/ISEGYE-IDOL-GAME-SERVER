@@ -1,6 +1,5 @@
 ﻿#include "BattleManager.h"
 #include <vector>
-#include <array>
 
 BattleManager::BattleManager(const std::vector<Client*> clients)
 	: mBattleInfo{}
@@ -20,9 +19,14 @@ BattleManager::BattleManager(const std::vector<Client*> clients)
 	}
 }
 
-std::array<int32_t, MAX_ROOM_PLAYER> BattleManager::GetBattleOpponent()
+std::vector<int32_t> BattleManager::GetBattleOpponent()
 {
-	std::array<int32_t, MAX_ROOM_PLAYER> aa{};
-	aa[1] = 10;
-	return aa;
+	std::vector<int32_t> list;
+	size_t cnt = 0;
+	for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
+	{
+		if(m)
+	}
+	for(size_t i = 0; i < )
+	return list;
 }
