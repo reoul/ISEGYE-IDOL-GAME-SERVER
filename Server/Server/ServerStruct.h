@@ -29,3 +29,13 @@ struct Exover
 	SOCKET			c_socket;
 };
 
+struct SlotInfo
+{
+	int index;
+	Item item;
+	SlotInfo(int index, Item item)
+		: index(index)
+		, item(item)
+	{
+	}
+};

@@ -2,7 +2,7 @@
 
 #include <memory>
 
-struct Client;
+class Client;
 
 class ServerQueueNode
 {

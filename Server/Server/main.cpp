@@ -51,38 +51,11 @@ int main()
 	string str;
 	while (true)
 	{
-		cin >> str;
-		if (str == "exit")
+		g_roomManager.TrySendRandomItemQueue();
+
+		if (!g_bIsRunningServer)
 		{
-			g_bIsRunningServer = false;
-			for (const Client& client : g_clients)
-			{
-				SendDisconnect(client.GetNetworkID());
-			}
 			break;
-		}
-		if (str == "list")
-		{
-			int cnt = 0;
-			for (const Client& client : g_clients)
-			{
-				if (client.GetStatus() == ST_ACTIVE)
-				{
-					wcout << setw(11) << client.GetName();
-					if (++cnt % 7 == 0)
-					{
-						wcout << endl;
-					}
-				}
-			}
-			wcout << endl << L"접속 인원 : " << cnt << endl;
-		}
-		if (str == "disconnect")
-		{
-			for (const Client& client : g_clients)
-			{
-				SendDisconnect(client.GetNetworkID());
-			}
 		}
 	}
 
@@ -175,6 +148,8 @@ void PacketConstruct(int userID, int ioByteLength)
 
 	cout << endl;*/
 
+	cout << ioByteLength << "들어옴 " << endl;
+
 	while (restByte > 0)	//처리해야할 데이터가 남아있으면 처리해야한다.
 	{
 		// 이전에 처리해야할 패킷이 없다면
@@ -235,14 +210,17 @@ void Disconnect(int userID)
 
 	closesocket(g_clients[userID].GetSocket());
 	g_clients[userID].GetSocket() = INVALID_SOCKET;
-	g_clients[userID].GetRoomPtr()->RemoveClient(g_clients[userID]);
-	g_clients[userID].SetRoom(nullptr);
+	if (g_clients[userID].GetRoomPtr() != nullptr)
+	{
+		g_clients[userID].GetRoomPtr()->RemoveClient(g_clients[userID]);
+		g_clients[userID].SetRoom(nullptr);
+	}
 	wchar_t name[MAX_USER_NAME_LENGTH];
 	wcscpy(name, g_clients[userID].GetName());
 	g_clients[userID].GetName()[0] = '\0';
 	g_clients[userID].SetStatus(ST_FREE);	//다 처리했으면 FREE
 	g_clients[userID].cLock.unlock();
-	wcout << L"[" << name << L"] 유저가 접속 해제하였습니다" << endl;
+	wcout << L"[" << userID << L"] 유저가 접속 해제하였습니다" << endl;
 }
 
 void WorkerThread()

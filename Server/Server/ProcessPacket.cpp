@@ -12,12 +12,12 @@ void ProcessPacket(int userID, char* buf)
 	{
 	case PacketType::cs_startMatching:
 	{
-		cs_startMatchingPacket* packet = reinterpret_cast<cs_startMatchingPacket*>(buf);
-		wcscpy(g_clients[packet->networkID].GetName(), packet->name);
-		g_clients[packet->networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
+		cs_startMatchingPacket* pPacket = reinterpret_cast<cs_startMatchingPacket*>(buf);
+		wcscpy(g_clients[pPacket->networkID].GetName(), pPacket->name);
+		g_clients[pPacket->networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
 
 		g_serverQueue.Lock();
-		g_serverQueue.AddClient(&g_clients[packet->networkID]);
+		g_serverQueue.AddClient(&g_clients[pPacket->networkID]);
 		Room* room = g_serverQueue.TryCreateRoomOrNullPtr();
 		g_serverQueue.UnLock();
 
@@ -36,30 +36,34 @@ void ProcessPacket(int userID, char* buf)
 	break;
 	case PacketType::cs_sc_addNewItem:
 	{
-		auto packet = reinterpret_cast<cs_AddNewItemPacket*>(buf);
-		wcout << packet->networkID << L" 번 유저가 새로운 아이템 " << packet->itemCode << L" 을 추가하였습니다" << endl;
-		g_clients[packet->networkID].GetRoomPtr()->SendAllClient(packet);
+		cs_AddNewItemPacket* pPacket = reinterpret_cast<cs_AddNewItemPacket*>(buf);
+		wcout << pPacket->networkID << L" 번 유저가 새로운 아이템 " << pPacket->itemCode << L" 을 추가하였습니다" << endl;
+		g_clients[pPacket->networkID].AddItem(pPacket->itemCode);
+		g_clients[pPacket->networkID].GetRoomPtr()->SendAllClient(pPacket);
 	}
 	break;
 	case PacketType::cs_sc_changeCharacter:
 	{
-		auto packet = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
-		cout << packet->networkID << " 번 유저가 캐릭터를 " << static_cast<int>(packet->characterType) << " 으로 변경하였습니다" << endl;
-		g_clients[packet->networkID].GetRoomPtr()->SendAnotherClient(g_clients[userID], packet);
+		cs_sc_changeCharacterPacket* pPacket = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
+		wcout << pPacket->networkID << L" 번 유저가 캐릭터를 " << static_cast<int>(pPacket->characterType) << L" 으로 변경하였습니다" << endl;
+		g_clients[pPacket->networkID].GetRoomPtr()->SendAnotherClient(g_clients[userID], pPacket);
 	}
 	break;
 	case PacketType::cs_sc_changeItemSlot:
 	{
-		auto* packet = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
-		cout << packet->networkID << " 번 유저가 슬롯 " << packet->slot1 << " <-> " << packet->slot2 << " 변경하였습니다" << endl;
-		g_clients[packet->networkID].GetRoomPtr()->SendAllClient(packet);
+		cs_sc_changeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
+		wcout << pPacket->networkID << L" 번 유저가 슬롯 " << pPacket->slot1 << L" <-> " << pPacket->slot2 << L" 변경하였습니다" << endl;
+		g_clients[pPacket->networkID].SwapItem(pPacket->slot1, pPacket->slot2);
+		g_clients[pPacket->networkID].GetRoomPtr()->SendAllClient(pPacket);
 	}
 	break;
-	case PacketType::sc_battleItemQueue:
+	case PacketType::cs_battleReady:
 	{
-		sc_battleItemQueuePacket* packet = reinterpret_cast<sc_battleItemQueuePacket*>(buf);
-		//const Client& client = g_clients[packet->networkID];
-		//client.GetRoomPtr()->SendAnotherClient(client, packet);
+		cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
+		g_clients[pPacket->networkID].GetRoomPtr()->BattleReady();
+		//g_clients[pPacket->networkID].GetRoomPtr()->mBattleReadyCount++;
+		//g_roomManager.mRooms[0].mBattleReadyCount++;
+		cout << "출력" << endl;
 	}
 	break;
 	default:

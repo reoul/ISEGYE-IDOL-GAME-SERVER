@@ -7,13 +7,28 @@ RoomManager::RoomManager()
 
 Room& RoomManager::GetUnUsedRoom()
 {
+	lock_guard<mutex> lg(cLock);
+	Room* pRet = &mRooms[MAX_ROOM_COUNT - 1];
 	for (Room& room : mRooms)
 	{
-		if(!room.IsRun())
+		if (!room.IsRun())
 		{
-			return room;
+			pRet = &room;
+			room.SetIsRun(true);
+			break;
 		}
 	}
+	
+	return *pRet;
+}
 
-	return mRooms[MAX_ROOM_COUNT - 1];
+void RoomManager::TrySendRandomItemQueue()
+{
+	for (Room& room : mRooms)
+	{
+		if (room.IsRun())
+		{
+			room.TrySendRandomItemQueue();
+		}
+	}
 }

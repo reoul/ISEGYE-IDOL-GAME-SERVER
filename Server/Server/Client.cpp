@@ -66,13 +66,41 @@ vector<Item> Client::GetUnUsingItems() const
 vector<SlotInfo> Client::GetValidUnUsingItems() const
 {
 	vector<SlotInfo> items;
-	for (size_t i = 0; i < MAX_UN_USING_ITEM; ++i)
+	for (uint8_t i = 0; i < MAX_UN_USING_ITEM; ++i)
 	{
-		uint8_t type = mUnUsingItems[i].GetType();
+		const uint8_t type = mUnUsingItems[i].GetType();
 		if (type < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
 		{
 			items.emplace_back(SlotInfo(i, mUnUsingItems[i]));
 		}
 	}
 	return items;
+}
+
+void Client::SwapItem(const uint8_t index1, const uint8_t index2)
+{
+	Item& item1 = index1 < MAX_USING_ITEM ? mUsingItems[index1] : mUnUsingItems[index1 - MAX_USING_ITEM];
+	Item& item2 = index2 < MAX_USING_ITEM ? mUsingItems[index2] : mUnUsingItems[index2 - MAX_USING_ITEM];
+
+	const uint8_t type2 = item2.GetType();
+	item2.SetType(item1.GetType());
+	item1.SetType(type2);
+}
+
+void Client::AddItem(uint8_t type)
+{
+	for (Item& item : mUnUsingItems)
+	{
+		if (item.GetType() == EMPTY_ITEM)
+		{
+			item.SetType(type);
+			break;
+		}
+	}
+}
+
+// UsingItems에 아무것도 장착되어 있지 않으면 UnUsingItems에서 가져다 장착한다
+void Client::TrySetDefaultUsingItem()
+{
+	vector<SlotInfo> validUnUsingItems = GetValidUnUsingItems();
 }
