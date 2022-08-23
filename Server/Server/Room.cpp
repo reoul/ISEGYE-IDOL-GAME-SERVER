@@ -172,7 +172,7 @@ vector<int32_t> Room::GetRandomItemQueue() const
 		{
 			size_t index2 = index + j * (BATTLE_ITEM_QUEUE_LOOP_COUNT * 2);
 			LogWrite("[아이템 순서] %d:%d == %d:%d  %d:%d  %d:%d  %d:%d  %d:%d  %d:%d ",
-				itemQueue[index2], j, itemQueue[index2 + 1], itemQueue[index2 + 2], itemQueue[index2 + 3], itemQueue[index2 + 4],
+				itemQueue[index], j, itemQueue[index2 + 1], itemQueue[index2 + 2], itemQueue[index2 + 3], itemQueue[index2 + 4],
 				itemQueue[index2 + 5], itemQueue[index2 + 6], itemQueue[index2 + 7], itemQueue[index2 + 8],
 				itemQueue[index2 + 9], itemQueue[index2 + 10], itemQueue[index2 + 11], itemQueue[index2 + 12]);
 		}
