@@ -14,8 +14,8 @@ public:
 	Room& operator=(const Room&) = delete;
 	void AddClient(Client& client);
 	void RemoveClient(const Client& client);
-	void SendAllClient(void* pPacket) const;
-	void SendAnotherClient(const Client& client, void* pPacket) const;
+	void SendPacketToAllClients(void* pPacket) const;
+	void SendPacketToAnotherClients(const Client& client, void* pPacket) const;
 	vector<int32_t> GetRandomItemQueue() const;
 	void TrySendRandomItemQueue();
 	const vector<Client*>& GetClients() const;
@@ -23,6 +23,8 @@ public:
 	bool IsRun() const;
 	void SetIsRun(bool isRun);
 	void BattleReady();
+	void Init();
+	size_t GetSize() const;
 private:
 	void SendRandomItemQueue() const;
 	vector<Client*> mClients;
@@ -51,4 +53,9 @@ inline bool Room::IsRun() const
 inline void Room::SetIsRun(bool isRun)
 {
 	mIsRun = isRun;
+}
+
+inline size_t Room::GetSize() const
+{
+	return mSize;
 }

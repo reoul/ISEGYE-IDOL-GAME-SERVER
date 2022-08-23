@@ -3,6 +3,7 @@
 #include <WinSock2.h>
 #include <vector>
 
+#include "Room.h"
 #include "ServerStruct.h"
 
 using namespace std;
@@ -39,6 +40,8 @@ public:
 	void					AddItem(uint8_t type);
 	void					TrySetDefaultUsingItem();
 	void					AddDefaultItem();
+	void					SendPacketInAllRoomClients(void* pPacket) const;
+	void					SendPacketInAnotherRoomClients(void* pPacket) const;
 private:
 	SOCKET					mSocket;
 	int32_t					mNetworkID;						// 클라이언트 아이디
@@ -138,4 +141,14 @@ inline wchar_t* Client::GetName()
 inline const wchar_t* Client::GetName() const
 {
 	return mName;
+}
+
+inline void Client::SendPacketInAllRoomClients(void* pPacket) const
+{
+	mRoomPtr->SendPacketToAllClients(pPacket);
+}
+
+inline void Client::SendPacketInAnotherRoomClients(void* pPacket) const
+{
+	mRoomPtr->SendPacketToAnotherClients(*this, pPacket);
 }

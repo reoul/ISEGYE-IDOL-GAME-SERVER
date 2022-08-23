@@ -113,7 +113,7 @@ void Client::TrySetDefaultUsingItem()
 			const uint8_t slot2 = validUnUsingItems[0].index;
 			SwapItem(slot1, slot2);
 			//cs_sc_changeItemSlotPacket packet(mNetworkID, slot1, slot2);
-			//mRoomPtr->SendAllClient(&packet);
+			//mRoomPtr->SendPacketToAllClients(&packet);
 
 			validUnUsingItems.erase(validUnUsingItems.begin());
 			if (validUnUsingItems.empty())
