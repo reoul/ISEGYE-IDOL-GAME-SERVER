@@ -3,6 +3,10 @@
 RoomManager::RoomManager()
 	: mRooms{}
 {
+	for (size_t i = 0; i < MAX_ROOM_COUNT; ++i)
+	{
+		mRooms[i].SetNumber(i);
+	}
 }
 
 Room& RoomManager::GetUnUsedRoom()
@@ -20,11 +24,6 @@ Room& RoomManager::GetUnUsedRoom()
 	}
 	
 	return *pRet;
-}
-
-void RoomManager::ReturnRoom(Room& room)
-{
-	room.Init();
 }
 
 void RoomManager::TrySendRandomItemQueue()

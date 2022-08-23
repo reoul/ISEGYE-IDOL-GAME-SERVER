@@ -11,6 +11,7 @@ void SendPacket(int userID, void* pPacket);
 
 Room::Room()
 	: mSize(0)
+	, mNumber(0)
 	, mIsRun(false)
 	, mCapacity(MAX_ROOM_PLAYER)
 	, mBattleReadyCount(0)
@@ -196,6 +197,7 @@ void Room::Init()
 	mSize = 0;
 	mIsRun = false;
 	mBattleReadyCount = 0;
+	Log(L"[서버] %d번 Room 초기화", mNumber);
 }
 
 void Room::SendRandomItemQueue() const

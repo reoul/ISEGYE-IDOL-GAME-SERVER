@@ -52,6 +52,7 @@ int main()
 	string str;
 	while (true)
 	{
+		g_roomManager.CheckActiveRoom();
 		g_roomManager.TrySendRandomItemQueue();
 
 		if (!g_bIsRunningServer)

@@ -62,7 +62,7 @@ void ProcessPacket(int userID, char* buf)
 		g_clients[pPacket->networkID].TrySetDefaultUsingItem();
 		g_clients[pPacket->networkID].GetRoomPtr()->BattleReady();
 		Log(L"[받음] %s(%d) 유저가 배틀 준비 완료 패킷을 보냈음",
-			pPacket->networkID, g_clients[pPacket->networkID].GetName());
+			g_clients[pPacket->networkID].GetName(), pPacket->networkID);
 	}
 	break;
 	default:

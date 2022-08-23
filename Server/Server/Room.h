@@ -25,10 +25,13 @@ public:
 	void BattleReady();
 	void Init();
 	size_t GetSize() const;
+	size_t GetNumber() const;
+	void SetNumber(size_t number);
 private:
 	void SendRandomItemQueue() const;
 	vector<Client*> mClients;
 	size_t mSize;
+	size_t mNumber;
 	bool mIsRun;
 	const size_t mCapacity;
 	int mBattleReadyCount;
@@ -58,4 +61,14 @@ inline void Room::SetIsRun(bool isRun)
 inline size_t Room::GetSize() const
 {
 	return mSize;
+}
+
+inline size_t Room::GetNumber() const
+{
+	return mNumber;
+}
+
+inline void Room::SetNumber(size_t number)
+{
+	mNumber = number;
 }

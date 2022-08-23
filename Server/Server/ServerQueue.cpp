@@ -80,7 +80,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 			client.AddDefaultItem();
 			node = node->Next;
 		}
-		Log(L"[서버] %d번 Room 생성", g_roomIndex++);
+		Log(L"[서버] %d번 Room 생성", room.GetNumber());
 		mClientQueue = node;
 		if (node != nullptr)
 		{
