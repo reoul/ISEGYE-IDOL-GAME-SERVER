@@ -11,6 +11,25 @@
 static mutex writeFileMutex;
 const int _maxLogBufferLength = 512;
 
+
+void _writeLogFile(const wchar_t* log)
+{
+	wofstream fout;
+	//lock_guard<mutex> lg(writeFileMutex);
+	fout.open("ServerLog.txt", std::ios_base::out | std::ios_base::app);
+	fout << log << endl;
+	fout.close();
+}
+
+void _writeLogFile(const char* log)
+{
+	ofstream fout;
+	//lock_guard<mutex> lg(writeFileMutex);
+	fout.open("ServerLog.txt", std::ios_base::out | std::ios_base::app);
+	fout << log << endl;
+	fout.close();
+}
+
 template<typename ... Arguments>
 void swprintfLog(char* buffer, const char* const format, Arguments... args)
 {
@@ -44,13 +63,7 @@ void LogWrite(const wchar_t* format, Arguments... args)
 	swprintfLog(str, format, args...);
 	str[_maxLogBufferLength - 1] = L'\0';
 
-	wofstream fout;
-	{
-		lock_guard<mutex> lg(writeFileMutex);
-		fout.open("ServerLog.txt", std::ios_base::out | std::ios_base::app);
-		fout << str << endl;
-		fout.close();
-	}
+	_writeLogFile(str);
 }
 
 template<typename ... Arguments>
@@ -60,13 +73,7 @@ void LogWrite(const char* format, Arguments... args)
 	swprintfLog(str, format, args...);
 	str[_maxLogBufferLength - 1] = '\0';
 
-	ofstream fout;
-	{
-		lock_guard<mutex> lg(writeFileMutex);
-		fout.open("ServerLog.txt", std::ios_base::out | std::ios_base::app);
-		fout << str << endl;
-		fout.close();
-	}
+	_writeLogFile(str);
 }
 
 inline bool _assertion_log_write(const wchar_t* message, const wchar_t* str2, unsigned int line)
@@ -102,13 +109,7 @@ void Log(const wchar_t* format, Arguments... args)
 	swprintfLog(str, format, args...);
 	str[_maxLogBufferLength - 1] = L'\0';
 
-	wofstream fout;
-	{
-		lock_guard<mutex> lg(writeFileMutex);
-		fout.open("ServerLog.txt", std::ios_base::out | std::ios_base::app);
-		fout << str << endl;
-		fout.close();
-	}
+	_writeLogFile(str);
 
 	wcout << str << endl;
 }
@@ -120,16 +121,7 @@ void Log(const char* format, Arguments... args)
 	swprintfLog(str, format, args...);
 	str[_maxLogBufferLength - 1] = '\0';
 
-	ofstream fout;
-	{
-		lock_guard<mutex> lg(writeFileMutex);
-		fout.open("ServerLog.txt", std::ios_base::out | std::ios_base::app);
-		fout << str << endl;
-		fout.close();
-	}
+	_writeLogFile(str);
 
 	cout << str << endl;
 }
-
-
-
