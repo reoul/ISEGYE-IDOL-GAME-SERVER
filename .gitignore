@@ -259,3 +259,4 @@ FakesAssemblies/
 
 # Visual Studio
 .vs/
+Server/Server/ServerLog.txt
