@@ -108,7 +108,6 @@ vector<int32_t> Room::GetRandomItemQueue() const
 
 				while (!items.empty())
 				{
-					// todo : 관련 로직 바꾸기
 					Random<int> gen(0, loopSum - 1);
 					int rand = gen();
 
@@ -153,15 +152,16 @@ vector<int32_t> Room::GetRandomItemQueue() const
 		items.clear();
 	}
 
-	for (size_t i = 0; i < MAX_ROOM_PLAYER - mSize; ++i)
-	{
-		itemQueue.emplace_back(-1);
-		for (size_t j = 0; j < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
-		{
-			itemQueue.emplace_back(0);
-			itemQueue.emplace_back(0);
-		}
-	}
+	// 순서 디버그용
+	//for (size_t i = 0; i < MAX_ROOM_PLAYER - mSize; ++i)
+	//{
+	//	itemQueue.emplace_back(-1);
+	//	for (size_t j = 0; j < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
+	//	{
+	//		itemQueue.emplace_back(0);
+	//		itemQueue.emplace_back(0);
+	//	}
+	//}
 
 	log_assert(itemQueue.size() == BATTLE_ITEM_QUEUE_LENGTH);
 
@@ -183,11 +183,6 @@ vector<int32_t> Room::GetRandomItemQueue() const
 
 void Room::TrySendRandomItemQueue()
 {
-	if (mSize == 0)
-	{
-		return;
-	}
-
 	if (mBattleReadyCount >= mSize)
 	{
 		{

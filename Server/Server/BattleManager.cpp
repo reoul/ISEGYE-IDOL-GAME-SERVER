@@ -20,6 +20,7 @@ BattleManager::BattleManager(const std::vector<Client*> clients)
 std::vector<int32_t> BattleManager::GetBattleOpponent()
 {
 	std::vector<int32_t> list;
+	// todo : 배틀 상대 지정 함수 구현
 	/*size_t cnt = 0;
 	for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 	{
