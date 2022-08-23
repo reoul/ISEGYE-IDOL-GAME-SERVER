@@ -46,7 +46,7 @@ void Room::RemoveClient(const Client& client)
 	}
 }
 
-void Room::SendAllClient(void* pPacket) const
+void Room::SendPacketToAllClients(void* pPacket) const
 {
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
@@ -54,7 +54,7 @@ void Room::SendAllClient(void* pPacket) const
 	}
 }
 
-void Room::SendAnotherClient(const Client& client, void* pPacket) const
+void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
 {
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
@@ -81,7 +81,7 @@ vector<int32_t> Room::GetRandomItemQueue() const
 		items = (*it)->GetValidUsingItems();
 
 		const size_t length = items.size();
-		assert(length <= MAX_USING_ITEM);
+		log_assert(length <= MAX_USING_ITEM);
 		
 		int sum = 0;
 		for (const SlotInfo& slotInfo : items)
@@ -161,9 +161,8 @@ vector<int32_t> Room::GetRandomItemQueue() const
 			itemQueue.emplace_back(0);
 		}
 	}
-
-	cout << itemQueue.size() << endl;
-	assert(itemQueue.size() == BATTLE_ITEM_QUEUE_LENGTH);
+	
+	log_assert(itemQueue.size() == BATTLE_ITEM_QUEUE_LENGTH);
 
 	return itemQueue;
 }
@@ -191,9 +190,17 @@ void Room::BattleReady()
 	++mBattleReadyCount;
 }
 
+void Room::Init()
+{
+	mClients.clear();
+	mSize = 0;
+	mIsRun = false;
+	mBattleReadyCount = 0;
+}
+
 void Room::SendRandomItemQueue() const
 {
 	const vector<int32_t> itemQueue = GetRandomItemQueue();
 	sc_battleItemQueuePacket packet(itemQueue);
-	SendAllClient(&packet);
+	SendPacketToAllClients(&packet);
 }

@@ -5,6 +5,7 @@
 #include "ServerQueue.h"
 #include "GlobalVariable.h"
 #include "Client.h"
+#include "Log.h"
 
 void ProcessPacket(int userID, char* buf)
 {
@@ -24,37 +25,35 @@ void ProcessPacket(int userID, char* buf)
 		if (room != nullptr) // 방을 만들 수 있다면
 		{
 			sc_connectRoomPacket connectRoomPacket(*room);
-			room->SendAllClient(&connectRoomPacket);
+			room->SendPacketToAllClients(&connectRoomPacket);
 		}
-
-		/*cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(buf);
-		strcpy_s(g_clients[userID].name, packet->name);
-		g_clients[userID].name[MAX_ID_LEN] = NULL;
-		send_login_ok_packet(userID);
-		enter_game(userID);*/
 	}
 	break;
 	case PacketType::cs_sc_addNewItem:
 	{
-		cs_AddNewItemPacket* pPacket = reinterpret_cast<cs_AddNewItemPacket*>(buf);
-		wcout << pPacket->networkID << L" 번 유저가 새로운 아이템 " << pPacket->itemCode << L" 을 추가하였습니다" << endl;
-		g_clients[pPacket->networkID].AddItem(pPacket->itemCode);
-		g_clients[pPacket->networkID].GetRoomPtr()->SendAllClient(pPacket);
+		cs_sc_AddNewItemPacket* pPacket = reinterpret_cast<cs_sc_AddNewItemPacket*>(buf);
+		Client& client = g_clients[pPacket->networkID];
+		client.AddItem(pPacket->itemCode);
+		Log(L"[받음] %s(%d) 유저가 새로운 아이템 %d 을 추가하였습니다",
+			g_clients[pPacket->networkID].GetName(), pPacket->networkID, pPacket->itemCode);
+		client.SendPacketInAnotherRoomClients(pPacket);
 	}
 	break;
 	case PacketType::cs_sc_changeCharacter:
 	{
 		cs_sc_changeCharacterPacket* pPacket = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
-		wcout << pPacket->networkID << L" 번 유저가 캐릭터를 " << static_cast<int>(pPacket->characterType) << L" 으로 변경하였습니다" << endl;
-		g_clients[pPacket->networkID].GetRoomPtr()->SendAnotherClient(g_clients[userID], pPacket);
+		Log(L"[받음] %s(%d) 유저가 캐릭터를 %d 으로 변경하였습니다",
+			g_clients[pPacket->networkID].GetName(), pPacket->networkID, static_cast<int>(pPacket->characterType));
+		g_clients[pPacket->networkID].SendPacketInAnotherRoomClients(pPacket);
 	}
 	break;
 	case PacketType::cs_sc_changeItemSlot:
 	{
 		cs_sc_changeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
-		wcout << pPacket->networkID << L" 번 유저가 슬롯 " << pPacket->slot1 << L" <-> " << pPacket->slot2 << L" 변경하였습니다" << endl;
 		g_clients[pPacket->networkID].SwapItem(pPacket->slot1, pPacket->slot2);
-		g_clients[pPacket->networkID].GetRoomPtr()->SendAllClient(pPacket);
+		Log(L"[받음] %s(%d) 유저가 아이템 슬롯을 %d <-> %d 변경하였습니다",
+			g_clients[pPacket->networkID].GetName(), pPacket->networkID, pPacket->slot1, pPacket->slot2);
+		g_clients[pPacket->networkID].SendPacketInAllRoomClients(pPacket);
 	}
 	break;
 	case PacketType::cs_battleReady:
@@ -62,10 +61,12 @@ void ProcessPacket(int userID, char* buf)
 		cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
 		g_clients[pPacket->networkID].TrySetDefaultUsingItem();
 		g_clients[pPacket->networkID].GetRoomPtr()->BattleReady();
+		Log(L"[받음] %s(%d) 유저가 배틀 준비 완료 패킷을 보냈음",
+			pPacket->networkID, g_clients[pPacket->networkID].GetName());
 	}
 	break;
 	default:
-		cout << "unknown packet type error \n";
+		Log(L"[받음] 미정의 패킷이 들어옴");
 		DebugBreak();
 		//exit(-1);
 		break;

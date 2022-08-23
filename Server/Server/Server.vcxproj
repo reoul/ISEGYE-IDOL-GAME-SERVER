@@ -176,6 +176,7 @@
     <ClInclude Include="ExtensionMethod.h" />
     <ClInclude Include="GlobalVariable.h" />
     <ClInclude Include="Item.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="PacketStruct.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RoomManager.h" />

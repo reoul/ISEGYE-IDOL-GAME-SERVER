@@ -4,6 +4,7 @@
 #include "Client.h"
 #include "SettingData.h"
 #include "GlobalVariable.h"
+#include "Log.h"
 
 ServerQueue::ServerQueue()
 	: mClientQueue(nullptr)
@@ -30,7 +31,7 @@ void ServerQueue::AddClient(Client* client)
 	}
 
 	++mSize;
-	wcout << L"[" << client->GetName() << L"] 대기열 등록 완료 " << mSize << L"명" << endl;
+	Log(L"[서버] %s(%d) 유저 대기열 등록 완료 (%d명 대기중)", client->GetName(), client->GetNetworkID(), mSize);
 }
 
 void ServerQueue::RemoveClient(Client* client)
@@ -51,13 +52,13 @@ void ServerQueue::RemoveClient(Client* client)
 			else
 			{
 				node->Previous.lock()->Next = node->Next;
-				if(node->Next != nullptr)
+				if (node->Next != nullptr)
 				{
 					node->Next->Previous = node->Previous.lock();
 				}
 			}
-			wcout << L"[" << client->GetName() << L"] 대기열 삭제 완료 " << mSize - 1 << L"명" << endl;
 			--mSize;
+			Log(L"[서버] %s(%d) 유저 대기열 삭제 완료 (%d명 대기중)", client->GetName(), client->GetNetworkID(), mSize);
 			break;
 		}
 		node = node->Next;
@@ -79,7 +80,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 			client.AddDefaultItem();
 			node = node->Next;
 		}
-		wcout << g_roomIndex << L"번 Room이 생성됨" << endl;
+		Log(L"[서버] %d번 Room 생성", g_roomIndex++);
 		mClientQueue = node;
 		if (node != nullptr)
 		{

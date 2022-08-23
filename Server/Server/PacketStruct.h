@@ -5,6 +5,7 @@
 #include "Client.h"
 #include "SettingData.h"
 #include "Room.h"
+#include "Log.h"
 
 using namespace std;
 
@@ -80,7 +81,7 @@ struct sc_connectRoomPacket
 	}
 };
 
-struct cs_AddNewItemPacket
+struct cs_sc_AddNewItemPacket
 {
 	const uint16_t size;
 	const PacketType type;
@@ -178,7 +179,7 @@ struct sc_battleItemQueuePacket
 		: size(sizeof(sc_battleItemQueuePacket))
 		, type(PacketType::sc_battleItemQueue)
 	{
-		assert(vec.size() == BATTLE_ITEM_QUEUE_LENGTH);
+		log_assert(vec.size() == BATTLE_ITEM_QUEUE_LENGTH);
 		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
 			constexpr int itemQueueCount = MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2;
