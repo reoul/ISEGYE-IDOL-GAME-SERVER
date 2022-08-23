@@ -12,7 +12,7 @@ static mutex writeFileMutex;
 const int _maxLogBufferLength = 512;
 
 
-void _writeLogFile(const wchar_t* log)
+inline void _writeLogFile(const wchar_t* log)
 {
 	wofstream fout;
 	//lock_guard<mutex> lg(writeFileMutex);
@@ -21,7 +21,7 @@ void _writeLogFile(const wchar_t* log)
 	fout.close();
 }
 
-void _writeLogFile(const char* log)
+inline void _writeLogFile(const char* log)
 {
 	ofstream fout;
 	//lock_guard<mutex> lg(writeFileMutex);
