@@ -274,8 +274,8 @@ void WorkerThread()
 			if (0 == io_byte)
 			{
 				Disconnect(user_id);
-				LogWrite(L"[보냄] %d byte 데이터 전송 완료", io_byte);
 			}
+			LogWrite(L"[보냄] %d byte 데이터 전송 완료", io_byte);
 			delete exover;
 			break;
 		case OperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
