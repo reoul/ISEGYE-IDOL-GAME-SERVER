@@ -72,10 +72,10 @@ vector<int32_t> Room::GetRandomItemQueue() const
 {
 	vector<SlotInfo> items;
 	items.reserve(MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT);
-	
+
 	vector<int32_t> itemQueue;
 	itemQueue.reserve(BATTLE_ITEM_QUEUE_LENGTH);
-	
+
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
 		itemQueue.emplace_back((*it)->GetNetworkID());
@@ -83,7 +83,7 @@ vector<int32_t> Room::GetRandomItemQueue() const
 
 		const size_t length = items.size();
 		log_assert(length <= MAX_USING_ITEM);
-		
+
 		int sum = 0;
 		for (const SlotInfo& slotInfo : items)
 		{
@@ -91,9 +91,9 @@ vector<int32_t> Room::GetRandomItemQueue() const
 		}
 
 		CopySelf(items, BATTLE_ITEM_QUEUE_LOOP_COUNT - 1);
-		
+
 		{
-			if(items.empty())
+			if (items.empty())
 			{
 				for (size_t i = 0; i < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++i)
 				{
@@ -149,7 +149,7 @@ vector<int32_t> Room::GetRandomItemQueue() const
 				}
 			}
 		}
-		
+
 		items.clear();
 	}
 
@@ -162,13 +162,13 @@ vector<int32_t> Room::GetRandomItemQueue() const
 			itemQueue.emplace_back(0);
 		}
 	}
-	
+
 	log_assert(itemQueue.size() == BATTLE_ITEM_QUEUE_LENGTH);
 
 	for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 	{
 		size_t index = i * 60 + i;
-		for(size_t j = 0; j < BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
+		for (size_t j = 0; j < BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
 		{
 			size_t index2 = index + j * (MAX_USING_ITEM * 2);
 			LogWrite("[아이템 순서] %d:%d == %d:%d  %d:%d  %d:%d  %d:%d  %d:%d  %d:%d ",
@@ -183,12 +183,12 @@ vector<int32_t> Room::GetRandomItemQueue() const
 
 void Room::TrySendRandomItemQueue()
 {
-	if(mSize == 0)
+	if (mSize == 0)
 	{
 		return;
 	}
 
-	if(mBattleReadyCount >= mSize)
+	if (mBattleReadyCount >= mSize)
 	{
 		{
 			lock_guard<mutex> lg(cLock);
@@ -202,6 +202,7 @@ void Room::BattleReady()
 {
 	lock_guard<mutex> lg(cLock);
 	++mBattleReadyCount;
+	LogWrite(L"%d번 Room 전투 준비 상태 증가 (현재:%d)", mNumber, mBattleReadyCount);
 }
 
 void Room::Init()
