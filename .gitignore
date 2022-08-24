@@ -260,3 +260,4 @@ FakesAssemblies/
 # Visual Studio
 .vs/
 Server/Server/logs/
+Server/Server/ServerLogs/

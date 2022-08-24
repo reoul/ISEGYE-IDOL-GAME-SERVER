@@ -183,6 +183,11 @@ vector<int32_t> Room::GetRandomItemQueue() const
 
 void Room::TrySendRandomItemQueue()
 {
+	if(mSize == 0)
+	{
+		return;
+	}
+
 	if (mBattleReadyCount >= mSize)
 	{
 		{
