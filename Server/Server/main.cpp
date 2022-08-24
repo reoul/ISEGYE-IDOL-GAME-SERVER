@@ -36,12 +36,12 @@ int main()
 	ServerInit();
 
 	SOCKET clientSocket;
-	clientSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	clientSocket = ::WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	Exover accept_over;
 	accept_over.c_socket = clientSocket;
 	ZeroMemory(&accept_over, sizeof(accept_over.over));
 	accept_over.type = OperationType::Accept;
-	AcceptEx(g_hListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
+	::AcceptEx(g_hListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
 
 	Log("Start Server");
 	vector<thread> worker_threads;
@@ -76,8 +76,8 @@ void ServerInit()
 		g_clients[i].SetNetworkID(i);
 	}
 
-	g_hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
-	g_hListenSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	g_hIocp = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
+	g_hListenSocket = ::WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if (g_hListenSocket == INVALID_SOCKET)
 	{
 		Log("listenSocket create fail");
@@ -93,12 +93,12 @@ void ServerInit()
 
 	if (::bind(g_hListenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
 		Log("bind error!");
-		closesocket(g_hListenSocket);
+		::closesocket(g_hListenSocket);
 	}
 
-	if (listen(g_hListenSocket, SOMAXCONN) == SOCKET_ERROR) {
+	if (::listen(g_hListenSocket, SOMAXCONN) == SOCKET_ERROR) {
 		Log("listen error!");
-		closesocket(g_hListenSocket);
+		::closesocket(g_hListenSocket);
 	}
 }
 
@@ -117,7 +117,7 @@ void SendPacket(int userID, void* pPacket)
 	exover->wsabuf.len = length;
 	memcpy(exover->io_buf, buf, length);
 
-	WSASend(client.GetSocket(), &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
+	::WSASend(client.GetSocket(), &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
 }
 
 /**
@@ -211,7 +211,7 @@ void Disconnect(int userID)
 	g_clients[userID].cLock.lock();
 	g_clients[userID].SetStatus(ST_ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
 
-	closesocket(g_clients[userID].GetSocket());
+	::closesocket(g_clients[userID].GetSocket());
 	g_clients[userID].SetSocket(INVALID_SOCKET);
 	if (g_clients[userID].GetRoomPtr() != nullptr)
 	{
@@ -234,8 +234,8 @@ void WorkerThread()
 		DWORD io_byte;
 		ULONG_PTR key;
 		WSAOVERLAPPED* over;
-		bool sucess = GetQueuedCompletionStatus(g_hIocp, &io_byte, &key, &over, 1000);
-		DWORD errorCode = GetLastError();
+		bool sucess = ::GetQueuedCompletionStatus(g_hIocp, &io_byte, &key, &over, 1000);
+		DWORD errorCode = ::GetLastError();
 
 		// 서버가 끝낸 상태
 		if (!g_bIsRunningServer)
@@ -268,7 +268,7 @@ void WorkerThread()
 				PacketConstruct(user_id, io_byte);
 				ZeroMemory(&client.GetRecvOver().over, sizeof(client.GetRecvOver().over));
 				DWORD flags = 0;
-				WSARecv(client.GetSocket(), &client.GetRecvOver().wsabuf, 1, NULL, &flags, &client.GetRecvOver().over, NULL);
+				::WSARecv(client.GetSocket(), &client.GetRecvOver().wsabuf, 1, NULL, &flags, &client.GetRecvOver().over, NULL);
 			}
 			break;
 		}
@@ -298,14 +298,14 @@ void WorkerThread()
 			SOCKET clientSocket = exover->c_socket;
 
 			if (userID == -1)
-				closesocket(clientSocket); // send_login_fail_packet();
+				::closesocket(clientSocket); // send_login_fail_packet();
 			else
 			{
-				const HANDLE result = CreateIoCompletionPort(reinterpret_cast<HANDLE>(clientSocket), g_hIocp, userID, 0);
+				const HANDLE result = ::CreateIoCompletionPort(reinterpret_cast<HANDLE>(clientSocket), g_hIocp, userID, 0);
 				if (result == NULL)
 				{
 					LogWarning("{0} Socket registration failed IOCP", userID);
-					closesocket(clientSocket);
+					::closesocket(clientSocket);
 				}
 				else
 				{
@@ -322,14 +322,14 @@ void WorkerThread()
 					g_clients[userID].SetStatus(ST_ACTIVE);
 
 					DWORD flags = 0;
-					WSARecv(clientSocket, &g_clients[userID].GetRecvOver().wsabuf, 1, NULL, &flags, &g_clients[userID].GetRecvOver().over, NULL);
+					::WSARecv(clientSocket, &g_clients[userID].GetRecvOver().wsabuf, 1, NULL, &flags, &g_clients[userID].GetRecvOver().over, NULL);
 				}
 			}
 			//소켓 초기화 후 다시 accept
-			clientSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+			clientSocket = ::WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 			exover->c_socket = clientSocket; //새로 받는 소켓을 넣어준다. 안그러면 클라들이 같은 소켓을 공유한다.
 			ZeroMemory(&exover->over, sizeof(exover->over)); //accept_over를 exover라는 이름으로 받았으니 exover를 재사용
-			AcceptEx(g_hListenSocket, clientSocket, exover->io_buf, NULL,
+			::AcceptEx(g_hListenSocket, clientSocket, exover->io_buf, NULL,
 				sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &exover->over);
 			break;
 		}
