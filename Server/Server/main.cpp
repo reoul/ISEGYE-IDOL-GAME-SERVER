@@ -91,7 +91,10 @@ void ServerInit()
 
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_hListenSocket), g_hIocp, 9957, 0);
 
-	bind(g_hListenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
+	if (::bind(g_hListenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
+		Log("bind error!");
+		closesocket(g_hListenSocket);
+	}
 
 	if (listen(g_hListenSocket, SOMAXCONN) == SOCKET_ERROR) {
 		Log("listen error!");
@@ -221,7 +224,7 @@ void Disconnect(int userID)
 	g_clients[userID].GetName()[0] = '\0';
 	g_clients[userID].SetStatus(ST_FREE);	//다 처리했으면 FREE
 	g_clients[userID].cLock.unlock();
-	Log("{0} client disconnect server", userID);
+	Log("Client{0} disconnect server", userID);
 }
 
 void WorkerThread()
@@ -336,7 +339,7 @@ void WorkerThread()
 
 void NewClientEvent(int32_t userID)
 {
-	Log("Connect {0} Socket", userID);
+	Log("Connect Socket{0}", userID);
 	sc_connectServerPacket connectServerPacket(userID);
 	SendPacket(userID, &connectServerPacket);
 }

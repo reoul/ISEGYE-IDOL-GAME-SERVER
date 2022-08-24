@@ -31,7 +31,7 @@ void ServerQueue::AddClient(Client* client)
 	}
 
 	++mSize;
-	Log("{0} client queue registration complete ({1} remaining)", client->GetNetworkID(), mSize);
+	Log("Client{0} queue registration complete ({1} remaining)", client->GetNetworkID(), mSize);
 }
 
 void ServerQueue::RemoveClient(Client* client)
@@ -58,7 +58,7 @@ void ServerQueue::RemoveClient(Client* client)
 				}
 			}
 			--mSize;
-			Log("{0} client queue remove complete ({1} remaining)", client->GetNetworkID(), mSize);
+			Log("Client{0} queue remove complete ({1} remaining)", client->GetNetworkID(), mSize);
 			break;
 		}
 		node = node->Next;
