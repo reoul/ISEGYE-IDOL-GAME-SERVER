@@ -32,9 +32,7 @@ int main()
 	std::locale::global(std::locale("Korean"));
 	SocketUtil::StaticInit();
 	LogInit();
-
-	log_assert(false);
-
+	
 	ServerInit();
 
 	SOCKET clientSocket;
