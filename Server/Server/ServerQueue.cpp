@@ -31,7 +31,7 @@ void ServerQueue::AddClient(Client* client)
 	}
 
 	++mSize;
-	Log(L"[서버] %s(%d) 유저 대기열 등록 완료 (%d명 대기중)", client->GetName(), client->GetNetworkID(), mSize);
+	Log("{0} client queue registration complete ({1} remaining)", client->GetNetworkID(), mSize);
 }
 
 void ServerQueue::RemoveClient(Client* client)
@@ -58,7 +58,7 @@ void ServerQueue::RemoveClient(Client* client)
 				}
 			}
 			--mSize;
-			Log(L"[서버] %s(%d) 유저 대기열 삭제 완료 (%d명 대기중)", client->GetName(), client->GetNetworkID(), mSize);
+			Log("{0} client queue remove complete ({1} remaining)", client->GetNetworkID(), mSize);
 			break;
 		}
 		node = node->Next;
@@ -80,7 +80,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 			client.AddDefaultItem();
 			node = node->Next;
 		}
-		Log(L"[서버] %d번 Room 생성", room.GetNumber());
+		Log("{0} Room Create", room.GetNumber());
 		mClientQueue = node;
 		if (node != nullptr)
 		{

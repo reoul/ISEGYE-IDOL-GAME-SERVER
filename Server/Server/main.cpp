@@ -31,6 +31,9 @@ int main()
 {
 	std::locale::global(std::locale("Korean"));
 	SocketUtil::StaticInit();
+	LogInit();
+
+	log_assert(false);
 
 	ServerInit();
 
@@ -42,7 +45,7 @@ int main()
 	accept_over.type = OperationType::Accept;
 	AcceptEx(g_hListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
 
-	Log(L"[서버] Start Server");
+	Log("Start Server");
 	vector<thread> worker_threads;
 	for (int i = 0; i < 4; ++i)
 	{
@@ -79,7 +82,7 @@ void ServerInit()
 	g_hListenSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 	if (g_hListenSocket == INVALID_SOCKET)
 	{
-		Log(L"[서버] ListenSocket Create Fail");
+		Log("listenSocket create fail");
 	}
 
 	sockaddr_in serverAddr;
@@ -90,13 +93,10 @@ void ServerInit()
 
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(g_hListenSocket), g_hIocp, 9957, 0);
 
-	if (bind(g_hListenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
-		Log(L"[서버] bind error!");
-		closesocket(g_hListenSocket);
-	}
+	bind(g_hListenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr));
 
 	if (listen(g_hListenSocket, SOMAXCONN) == SOCKET_ERROR) {
-		Log(L"[서버] listen error!");
+		Log("listen error!");
 		closesocket(g_hListenSocket);
 	}
 }
@@ -150,7 +150,7 @@ void PacketConstruct(int userID, int ioByteLength)
 
 	cout << endl;*/
 
-	LogWrite(L"[받음] 패킷 %dByte 들어옴", ioByteLength);
+	LogWrite("packet {0}Byte recive", ioByteLength);
 
 	while (restByte > 0)	//처리해야할 데이터가 남아있으면 처리해야한다.
 	{
@@ -194,7 +194,7 @@ void SendDisconnect(int userID)
 	}
 	sc_disconnectPacket packet(userID);
 	SendPacket(userID, &packet);
-	Log(L"[보냄] %s(%d) 유저에게 접속 해제 요청 패킷 전송", g_clients[userID].GetName(), userID);
+	Log("Send request disconnect packet {0} client", userID);
 }
 
 void Disconnect(int userID)
@@ -223,7 +223,7 @@ void Disconnect(int userID)
 	g_clients[userID].GetName()[0] = '\0';
 	g_clients[userID].SetStatus(ST_FREE);	//다 처리했으면 FREE
 	g_clients[userID].cLock.unlock();
-	Log(L"[받음] %s(%d) 접속 해제", name, userID);
+	Log("{0} client disconnect server", userID);
 }
 
 void WorkerThread()
@@ -276,7 +276,7 @@ void WorkerThread()
 			{
 				Disconnect(user_id);
 			}
-			LogWrite(L"[보냄] %d byte 데이터 전송 완료", io_byte);
+			LogWrite("Send {0}Byte packet", io_byte);
 			delete exover;
 			break;
 		case OperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
@@ -303,12 +303,11 @@ void WorkerThread()
 				const HANDLE result = CreateIoCompletionPort(reinterpret_cast<HANDLE>(clientSocket), g_hIocp, userID, 0);
 				if (result == NULL)
 				{
-					Log(L"[받음] %d번 소켓 IOCP에 등록 실패", userID);
+					LogWarning("{0} Socket registration failed IOCP", userID);
 					closesocket(clientSocket);
 				}
 				else
 				{
-					//g_clients[user_id].networkID = user_id; 멀쓰에서 하는게 아니고 초기화 할때 한번 해줘야 함 처음에 한번.
 					g_clients[userID].SetPrevSize(0); //이전에 받아둔 조각이 없으니 0
 					g_clients[userID].SetSocket(clientSocket);
 
@@ -339,7 +338,7 @@ void WorkerThread()
 
 void NewClientEvent(int32_t userID)
 {
-	Log(L"[받음] %d번 소켓 접속", userID);
+	Log("Connect {0} Socket", userID);
 	sc_connectServerPacket connectServerPacket(userID);
 	SendPacket(userID, &connectServerPacket);
 }

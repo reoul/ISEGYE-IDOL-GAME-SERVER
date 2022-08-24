@@ -2,126 +2,76 @@
 #pragma warning(disable:4996)
 #include <fstream>
 #include <mutex>
+#include <spdlog/spdlog.h>
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include <spdlog/sinks/rotating_file_sink.h>
 
 #define log_assert(expression) (void)(																						\
-            (!!(expression)) || _assertion_log_write(_CRT_WIDE(#expression), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)) ||	\
+            (!!(expression)) || _assertion_log_write(#expression, __FILE__, (unsigned)(__LINE__)) ||	\
             (_wassert(_CRT_WIDE(#expression), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0)								\
         )
 
-static mutex writeFileMutex;
-const int _maxLogBufferLength = 512;
-
-
-inline void _writeLogFile(const wchar_t* log)
+inline void LogInit()
 {
-	wofstream fout;
-	//lock_guard<mutex> lg(writeFileMutex);
-	fout.open("ServerLog.txt", std::ios_base::out | std::ios_base::app);
-	fout << log << endl;
-	fout.close();
-}
-
-inline void _writeLogFile(const char* log)
-{
-	ofstream fout;
-	//lock_guard<mutex> lg(writeFileMutex);
-	fout.open("ServerLog.txt", std::ios_base::out | std::ios_base::app);
-	fout << log << endl;
-	fout.close();
+	auto consoleLogger = spdlog::stdout_color_mt("console");
+	auto fileLogger = spdlog::rotating_logger_mt("log", "ServerLogs/log.txt", 3 * 1024 * 1024, 100);
+	auto testLogger = spdlog::rotating_logger_mt("test", "ServerLogs/testLog.txt", 3 * 1024 * 1024, 100);
 }
 
 template<typename ... Arguments>
-void swprintfLog(char* buffer, const char* const format, Arguments... args)
+inline void LogWrite(const char* format, Arguments... args)
 {
-	SYSTEMTIME tmSystem;
-	::GetLocalTime(&tmSystem);
-
-	// Print the current time 
-	const int length = sprintf(buffer, "%04d-%02d-%02dT%02d:%02d:%02d  ",
-		tmSystem.wYear, tmSystem.wMonth, tmSystem.wDay, tmSystem.wHour, tmSystem.wMinute, tmSystem.wSecond);
-
-	sprintf(buffer + length, format, args...);
+	const auto logger = spdlog::get("log");
+	logger->info(format, args...);
+	logger->flush();
 }
 
 template<typename ... Arguments>
-void swprintfLog(wchar_t* buffer, const wchar_t* format, Arguments... args)
+inline void LogWriteTest(const char* format, Arguments... args)
 {
-	SYSTEMTIME tmSystem;
-	::GetLocalTime(&tmSystem);
-
-	// Print the current time 
-	const int length = swprintf(buffer, L"%04d-%02d-%02dT%02d:%02d:%02d  ",
-		tmSystem.wYear, tmSystem.wMonth, tmSystem.wDay, tmSystem.wHour, tmSystem.wMinute, tmSystem.wSecond);
-
-	swprintf(buffer + length, format, args...);
+	const auto logger = spdlog::get("test");
+	logger->info(format, args...);
+	logger->flush();
 }
 
 template<typename ... Arguments>
-void LogWrite(const wchar_t* format, Arguments... args)
+inline void LogWriteWarning(const char* format, Arguments... args)
 {
-	wchar_t str[_maxLogBufferLength];
-	swprintfLog(str, format, args...);
-	str[_maxLogBufferLength - 1] = L'\0';
-
-	_writeLogFile(str);
+	const auto logger = spdlog::get("log");
+	logger->error(format, args...);
+	logger->flush();
 }
 
 template<typename ... Arguments>
-void LogWrite(const char* format, Arguments... args)
+inline void LogWriteError(const char* format, Arguments... args)
 {
-	char str[_maxLogBufferLength];
-	swprintfLog(str, format, args...);
-	str[_maxLogBufferLength - 1] = '\0';
-
-	_writeLogFile(str);
+	const auto logger = spdlog::get("log");
+	logger->error(format, args...);
+	logger->flush();
 }
 
-inline bool _assertion_log_write(const wchar_t* message, const wchar_t* str2, unsigned int line)
+inline bool _assertion_log_write(const char* message, const char* file, unsigned int line)
 {
-	LogWrite(L"[에러] Assertion failed: %s, %s, line %d", message, str2, line);
+	LogWriteError("Assertion failed: {0}, {1}, line {2}", message, file, line);
 	return false;
-}
-
-template<typename ... Arguments>
-void LogPrintf(const wchar_t* format, Arguments... args)
-{
-	wchar_t str[_maxLogBufferLength];
-	swprintfLog(str, format, args...);
-	str[_maxLogBufferLength - 1] = L'\0';
-
-	wcout << str << endl;
 }
 
 template<typename ... Arguments>
 void LogPrintf(const char* format, Arguments... args)
 {
-	char str[_maxLogBufferLength];
-	swprintfLog(str, format, args...);
-	str[_maxLogBufferLength - 1] = L'\0';
-
-	cout << str << endl;
-}
-
-template<typename ... Arguments>
-void Log(const wchar_t* format, Arguments... args)
-{
-	wchar_t str[_maxLogBufferLength];
-	swprintfLog(str, format, args...);
-	str[_maxLogBufferLength - 1] = L'\0';
-
-	_writeLogFile(str);
-
-	wcout << str << endl;
+	spdlog::get("console")->info(format, args...);
 }
 
 template<typename ... Arguments>
 void Log(const char* format, Arguments... args)
 {
-	char str[_maxLogBufferLength];
-	swprintfLog(str, format, args...);
-	str[_maxLogBufferLength - 1] = '\0';
+	spdlog::get("console")->info(format, args...);
+	LogWrite(format, args...);
+}
 
-	_writeLogFile(str);
-
-	cout << str << endl;
+template<typename ... Arguments>
+void LogWarning(const char* format, Arguments... args)
+{
+	spdlog::get("console")->warn(format, args...);
+	LogWriteWarning(format, args...);
 }
