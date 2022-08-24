@@ -151,20 +151,18 @@ vector<int32_t> Room::GetRandomItemQueue() const
 
 		items.clear();
 	}
-
-	// 순서 디버그용
-	//for (size_t i = 0; i < MAX_ROOM_PLAYER - mSize; ++i)
-	//{
-	//	itemQueue.emplace_back(-1);
-	//	for (size_t j = 0; j < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
-	//	{
-	//		itemQueue.emplace_back(0);
-	//		itemQueue.emplace_back(0);
-	//	}
-	//}
+	
+	for (size_t i = 0; i < MAX_ROOM_PLAYER - mSize; ++i)
+	{
+		itemQueue.emplace_back(-1);
+		for (size_t j = 0; j < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
+		{
+			itemQueue.emplace_back(0);
+			itemQueue.emplace_back(0);
+		}
+	}
 
 	log_assert(itemQueue.size() == BATTLE_ITEM_QUEUE_LENGTH);
-
 	/*for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 	{
 		size_t index = i * 60 + i;
