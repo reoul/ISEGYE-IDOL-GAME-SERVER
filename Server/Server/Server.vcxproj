@@ -92,7 +92,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\Server-Library\Header;D:\Dev\C++\spdlog-1.10.0\spdlog-1.10.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\Server-Library\Header;D:\Dev\C++\spdlog-1.10.0\spdlog-1.10.0\include;D:\Dev\C++\PersonalCppLibrary\include</AdditionalIncludeDirectories>
       <MaxFilesInUnityFile>5</MaxFilesInUnityFile>
     </ClCompile>
     <Link>
@@ -109,7 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\Server-Library\Header;D:\Dev\C++\spdlog-1.10.0\spdlog-1.10.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\Server-Library\Header;D:\Dev\C++\spdlog-1.10.0\spdlog-1.10.0\include;D:\Dev\C++\PersonalCppLibrary\include</AdditionalIncludeDirectories>
       <MaxFilesInUnityFile>5</MaxFilesInUnityFile>
     </ClCompile>
     <Link>
@@ -126,7 +126,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\Server-Library\Header;D:\Dev\C++\spdlog-1.10.0\spdlog-1.10.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\Server-Library\Header;D:\Dev\C++\spdlog-1.10.0\spdlog-1.10.0\include;D:\Dev\C++\PersonalCppLibrary\include</AdditionalIncludeDirectories>
       <MaxFilesInUnityFile>5</MaxFilesInUnityFile>
     </ClCompile>
     <Link>
@@ -143,7 +143,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\Server-Library\Header;D:\Dev\C++\spdlog-1.10.0\spdlog-1.10.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\Server-Library\Header;D:\Dev\C++\spdlog-1.10.0\spdlog-1.10.0\include;D:\Dev\C++\PersonalCppLibrary\include</AdditionalIncludeDirectories>
       <MaxFilesInUnityFile>5</MaxFilesInUnityFile>
     </ClCompile>
     <Link>
@@ -189,7 +189,6 @@
     <ClInclude Include="..\..\Server-Library\Header\UDPSocket.h" />
     <ClInclude Include="BattleManager.h" />
     <ClInclude Include="Client.h" />
-    <ClInclude Include="ExtensionMethod.h" />
     <ClInclude Include="GlobalVariable.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="Log.h" />

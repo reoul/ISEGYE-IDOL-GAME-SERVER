@@ -146,9 +146,6 @@
     <ClInclude Include="Client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ExtensionMethod.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RoomManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
