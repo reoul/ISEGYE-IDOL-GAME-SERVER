@@ -21,8 +21,7 @@ enum class PacketType : uint8_t
 	cs_sc_changeItemSlot,
 	cs_sc_upgradeItem,
 	cs_sc_changeCharacter,
-	sc_battleItemQueue,
-	sc_battleOpponentQueue,
+	sc_battleInfo,
 	cs_battleReady,
 };
 
@@ -170,24 +169,32 @@ struct ItemQueueInfo
 	uint8_t itemQueue[MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2];
 };
 
-struct sc_battleItemQueuePacket
+struct sc_battleInfoPacket
 {
 	const uint16_t size;
 	const PacketType type;
+	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
 	ItemQueueInfo itemQueueInfo[MAX_ROOM_PLAYER];
-	sc_battleItemQueuePacket(const vector<int32_t>& vec)
-		: size(sizeof(sc_battleItemQueuePacket))
-		, type(PacketType::sc_battleItemQueue)
+	sc_battleInfoPacket(const vector<int32_t>& battleOpponents, const vector<int32_t>& itemQueues)
+		: size(sizeof(sc_battleInfoPacket))
+		, type(PacketType::sc_battleInfo)
 	{
-		log_assert(vec.size() == BATTLE_ITEM_QUEUE_LENGTH);
+		log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
+		copy(battleOpponents.begin(), battleOpponents.end(), battleOpponentQueue);
+		if(battleOpponents.size() < MAX_ROOM_PLAYER)
+		{
+			battleOpponentQueue[battleOpponents.size()] = INT32_MAX;
+		}
+
+		log_assert(itemQueues.size() == BATTLE_ITEM_QUEUE_LENGTH);
 		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
 			constexpr int itemQueueCount = MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2;
-			itemQueueInfo[i].networkID = vec[i * itemQueueCount + i];
+			itemQueueInfo[i].networkID = itemQueues[i * itemQueueCount + i];
 
 			for (size_t j = 0; j < itemQueueCount; ++j)
 			{
-				itemQueueInfo[i].itemQueue[j] = vec[i * itemQueueCount + i + (j + 1)];
+				itemQueueInfo[i].itemQueue[j] = itemQueues[i * itemQueueCount + i + (j + 1)];
 			}
 		}
 	}
@@ -201,7 +208,7 @@ struct sc_battleOpponentQueuePacket
 	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
 	sc_battleOpponentQueuePacket(const int32_t(&playerQueue)[MAX_ROOM_PLAYER])
 		: size(sizeof(sc_battleOpponentQueuePacket))
-		, type(PacketType::sc_battleItemQueue)
+		, type(PacketType::sc_battleInfo)
 	{
 		::copy_n(playerQueue, _countof(playerQueue), battleOpponentQueue);
 	}

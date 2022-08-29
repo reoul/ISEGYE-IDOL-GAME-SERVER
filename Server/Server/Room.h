@@ -1,8 +1,7 @@
 ﻿#pragma once
 #include "ServerShared.h"
+#include "BattleManager.h"
 #include "ServerStruct.h"
-
-class Client;
 
 class Room
 {
@@ -12,12 +11,12 @@ public:
 	~Room() = default;
 	Room(const Room&) = delete;
 	Room& operator=(const Room&) = delete;
-	void AddClient(Client& client);
+	void AddClients(vector<Client*>& clients);
 	void RemoveClient(const Client& client);
 	void SendPacketToAllClients(void* pPacket) const;
 	void SendPacketToAnotherClients(const Client& client, void* pPacket) const;
 	vector<int32_t> GetRandomItemQueue() const;
-	void TrySendRandomItemQueue();
+	void TrySendBattleInfo();
 	const vector<Client*>& GetClients() const;
 	vector<Client*>& GetClients();
 	bool IsRun() const;
@@ -28,13 +27,14 @@ public:
 	size_t GetNumber() const;
 	void SetNumber(size_t number);
 private:
-	void SendRandomItemQueue() const;
+	void SendRandomItemQueue();
 	vector<Client*> mClients;
 	size_t mSize;
 	size_t mNumber;
 	bool mIsRun;
-	const size_t mCapacity;
+	const_wrapper<size_t> mCapacity;
 	int mBattleReadyCount;
+	BattleManager mBattleManager;
 };
 
 inline const vector<Client*>& Room::GetClients() const

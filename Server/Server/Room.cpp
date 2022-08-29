@@ -1,9 +1,8 @@
 ﻿#include "Room.h"
 
 #include <iostream>
-
+#include "reoul/functional.h"
 #include "Client.h"
-#include "ExtensionMethod.h"
 #include "Random.h"
 #include "PacketStruct.h"
 
@@ -18,15 +17,21 @@ Room::Room()
 {
 }
 
-void Room::AddClient(Client& client)
+void Room::AddClients(vector<Client*>& clients)
 {
 	if (mSize == mCapacity)
 	{
 		return;
 	}
 
-	++mSize;
-	mClients.emplace_back(&client);
+	for (Client* client : clients)
+	{
+		++mSize;
+		mClients.emplace_back(client);
+		client->SetRoom(this);
+	}
+
+	mBattleManager.SetClients(clients);
 }
 
 void Room::RemoveClient(const Client& client)
@@ -43,7 +48,13 @@ void Room::RemoveClient(const Client& client)
 	if (it != mClients.cend())
 	{
 		mClients.erase(it);
+		mBattleManager.RemoveClient(client.GetNetworkID());
 		--mSize;
+	}
+
+	if(mSize == 0)
+	{
+		Init();
 	}
 }
 
@@ -151,7 +162,7 @@ vector<int32_t> Room::GetRandomItemQueue() const
 
 		items.clear();
 	}
-	
+
 	for (size_t i = 0; i < MAX_ROOM_PLAYER - mSize; ++i)
 	{
 		itemQueue.emplace_back(-1);
@@ -179,9 +190,9 @@ vector<int32_t> Room::GetRandomItemQueue() const
 	return itemQueue;
 }
 
-void Room::TrySendRandomItemQueue()
+void Room::TrySendBattleInfo()
 {
-	if(mSize == 0)
+	if (mSize == 0)
 	{
 		return;
 	}
@@ -212,9 +223,10 @@ void Room::Init()
 	Log("{0} Room Initialization", mNumber);
 }
 
-void Room::SendRandomItemQueue() const
+void Room::SendRandomItemQueue()
 {
+	const vector<int32_t> battleOpponent = mBattleManager.GetBattleOpponent();
 	const vector<int32_t> itemQueue = GetRandomItemQueue();
-	sc_battleItemQueuePacket packet(itemQueue);
+	sc_battleInfoPacket packet(battleOpponent, itemQueue);
 	SendPacketToAllClients(&packet);
 }

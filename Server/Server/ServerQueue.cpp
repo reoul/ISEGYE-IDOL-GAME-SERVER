@@ -72,14 +72,16 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 		Room& room = g_roomManager.GetUnUsedRoom();
 
 		auto node = mClientQueue;
+
+		vector<Client*> clients;
 		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
 			Client& client = *node->GetClient();
-			client.SetRoom(&room);
-			room.AddClient(client);
 			client.AddDefaultItem();
+			clients.emplace_back(&client);
 			node = node->Next;
 		}
+		room.AddClients(clients);
 		Log("{0} Room Create", room.GetNumber());
 		mClientQueue = node;
 		if (node != nullptr)

@@ -26,24 +26,13 @@ Room& RoomManager::GetUnUsedRoom()
 	return *pRet;
 }
 
-void RoomManager::TrySendRandomItemQueue()
+void RoomManager::TrySendBattleInfo()
 {
 	for (Room& room : mRooms)
 	{
 		if (room.IsRun())
 		{
-			room.TrySendRandomItemQueue();
-		}
-	}
-}
-
-void RoomManager::CheckActiveRoom()
-{
-	for (Room& room : mRooms)
-	{
-		if (room.IsRun() && room.GetSize() == 0)
-		{
-			room.Init();
+			room.TrySendBattleInfo();
 		}
 	}
 }

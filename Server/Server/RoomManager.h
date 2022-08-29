@@ -11,8 +11,7 @@ public:
 	RoomManager();
 	~RoomManager() = default;
 	Room& GetUnUsedRoom();
-	void TrySendRandomItemQueue();
-	void CheckActiveRoom();
+	void TrySendBattleInfo();
 private:
 	Room mRooms[MAX_ROOM_COUNT];
 };
