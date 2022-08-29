@@ -7,8 +7,6 @@
 
 using namespace std;
 
-class Room;
-
 enum class OperationType { Send, Recv, Accept };
 /*
  * FREE : 아무도 사용하지 않음, 할당 가능, 접근 금지

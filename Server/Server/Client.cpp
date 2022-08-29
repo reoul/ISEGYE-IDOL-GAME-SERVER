@@ -129,3 +129,13 @@ void Client::AddDefaultItem()
 	AddItem(1);
 	AddItem(6);
 }
+
+void Client::SendPacketInAllRoomClients(void* pPacket) const
+{
+	mRoomPtr->SendPacketToAllClients(pPacket);
+}
+
+void Client::SendPacketInAnotherRoomClients(void* pPacket) const
+{
+	mRoomPtr->SendPacketToAnotherClients(*this, pPacket);
+}

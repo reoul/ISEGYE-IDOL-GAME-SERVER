@@ -3,8 +3,9 @@
 #include <WinSock2.h>
 #include <vector>
 
-#include "Room.h"
 #include "ServerStruct.h"
+
+class Room;
 
 using namespace std;
 
@@ -141,14 +142,4 @@ inline wchar_t* Client::GetName()
 inline const wchar_t* Client::GetName() const
 {
 	return mName;
-}
-
-inline void Client::SendPacketInAllRoomClients(void* pPacket) const
-{
-	mRoomPtr->SendPacketToAllClients(pPacket);
-}
-
-inline void Client::SendPacketInAnotherRoomClients(void* pPacket) const
-{
-	mRoomPtr->SendPacketToAnotherClients(*this, pPacket);
 }
