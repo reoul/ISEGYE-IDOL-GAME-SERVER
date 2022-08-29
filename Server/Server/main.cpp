@@ -45,7 +45,8 @@ int main()
 
 	Log("Start Server");
 	vector<thread> worker_threads;
-	for (int i = 0; i < 4; ++i)
+	constexpr size_t ThreadNum = 12;
+	for (int i = 0; i < ThreadNum; ++i)
 	{
 		worker_threads.emplace_back(WorkerThread);
 	}
