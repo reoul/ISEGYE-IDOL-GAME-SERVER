@@ -32,7 +32,7 @@ int main()
 	std::locale::global(std::locale("Korean"));
 	SocketUtil::StaticInit();
 	LogInit();
-	
+
 	ServerInit();
 
 	SOCKET clientSocket;
@@ -151,7 +151,7 @@ void PacketConstruct(int userID, int ioByteLength)
 
 	cout << endl;*/
 
-	LogWrite("packet {0}Byte recive", ioByteLength);
+	LogWrite("Client {0} Packet {1}Byte recive", userID, ioByteLength);
 
 	while (restByte > 0)	//처리해야할 데이터가 남아있으면 처리해야한다.
 	{
@@ -249,7 +249,7 @@ void WorkerThread()
 		}
 
 		Exover* exover = reinterpret_cast<Exover*>(over);
-		int user_id = static_cast<int>(key);
+		int userID = static_cast<int>(key);
 
 		switch (exover->type)
 		{
@@ -257,15 +257,15 @@ void WorkerThread()
 		{
 			if (0 == io_byte)
 			{
-				Disconnect(user_id);
+				Disconnect(userID);
 
 				if (OperationType::Send == exover->type)
 					delete exover;
 			}
 			else
 			{
-				Client& client = g_clients[user_id];
-				PacketConstruct(user_id, io_byte);
+				Client& client = g_clients[userID];
+				PacketConstruct(userID, io_byte);
 				ZeroMemory(&client.GetRecvOver().over, sizeof(client.GetRecvOver().over));
 				DWORD flags = 0;
 				::WSARecv(client.GetSocket(), &client.GetRecvOver().wsabuf, 1, NULL, &flags, &client.GetRecvOver().over, NULL);
@@ -275,9 +275,10 @@ void WorkerThread()
 		case OperationType::Send:			//구조체 delete
 			if (0 == io_byte)
 			{
-				Disconnect(user_id);
+				Disconnect(userID);
 			}
-			LogWrite("Send {0}Byte packet", io_byte);
+
+			LogWrite("Server To Client {0} Send {1}Byte packet", userID, io_byte);
 			delete exover;
 			break;
 		case OperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
@@ -312,7 +313,7 @@ void WorkerThread()
 					g_clients[userID].SetPrevSize(0); //이전에 받아둔 조각이 없으니 0
 					g_clients[userID].SetSocket(clientSocket);
 
-					ZeroMemory(&g_clients[userID].GetRecvOver().over, sizeof(g_clients[user_id].GetRecvOver().over));
+					ZeroMemory(&g_clients[userID].GetRecvOver().over, sizeof(g_clients[userID].GetRecvOver().over));
 					g_clients[userID].GetRecvOver().type = OperationType::Recv;
 					g_clients[userID].GetRecvOver().wsabuf.buf = g_clients[userID].GetRecvOver().io_buf;
 					g_clients[userID].GetRecvOver().wsabuf.len = MAX_BUF_SIZE;
