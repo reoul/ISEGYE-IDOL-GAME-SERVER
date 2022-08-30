@@ -15,7 +15,7 @@ public:
 	void RemoveClient(const Client& client);
 	void SendPacketToAllClients(void* pPacket) const;
 	void SendPacketToAnotherClients(const Client& client, void* pPacket) const;
-	vector<int32_t> GetRandomItemQueue() const;
+	vector<int32_t> GetRandomItemQueue();
 	void TrySendBattleInfo();
 	const vector<Client*>& GetClients() const;
 	vector<Client*>& GetClients();

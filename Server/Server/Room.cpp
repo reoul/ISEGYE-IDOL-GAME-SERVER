@@ -52,7 +52,7 @@ void Room::RemoveClient(const Client& client)
 		--mSize;
 	}
 
-	if(mSize == 0)
+	if (mSize == 0)
 	{
 		Init();
 	}
@@ -79,88 +79,90 @@ void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
 	}
 }
 
-vector<int32_t> Room::GetRandomItemQueue() const
+vector<int32_t> Room::GetRandomItemQueue()
 {
 	vector<SlotInfo> items;
 	items.reserve(MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT);
 
 	vector<int32_t> itemQueue;
 	itemQueue.reserve(BATTLE_ITEM_QUEUE_LENGTH);
-
-	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
-		itemQueue.emplace_back((*it)->GetNetworkID());
-		items = (*it)->GetValidUsingItems();
-
-		const size_t length = items.size();
-		log_assert(length <= MAX_USING_ITEM);
-
-		int sum = 0;
-		for (const SlotInfo& slotInfo : items)
+		lock_guard<mutex> lg(cLock);
+		for (auto it = mClients.begin(); it != mClients.end(); ++it)
 		{
-			sum += slotInfo.item.GetActivePercent();
-		}
+			itemQueue.emplace_back((*it)->GetNetworkID());
+			items = (*it)->GetValidUsingItems();
 
-		CopySelf(items, BATTLE_ITEM_QUEUE_LOOP_COUNT - 1);
+			const size_t length = items.size();
+			log_assert(length <= MAX_USING_ITEM);
 
-		{
-			if (items.empty())
+			int sum = 0;
+			for (const SlotInfo& slotInfo : items)
 			{
-				for (size_t i = 0; i < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++i)
-				{
-					itemQueue.emplace_back(EMPTY_ITEM);
-					itemQueue.emplace_back(ACTIVATE_ITEM);
-				}
+				sum += slotInfo.item.GetActivePercent();
 			}
-			else
+
+			CopySelf(items, BATTLE_ITEM_QUEUE_LOOP_COUNT - 1);
+
 			{
-				int loopSum = sum;
-				size_t loopLength = length;
-
-				while (!items.empty())
+				if (items.empty())
 				{
-					Random<int> gen(0, loopSum - 1);
-					int rand = gen();
-
-					auto iter = items.begin();
-					for (size_t i = 0; i < loopLength; ++i)
+					for (size_t i = 0; i < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++i)
 					{
-						const int itemActivePercent = iter->item.GetActivePercent();
-						rand -= itemActivePercent;
-						if (rand < 0)
-						{
-							--loopLength;
-							loopSum -= itemActivePercent;
-							itemQueue.emplace_back(iter->index);
-							itemQueue.emplace_back(ACTIVATE_ITEM);
-							items.erase(iter);
-							break;
-						}
-					}
-
-					if (loopLength == 0)
-					{
-						loopSum = sum;
-						loopLength = length;
-
-						const int lockSlotCnt = (*it)->GetLockSlotCount();
-						for (size_t i = 0; i < MAX_USING_ITEM - length - lockSlotCnt; ++i)
-						{
-							itemQueue.emplace_back(EMPTY_ITEM);
-							itemQueue.emplace_back(ACTIVATE_ITEM);
-						}
-
-						for (size_t i = 0; i < lockSlotCnt; ++i)
-						{
-							itemQueue.emplace_back(LOCK_ITEM);
-							itemQueue.emplace_back(DISABLE_ITEM);
-						}
+						itemQueue.emplace_back(EMPTY_ITEM);
+						itemQueue.emplace_back(ACTIVATE_ITEM);
 					}
 				}
-			}
-		}
+				else
+				{
+					int loopSum = sum;
+					size_t loopLength = length;
 
-		items.clear();
+					while (!items.empty())
+					{
+						Random<int> gen(0, loopSum - 1);
+						int rand = gen();
+
+						auto iter = items.begin();
+						for (size_t i = 0; i < loopLength; ++i)
+						{
+							const int itemActivePercent = iter->item.GetActivePercent();
+							rand -= itemActivePercent;
+							if (rand < 0)
+							{
+								--loopLength;
+								loopSum -= itemActivePercent;
+								itemQueue.emplace_back(iter->index);
+								itemQueue.emplace_back(ACTIVATE_ITEM);
+								items.erase(iter);
+								break;
+							}
+						}
+
+						if (loopLength == 0)
+						{
+							loopSum = sum;
+							loopLength = length;
+
+							const int lockSlotCnt = (*it)->GetLockSlotCount();
+							for (size_t i = 0; i < MAX_USING_ITEM - length - lockSlotCnt; ++i)
+							{
+								itemQueue.emplace_back(EMPTY_ITEM);
+								itemQueue.emplace_back(ACTIVATE_ITEM);
+							}
+
+							for (size_t i = 0; i < lockSlotCnt; ++i)
+							{
+								itemQueue.emplace_back(LOCK_ITEM);
+								itemQueue.emplace_back(DISABLE_ITEM);
+							}
+						}
+					}
+				}
+			}
+
+			items.clear();
+		}
 	}
 
 	for (size_t i = 0; i < MAX_ROOM_PLAYER - mSize; ++i)
@@ -172,7 +174,6 @@ vector<int32_t> Room::GetRandomItemQueue() const
 			itemQueue.emplace_back(0);
 		}
 	}
-
 	log_assert(itemQueue.size() == BATTLE_ITEM_QUEUE_LENGTH);
 	/*for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 	{
