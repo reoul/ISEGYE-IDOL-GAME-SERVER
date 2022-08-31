@@ -12,7 +12,6 @@
 #include "PacketStruct.h"
 #include <MSWSock.h>
 #include "GlobalVariable.h"
-#include "Random.h"
 #include "Client.h"
 #include "Log.h"
 
@@ -44,11 +43,11 @@ int main()
 	::AcceptEx(g_hListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
 
 	Log("Start Server");
-	vector<thread> worker_threads;
+	vector<thread> workerThreads;
 	constexpr size_t ThreadNum = 12;
 	for (int i = 0; i < ThreadNum; ++i)
 	{
-		worker_threads.emplace_back(WorkerThread);
+		workerThreads.emplace_back(WorkerThread);
 	}
 
 	string str;
@@ -62,7 +61,7 @@ int main()
 		}
 	}
 
-	for (auto& th : worker_threads)
+	for (auto& th : workerThreads)
 	{
 		th.join();
 	}

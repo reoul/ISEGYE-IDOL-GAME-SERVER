@@ -175,18 +175,18 @@ vector<int32_t> Room::GetRandomItemQueue()
 		}
 	}
 	log_assert(itemQueue.size() == BATTLE_ITEM_QUEUE_LENGTH);
-	/*for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
+	for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 	{
 		size_t index = i * 60 + i;
 		for (size_t j = 0; j < BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
 		{
 			size_t index2 = index + j * (MAX_USING_ITEM * 2);
-			LogWriteTest("[itemQueue] {0}:{1} == {2}:{3}  {4}:{5}  {6}:{7}  {8}:{9}  {10}:{11}  {12}:{13} ",
+			LogWriteTest("[itemQueue] networkID : {0} : {1}th === {2}:{3}  {4}:{5}  {6}:{7}  {8}:{9}  {10}:{11}  {12}:{13} ",
 				itemQueue[index], j, itemQueue[index2 + 1], itemQueue[index2 + 2], itemQueue[index2 + 3], itemQueue[index2 + 4],
 				itemQueue[index2 + 5], itemQueue[index2 + 6], itemQueue[index2 + 7], itemQueue[index2 + 8],
 				itemQueue[index2 + 9], itemQueue[index2 + 10], itemQueue[index2 + 11], itemQueue[index2 + 12]);
 		}
-	}*/
+	}
 
 	return itemQueue;
 }
