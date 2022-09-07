@@ -281,7 +281,7 @@ void WorkerThread()
 				Disconnect(userID);
 			}
 			
-			LogWrite("네트워크 {0}번 클라이언트에게 {1}Byte 패킷 보냄", userID, io_byte);
+			LogWrite("네트워크 {0}번 클라이언트 {1}Byte 패킷 전송", userID, io_byte);
 			delete exover;
 			break;
 		case OperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
