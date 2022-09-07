@@ -181,7 +181,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 		for (size_t j = 0; j < BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
 		{
 			size_t index2 = index + j * (MAX_USING_ITEM * 2);
-			LogWriteTest("[itemQueue] networkID : {0} : {1}th === {2}:{3}  {4}:{5}  {6}:{7}  {8}:{9}  {10}:{11}  {12}:{13} ",
+			LogWriteTest("[아이템순서] 네트워크 {0}번 클라이언트 : {1}번째 순서 === {2}:{3}  {4}:{5}  {6}:{7}  {8}:{9}  {10}:{11}  {12}:{13} ",
 				itemQueue[index], j, itemQueue[index2 + 1], itemQueue[index2 + 2], itemQueue[index2 + 3], itemQueue[index2 + 4],
 				itemQueue[index2 + 5], itemQueue[index2 + 6], itemQueue[index2 + 7], itemQueue[index2 + 8],
 				itemQueue[index2 + 9], itemQueue[index2 + 10], itemQueue[index2 + 11], itemQueue[index2 + 12]);
@@ -212,7 +212,7 @@ void Room::BattleReady()
 {
 	lock_guard<mutex> lg(cLock);
 	++mBattleReadyCount;
-	Log("{0} Room Increment Battle Ready Count (Cur:{1})", mNumber, mBattleReadyCount);
+	Log("{0}번 룸 전투 준비 카운트 증가 (현재 {1}/{2})", mNumber, mBattleReadyCount, mSize);
 }
 
 void Room::Init()
@@ -221,7 +221,7 @@ void Room::Init()
 	mSize = 0;
 	mIsRun = false;
 	mBattleReadyCount = 0;
-	Log("{0} Room Initialization", mNumber);
+	Log("{0}번 룸 비활성화", mNumber);
 }
 
 void Room::SendRandomItemQueue()

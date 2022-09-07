@@ -4,7 +4,7 @@
 #include "Client.h"
 #include "SettingData.h"
 #include "GlobalVariable.h"
-#include "Log.h"
+#include "reoul/logger.h"
 
 ServerQueue::ServerQueue()
 	: mClientQueue(nullptr)
@@ -31,7 +31,7 @@ void ServerQueue::AddClient(Client* client)
 	}
 
 	++mSize;
-	Log("Client{0} queue registration complete ({1} remaining)", client->GetNetworkID(), mSize);
+	Log("네트워크 {0}번 클라이언트 대기열 추가 (현재 {1}명 대기중)", client->GetNetworkID(), mSize);
 }
 
 void ServerQueue::RemoveClient(Client* client)
@@ -58,7 +58,7 @@ void ServerQueue::RemoveClient(Client* client)
 				}
 			}
 			--mSize;
-			Log("Client{0} queue remove complete ({1} remaining)", client->GetNetworkID(), mSize);
+			Log("네트워크 {0}번 클라이언트 대기열 제거 (현재 {1}명 대기중)", client->GetNetworkID(), mSize);
 			break;
 		}
 		node = node->Next;
@@ -82,7 +82,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 			node = node->Next;
 		}
 		room.AddClients(clients);
-		Log("{0} Room Create", room.GetNumber());
+		Log("{0}번 룸 활성화", room.GetNumber());
 		mClientQueue = node;
 		if (node != nullptr)
 		{

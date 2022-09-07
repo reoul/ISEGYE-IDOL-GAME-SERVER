@@ -1,7 +1,7 @@
 ﻿#include "BattleManager.h"
 #include <vector>
 #include "Random.h"
-#include "Log.h"
+#include "reoul/logger.h"
 #include "SettingData.h"
 #include "Client.h"
 
@@ -93,10 +93,10 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 	}
 	mMatchingClients.clear();
 
-	LogWriteTest("Battle Opponent Queue {0}", list.size());
+	LogWriteTest("배틀 상대 목록 {0}명", list.size());
 	for (size_t i = 0; i < list.size() / 2; ++i)
 	{
-		LogWriteTest("{0}-{1}", list[i * 2], list[i * 2 + 1]);
+		LogWriteTest("선공 {0} - {1}", list[i * 2], list[i * 2 + 1]);
 	}
 
 	log_assert(list.size() <= MAX_ROOM_PLAYER);
