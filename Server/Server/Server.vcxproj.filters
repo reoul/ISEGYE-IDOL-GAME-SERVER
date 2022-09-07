@@ -146,9 +146,6 @@
     <ClInclude Include="RoomManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Log.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BattleManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
