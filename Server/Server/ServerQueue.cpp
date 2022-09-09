@@ -94,13 +94,3 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 	}
 	return nullptr;
 }
-
-void ServerQueue::Lock()
-{
-	mLock.lock();
-}
-
-void ServerQueue::UnLock()
-{
-	mLock.unlock();
-}

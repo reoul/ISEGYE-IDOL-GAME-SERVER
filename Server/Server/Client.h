@@ -12,9 +12,9 @@ using namespace std;
 class Client
 {
 public:
-	std::mutex				cLock;
 	Client();
 
+	void					Init();
 	const SOCKET&			GetSocket() const;
 	void					SetSocket(SOCKET socket);
 	int32_t					GetNetworkID() const;
@@ -43,7 +43,9 @@ public:
 	void					AddDefaultItem();
 	void					SendPacketInAllRoomClients(void* pPacket) const;
 	void					SendPacketInAnotherRoomClients(void* pPacket) const;
+	std::mutex&				GetMutex();
 private:
+	std::mutex				mLock;
 	SOCKET					mSocket;
 	int32_t					mNetworkID;						// 클라이언트 아이디
 	Exover					mRecvOver;						// 확장 overlapped 구조체
@@ -133,7 +135,6 @@ inline void Client::SetRoom(Room* room)
 	mRoomPtr = room;
 }
 
-
 inline wchar_t* Client::GetName()
 {
 	return mName;
@@ -142,4 +143,9 @@ inline wchar_t* Client::GetName()
 inline const wchar_t* Client::GetName() const
 {
 	return mName;
+}
+
+inline std::mutex& Client::GetMutex()
+{
+	return mLock;
 }

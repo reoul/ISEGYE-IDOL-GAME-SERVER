@@ -207,26 +207,23 @@ void Disconnect(int userID)
 	{
 		return;
 	}
-	g_serverQueue.Lock();
-	g_serverQueue.RemoveClient(&g_clients[userID]);
-	g_serverQueue.UnLock();
 
-	g_clients[userID].cLock.lock();
-	g_clients[userID].SetStatus(ST_ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
-
-	::closesocket(g_clients[userID].GetSocket());
-	g_clients[userID].SetSocket(INVALID_SOCKET);
-	if (g_clients[userID].GetRoomPtr() != nullptr)
 	{
-		lock_guard<mutex> lg(g_clients[userID].GetRoomPtr()->cLock);
-		g_clients[userID].GetRoomPtr()->RemoveClient(g_clients[userID]);
-		g_clients[userID].SetRoom(nullptr);
+		lock_guard<mutex> lg(g_serverQueue.GetMutex());
+		g_serverQueue.RemoveClient(&g_clients[userID]);
 	}
-	wchar_t name[MAX_USER_NAME_LENGTH];
-	wcscpy(name, g_clients[userID].GetName());
-	g_clients[userID].GetName()[0] = '\0';
-	g_clients[userID].SetStatus(ST_FREE);	//다 처리했으면 FREE
-	g_clients[userID].cLock.unlock();
+
+	{
+		lock_guard<mutex> lg(g_clients[userID].GetMutex());
+		g_clients[userID].SetStatus(ST_ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
+
+		::closesocket(g_clients[userID].GetSocket());
+
+		wchar_t name[MAX_USER_NAME_LENGTH];
+		wcscpy(name, g_clients[userID].GetName());
+		g_clients[userID].Init();
+	}
+
 	Log("네트워크 {0}번 클라이언트 서버 접속 해제", userID);
 }
 
@@ -280,7 +277,7 @@ void WorkerThread()
 			{
 				Disconnect(userID);
 			}
-			
+
 			LogWrite("네트워크 {0}번 클라이언트 {1}Byte 패킷 전송", userID, io_byte);
 			delete exover;
 			break;
@@ -289,7 +286,7 @@ void WorkerThread()
 			int userID = -1;
 			for (int i = 0; i < MAX_USER; ++i)
 			{
-				lock_guard<mutex> gl{ g_clients[i].cLock }; //이렇게 하면 unlock이 필요 없다. 이 블록에서 빠져나갈때 unlock을 자동으로 해준다.
+				lock_guard<mutex> gl{ g_clients[i].GetMutex() }; //이렇게 하면 unlock이 필요 없다. 이 블록에서 빠져나갈때 unlock을 자동으로 해준다.
 				if (ST_FREE == g_clients[i].GetStatus())
 				{
 					g_clients[i].SetStatus(ST_ALLOCATED);

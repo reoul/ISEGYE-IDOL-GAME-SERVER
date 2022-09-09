@@ -17,10 +17,14 @@ public:
 	void AddClient(Client* client);
 	void RemoveClient(Client* client);
 	Room* TryCreateRoomOrNullPtr();
-	void Lock();
-	void UnLock();
+	std::mutex& GetMutex();
 private:
 	std::mutex mLock;
 	std::shared_ptr<ServerQueueNode> mClientQueue;
 	size_t mSize;
 };
+
+inline std::mutex& ServerQueue::GetMutex()
+{
+	return mLock;
+}

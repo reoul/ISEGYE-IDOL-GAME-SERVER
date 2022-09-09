@@ -13,14 +13,16 @@ void ProcessPacket(int userID, char* buf)
 	{
 	case PacketType::cs_startMatching:
 	{
-		cs_startMatchingPacket* pPacket = reinterpret_cast<cs_startMatchingPacket*>(buf);
+		const cs_startMatchingPacket* pPacket = reinterpret_cast<cs_startMatchingPacket*>(buf);
 		wcscpy(g_clients[pPacket->networkID].GetName(), pPacket->name);
 		g_clients[pPacket->networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
 
-		g_serverQueue.Lock();
-		g_serverQueue.AddClient(&g_clients[pPacket->networkID]);
-		Room* room = g_serverQueue.TryCreateRoomOrNullPtr();
-		g_serverQueue.UnLock();
+		const Room* room = nullptr;
+		{
+			lock_guard<mutex> lg(g_serverQueue.GetMutex());
+			g_serverQueue.AddClient(&g_clients[pPacket->networkID]);
+			room = g_serverQueue.TryCreateRoomOrNullPtr();
+		}
 
 		if (room != nullptr) // 방을 만들 수 있다면
 		{
@@ -55,7 +57,7 @@ void ProcessPacket(int userID, char* buf)
 	break;
 	case PacketType::cs_battleReady:
 	{
-		cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
+		const cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
 		g_clients[pPacket->networkID].TrySetDefaultUsingItem();
 		g_clients[pPacket->networkID].GetRoomPtr()->BattleReady();
 		Log("[cs_battleReady] 네트워크 {0}번 클라이언트 전투 준비 완료", pPacket->networkID);
