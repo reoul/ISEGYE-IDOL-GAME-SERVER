@@ -6,7 +6,7 @@
 #include "PacketStruct.h"
 
 Client::Client()
-	: mSocket(NULL)
+	: mSocket(INVALID_SOCKET)
 	, mNetworkID(0)
 	, mRecvOver()
 	, mPrevSize(0)
@@ -19,6 +19,31 @@ Client::Client()
 	, mUnUsingItems{}
 {
 	mName[0] = '\0';
+}
+
+void Client::Init()
+{
+	mSocket = INVALID_SOCKET;
+	mPrevSize = 0;
+	memset(mPacketBuf, 0, MAX_PACKET_SIZE);
+	mIsAlive = false;
+	mCharacterType = CharacterType::Woowakgood;		// todo : 클라이언트 연결 끊겼을때 Init 적용하기
+	if (mRoomPtr != nullptr)
+	{
+		lock_guard<mutex> lg(mRoomPtr->cLock);
+		mRoomPtr->RemoveClient(*this);
+		mRoomPtr = nullptr;
+	}
+	mName[0] = '\0';
+	for (Item item : mUsingItems)
+	{
+		item.SetType(EMPTY_ITEM);
+	}
+	for (Item item : mUnUsingItems)
+	{
+		item.SetType(EMPTY_ITEM);
+	}
+	mStatus = ST_FREE;
 }
 
 vector<Item> Client::GetUsingItems() const
