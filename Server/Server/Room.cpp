@@ -1,7 +1,8 @@
 ﻿#include "Room.h"
 
 #include <iostream>
-#include "reoul/functional.h"
+#include <reoul/functional.h>
+#include <reoul/logger.h>
 #include "Client.h"
 #include "Random.h"
 #include "PacketStruct.h"
