@@ -9,9 +9,9 @@
 
 using namespace std;
 
-enum class CharacterType : uint8_t;
+enum class ECharacterType : uint8_t;
 
-enum class PacketType : uint8_t
+enum class EPacketType : uint8_t
 {
 	sc_connectServer,
 	sc_connectRoom,
@@ -43,11 +43,11 @@ struct cs_test_data
 struct sc_connectServerPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	int32_t networkID;
 	sc_connectServerPacket(int network_id)
 		: size(sizeof(sc_connectServerPacket))
-		, type(PacketType::sc_connectServer)
+		, type(EPacketType::sc_connectServer)
 		, networkID(network_id)
 	{
 	}
@@ -56,7 +56,7 @@ struct sc_connectServerPacket
 struct cs_startMatchingPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	const int32_t networkID;
 	const wchar_t name[MAX_USER_NAME_LENGTH];
 };
@@ -64,11 +64,11 @@ struct cs_startMatchingPacket
 struct sc_connectRoomPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	UserInfo users[MAX_ROOM_PLAYER];
 	sc_connectRoomPacket(const Room& room)
 		: size(sizeof(sc_connectRoomPacket))
-		, type(PacketType::sc_connectRoom)
+		, type(EPacketType::sc_connectRoom)
 		, users{}
 	{
 		const vector<Client*> clients = room.GetClients();
@@ -83,7 +83,7 @@ struct sc_connectRoomPacket
 struct cs_sc_AddNewItemPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	const int32_t networkID;
 	const uint8_t itemCode;
 };
@@ -91,11 +91,11 @@ struct cs_sc_AddNewItemPacket
 struct sc_disconnectPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	int32_t networkID;
 	sc_disconnectPacket(int32_t network_id)
 		: size(sizeof(sc_disconnectPacket))
-		, type(PacketType::sc_disconnect)
+		, type(EPacketType::sc_disconnect)
 		, networkID(network_id)
 	{
 	}
@@ -104,13 +104,13 @@ struct sc_disconnectPacket
 struct cs_sc_changeItemSlotPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	const int32_t networkID;
 	const uint8_t slot1;
 	const uint8_t slot2;
 	cs_sc_changeItemSlotPacket(int32_t networkID, uint8_t slot1, uint8_t slot2)
 		: size(sizeof(cs_sc_changeItemSlotPacket))
-		, type(PacketType::cs_sc_changeItemSlot)
+		, type(EPacketType::cs_sc_changeItemSlot)
 		, networkID(networkID)
 		, slot1(slot1)
 		, slot2(slot2)
@@ -121,12 +121,12 @@ struct cs_sc_changeItemSlotPacket
 struct cs_sc_upgradeItemPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	const int32_t networkID;
 	const uint8_t slot;
 	cs_sc_upgradeItemPacket(int32_t networkID, uint8_t slot)
 		: size(sizeof(cs_sc_upgradeItemPacket))
-		, type(PacketType::cs_sc_upgradeItem)
+		, type(EPacketType::cs_sc_upgradeItem)
 		, networkID(networkID)
 		, slot(slot)
 	{
@@ -136,12 +136,12 @@ struct cs_sc_upgradeItemPacket
 struct cs_sc_battleInfoPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	const int32_t networkID1;
 	const int32_t networkID2;
 	cs_sc_battleInfoPacket(int32_t networkID1, int16_t networkID2)
 		: size(sizeof(cs_sc_battleInfoPacket))
-		, type(PacketType::cs_sc_upgradeItem)
+		, type(EPacketType::cs_sc_upgradeItem)
 		, networkID1(networkID1)
 		, networkID2(networkID2)
 	{
@@ -151,12 +151,12 @@ struct cs_sc_battleInfoPacket
 struct cs_sc_changeCharacterPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	const int32_t networkID;
-	const CharacterType characterType;
-	cs_sc_changeCharacterPacket(int32_t networkID, CharacterType characterType)
+	const ECharacterType characterType;
+	cs_sc_changeCharacterPacket(int32_t networkID, ECharacterType characterType)
 		: size(sizeof(cs_sc_changeCharacterPacket))
-		, type(PacketType::cs_sc_changeCharacter)
+		, type(EPacketType::cs_sc_changeCharacter)
 		, networkID(networkID)
 		, characterType(characterType)
 	{
@@ -172,12 +172,12 @@ struct ItemQueueInfo
 struct sc_battleInfoPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
 	ItemQueueInfo itemQueueInfo[MAX_ROOM_PLAYER];
 	sc_battleInfoPacket(const vector<int32_t>& battleOpponents, const vector<int32_t>& itemQueues)
 		: size(sizeof(sc_battleInfoPacket))
-		, type(PacketType::sc_battleInfo)
+		, type(EPacketType::sc_battleInfo)
 	{
 		log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
 		copy(battleOpponents.begin(), battleOpponents.end(), battleOpponentQueue);
@@ -204,11 +204,11 @@ struct sc_battleInfoPacket
 struct sc_battleOpponentQueuePacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
 	sc_battleOpponentQueuePacket(const int32_t(&playerQueue)[MAX_ROOM_PLAYER])
 		: size(sizeof(sc_battleOpponentQueuePacket))
-		, type(PacketType::sc_battleInfo)
+		, type(EPacketType::sc_battleInfo)
 	{
 		::copy_n(playerQueue, _countof(playerQueue), battleOpponentQueue);
 	}
@@ -217,7 +217,7 @@ struct sc_battleOpponentQueuePacket
 struct cs_battleReadyPacket
 {
 	const uint16_t size;
-	const PacketType type;
+	const EPacketType type;
 	const int32_t networkID;
 };
 

@@ -12,8 +12,8 @@ Client::Client()
 	, mPrevSize(0)
 	, mPacketBuf{}
 	, mIsAlive(false)
-	, mStatus(ST_FREE)
-	, mCharacterType(CharacterType::Woowakgood)
+	, mStatus(ESocketStatus::FREE)
+	, mCharacterType(ECharacterType::Woowakgood)
 	, mRoomPtr(nullptr)
 	, mUsingItems{}
 	, mUnUsingItems{}
@@ -27,7 +27,7 @@ void Client::Init()
 	mPrevSize = 0;
 	memset(mPacketBuf, 0, MAX_PACKET_SIZE);
 	mIsAlive = false;
-	mCharacterType = CharacterType::Woowakgood;		// todo : 클라이언트 연결 끊겼을때 Init 적용하기
+	mCharacterType = ECharacterType::Woowakgood;		// todo : 클라이언트 연결 끊겼을때 Init 적용하기
 	if (mRoomPtr != nullptr)
 	{
 		lock_guard<mutex> lg(mRoomPtr->cLock);
@@ -43,7 +43,7 @@ void Client::Init()
 	{
 		item.SetType(EMPTY_ITEM);
 	}
-	mStatus = ST_FREE;
+	mStatus = ESocketStatus::FREE;
 }
 
 vector<Item> Client::GetUsingItems() const

@@ -24,9 +24,9 @@ public:
 	void					SetPrevSize(int32_t size);
 	char*					GetPacketBuf();
 	bool					IsAlive() const;
-	C_STATUS				GetStatus() const;
-	void					SetStatus(C_STATUS status);
-	CharacterType			GetCharacterType() const;
+	ESocketStatus				GetStatus() const;
+	void					SetStatus(ESocketStatus status);
+	ECharacterType			GetCharacterType() const;
 	Room*					GetRoomPtr();
 	const Room*				GetRoomPtr() const;
 	void					SetRoom(Room* room);
@@ -52,8 +52,8 @@ private:
 	int32_t					mPrevSize;						// 이전에 받아놓은 양
 	char					mPacketBuf[MAX_PACKET_SIZE];	// 조각난 거 받아두기 위한 버퍼
 	bool					mIsAlive;						// 플레이 도중에 살아있는지(HP가 0이 아닌경우)
-	C_STATUS				mStatus;						// 접속했나 안했나
-	CharacterType			mCharacterType;					// 플레이어 캐릭터
+	ESocketStatus				mStatus;						// 접속했나 안했나
+	ECharacterType			mCharacterType;					// 플레이어 캐릭터
 	Room*					mRoomPtr;						// 클라이언트가 속한 룸
 	wchar_t					mName[MAX_USER_NAME_LENGTH];	// 플레이어 이름
 	Item					mUsingItems[MAX_USING_ITEM];
@@ -105,17 +105,17 @@ inline bool Client::IsAlive() const
 	return mIsAlive;
 }
 
-inline C_STATUS Client::GetStatus() const
+inline ESocketStatus Client::GetStatus() const
 {
 	return mStatus;
 }
 
-inline void Client::SetStatus(C_STATUS status)
+inline void Client::SetStatus(ESocketStatus status)
 {
 	mStatus = status;
 }
 
-inline CharacterType Client::GetCharacterType() const
+inline ECharacterType Client::GetCharacterType() const
 {
 	return mCharacterType;
 }

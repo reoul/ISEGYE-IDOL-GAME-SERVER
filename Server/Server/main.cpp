@@ -39,14 +39,14 @@ int main()
 	Exover accept_over;
 	accept_over.c_socket = clientSocket;
 	ZeroMemory(&accept_over, sizeof(accept_over.over));
-	accept_over.type = OperationType::Accept;
+	accept_over.type = EOperationType::Accept;
 	::AcceptEx(g_hListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
 	Log("서버 시작");
 
 	vector<thread> workerThreads;
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
-	for (int i = 0; i < si.dwNumberOfProcessors * 2; ++i)
+	for (ULONG i = 0; i < si.dwNumberOfProcessors * 2; ++i)
 	{
 		workerThreads.emplace_back(WorkerThread);
 	}
@@ -67,6 +67,8 @@ int main()
 	{
 		th.join();
 	}
+
+	SocketUtil::CleanUp();
 	return 0;
 }
 
@@ -113,10 +115,10 @@ void SendPacket(int userID, void* pPacket)
 
 	//WSASend의 두번째 인자의 over는 recv용이라 쓰면 안된다. 새로 만들어야 한다.
 	Exover* exover = new Exover;
-	exover->type = OperationType::Send;
+	exover->type = EOperationType::Send;
 	ZeroMemory(&exover->over, sizeof(exover->over));
 	exover->wsabuf.buf = exover->io_buf;
-	const size_t length = reinterpret_cast<uint16_t*>(buf)[0];
+	const ULONG length = reinterpret_cast<uint16_t*>(buf)[0];
 	exover->wsabuf.len = length;
 	memcpy(exover->io_buf, buf, length);
 
@@ -192,7 +194,7 @@ void PacketConstruct(int userID, int ioByteLength)
 
 void SendDisconnect(int userID)
 {
-	if (g_clients[userID].GetStatus() != ST_ACTIVE)
+	if (g_clients[userID].GetStatus() != ESocketStatus::ACTIVE)
 	{
 		return;
 	}
@@ -203,7 +205,7 @@ void SendDisconnect(int userID)
 
 void Disconnect(int userID)
 {
-	if (g_clients[userID].GetStatus() == ST_FREE)
+	if (g_clients[userID].GetStatus() == ESocketStatus::FREE)
 	{
 		return;
 	}
@@ -215,7 +217,7 @@ void Disconnect(int userID)
 
 	{
 		lock_guard<mutex> lg(g_clients[userID].GetMutex());
-		g_clients[userID].SetStatus(ST_ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
+		g_clients[userID].SetStatus(ESocketStatus::ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
 
 		::closesocket(g_clients[userID].GetSocket());
 
@@ -253,13 +255,13 @@ void WorkerThread()
 
 		switch (exover->type)
 		{
-		case OperationType::Recv:			//받은 패킷 처리 -> overlapped구조체 초기화 -> recv
+		case EOperationType::Recv:			//받은 패킷 처리 -> overlapped구조체 초기화 -> recv
 		{
 			if (0 == io_byte)
 			{
 				Disconnect(userID);
 
-				if (OperationType::Send == exover->type)
+				if (EOperationType::Send == exover->type)
 					delete exover;
 			}
 			else
@@ -272,7 +274,7 @@ void WorkerThread()
 			}
 			break;
 		}
-		case OperationType::Send:			//구조체 delete
+		case EOperationType::Send:			//구조체 delete
 			if (0 == io_byte)
 			{
 				Disconnect(userID);
@@ -281,15 +283,15 @@ void WorkerThread()
 			LogWrite("네트워크 {0}번 클라이언트 {1}Byte 패킷 전송", userID, io_byte);
 			delete exover;
 			break;
-		case OperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
+		case EOperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
 		{
 			int userID = -1;
 			for (int i = 0; i < MAX_USER; ++i)
 			{
 				lock_guard<mutex> gl{ g_clients[i].GetMutex() }; //이렇게 하면 unlock이 필요 없다. 이 블록에서 빠져나갈때 unlock을 자동으로 해준다.
-				if (ST_FREE == g_clients[i].GetStatus())
+				if (ESocketStatus::FREE == g_clients[i].GetStatus())
 				{
-					g_clients[i].SetStatus(ST_ALLOCATED);
+					g_clients[i].SetStatus(ESocketStatus::ALLOCATED);
 					userID = i;
 					break;
 				}
@@ -314,13 +316,13 @@ void WorkerThread()
 					g_clients[userID].SetSocket(clientSocket);
 
 					ZeroMemory(&g_clients[userID].GetRecvOver().over, sizeof(g_clients[userID].GetRecvOver().over));
-					g_clients[userID].GetRecvOver().type = OperationType::Recv;
+					g_clients[userID].GetRecvOver().type = EOperationType::Recv;
 					g_clients[userID].GetRecvOver().wsabuf.buf = g_clients[userID].GetRecvOver().io_buf;
 					g_clients[userID].GetRecvOver().wsabuf.len = MAX_BUF_SIZE;
 
 					NewClientEvent(userID);
 
-					g_clients[userID].SetStatus(ST_ACTIVE);
+					g_clients[userID].SetStatus(ESocketStatus::ACTIVE);
 
 					DWORD flags = 0;
 					::WSARecv(clientSocket, &g_clients[userID].GetRecvOver().wsabuf, 1, NULL, &flags, &g_clients[userID].GetRecvOver().over, NULL);
