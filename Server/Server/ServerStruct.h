@@ -29,9 +29,9 @@ struct Exover
 
 struct SlotInfo
 {
-	int index;
+	int8_t index;
 	Item item;
-	SlotInfo(int index, Item item)
+	SlotInfo(int8_t index, Item item)
 		: index(index)
 		, item(item)
 	{

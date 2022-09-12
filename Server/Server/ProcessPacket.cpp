@@ -59,6 +59,7 @@ void ProcessPacket(int userID, char* buf)
 	{
 		const cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
 		g_clients[pPacket->networkID].TrySetDefaultUsingItem();
+		g_clients[pPacket->networkID].SetFirstAttackState(pPacket->firstAttackState);
 		g_clients[pPacket->networkID].GetRoomPtr()->BattleReady();
 		Log("[cs_battleReady] 네트워크 {0}번 클라이언트 전투 준비 완료", pPacket->networkID);
 	}

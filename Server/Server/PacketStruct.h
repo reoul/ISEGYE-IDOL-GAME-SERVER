@@ -219,6 +219,7 @@ struct cs_battleReadyPacket
 	const uint16_t size;
 	const EPacketType type;
 	const int32_t networkID;
+	const int16_t firstAttackState;
 };
 
 #pragma pack(pop)

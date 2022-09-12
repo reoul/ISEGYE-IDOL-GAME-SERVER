@@ -83,7 +83,6 @@ void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
 vector<int32_t> Room::GetRandomItemQueue()
 {
 	vector<SlotInfo> items;
-	items.reserve(MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT);
 
 	vector<int32_t> itemQueue;
 	itemQueue.reserve(BATTLE_ITEM_QUEUE_LENGTH);
@@ -93,6 +92,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 		{
 			itemQueue.emplace_back((*it)->GetNetworkID());
 			items = (*it)->GetValidUsingItems();
+			LogWriteTest("{0} 클라이언트 {1}개 아이템 장착중", (*it)->GetNetworkID(), items.size());
 
 			const size_t length = items.size();
 			log_assert(length <= MAX_USING_ITEM);
@@ -103,6 +103,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 				sum += slotInfo.item.GetActivePercent();
 			}
 
+			items.reserve(MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT);
 			CopySelf(items, BATTLE_ITEM_QUEUE_LOOP_COUNT - 1);
 
 			{

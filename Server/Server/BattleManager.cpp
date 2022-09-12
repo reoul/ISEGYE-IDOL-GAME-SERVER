@@ -44,18 +44,30 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 			}
 		}
 
+		const Client* pClient = clientIt->GetClientPtr();
+		const Client* pMinClient = minClientIt->GetClientPtr();
 		if (minClientIt != mUnMatchingClients.end())
 		{
 			// todo : 선공 정하는 로직 추가
-			int networkID1 = clientIt->GetClientPtr()->GetNetworkID();
-			int networkID2 = minClientIt->GetClientPtr()->GetNetworkID();
+			int networkID1 = pClient->GetNetworkID();
+			int networkID2 = pMinClient->GetNetworkID();
 
-			const int rand = gen();
-			list.push_back(rand ? networkID1 : networkID2);
-			list.push_back(rand ? networkID2 : networkID1);
+			const int16_t clientFirstAttackState = pClient->GetFirstAttackState();
+			const int16_t minClientFirstAttackState = pMinClient->GetFirstAttackState();
+			if(pClient->GetFirstAttackState() == pMinClient->GetFirstAttackState())
+			{
+				const int rand = gen();
+				list.push_back(rand ? networkID1 : networkID2);
+				list.push_back(rand ? networkID2 : networkID1);
+			}
+			else
+			{
+				list.push_back(clientFirstAttackState > minClientFirstAttackState ? networkID1 : networkID2);
+				list.push_back(clientFirstAttackState > minClientFirstAttackState ? networkID2 : networkID1);
+			}
 
-			clientIt->AddBattleCount(minClientIt->GetClientPtr());
-			minClientIt->AddBattleCount(clientIt->GetClientPtr());
+			clientIt->AddBattleCount(pMinClient);
+			minClientIt->AddBattleCount(pClient);
 
 			mMatchingClients.push_back(*minClientIt);
 			mUnMatchingClients.erase(minClientIt);
@@ -75,12 +87,22 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 			}
 
 			// todo : 선공 정하는 로직 추가
-			int networkID1 = clientIt->GetClientPtr()->GetNetworkID();
-			int networkID2 = ~minClientIt2->GetClientPtr()->GetNetworkID();
+			int networkID1 = pClient->GetNetworkID();
+			int networkID2 = ~pMinClient->GetNetworkID();
 
-			const int rand = gen();
-			list.push_back(rand ? networkID1 : networkID2);
-			list.push_back(rand ? networkID2 : networkID1);
+			const int16_t clientFirstAttackState = pClient->GetFirstAttackState();
+			const int16_t minClientFirstAttackState = pMinClient->GetFirstAttackState();
+			if (pClient->GetFirstAttackState() == pMinClient->GetFirstAttackState())
+			{
+				const int rand = gen();
+				list.push_back(rand ? networkID1 : networkID2);
+				list.push_back(rand ? networkID2 : networkID1);
+			}
+			else
+			{
+				list.push_back(clientFirstAttackState > minClientFirstAttackState ? networkID1 : networkID2);
+				list.push_back(clientFirstAttackState > minClientFirstAttackState ? networkID2 : networkID1);
+			}
 		}
 
 		mMatchingClients.push_back(*clientIt);

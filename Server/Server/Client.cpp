@@ -19,6 +19,13 @@ Client::Client()
 	, mUnUsingItems{}
 {
 	mName[0] = '\0';
+	static_assert(MAX_USING_ITEM == 6, "MAX_USING_ITEM is not 6");
+	mUsingItems[0].SetActivePercent(30);
+	mUsingItems[1].SetActivePercent(30);
+	mUsingItems[2].SetActivePercent(20);
+	mUsingItems[3].SetActivePercent(20);
+	mUsingItems[4].SetActivePercent(10);
+	mUsingItems[5].SetActivePercent(10);
 }
 
 void Client::Init()
@@ -135,7 +142,7 @@ void Client::TrySetDefaultUsingItem()
 	{
 		for (uint8_t slot1 = 0; slot1 < MAX_USING_ITEM; ++slot1)
 		{
-			const uint8_t slot2 = validUnUsingItems[0].index;
+			const uint8_t slot2 = validUnUsingItems.front().index;
 			SwapItem(slot1, slot2);
 			//cs_sc_changeItemSlotPacket packet(mNetworkID, slot1, slot2);
 			//mRoomPtr->SendPacketToAllClients(&packet);
