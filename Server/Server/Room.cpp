@@ -139,6 +139,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 								items.erase(iter);
 								break;
 							}
+							++iter;
 						}
 
 						if (loopLength == 0)
