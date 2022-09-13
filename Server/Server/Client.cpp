@@ -20,6 +20,8 @@ Client::Client()
 {
 	mName[0] = '\0';
 	static_assert(MAX_USING_ITEM == 6, "MAX_USING_ITEM is not 6");
+
+	// UsingItems 자리에 선공 확률 지정
 	mUsingItems[0].SetActivePercent(30);
 	mUsingItems[1].SetActivePercent(30);
 	mUsingItems[2].SetActivePercent(20);
