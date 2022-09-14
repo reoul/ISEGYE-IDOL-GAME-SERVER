@@ -27,7 +27,17 @@ inline uint8_t Item::GetType() const
 	return mType;
 }
 
+inline void Item::SetType(uint8_t type)
+{
+	mType = type;
+}
+
 inline uint8_t Item::GetActivePercent() const
 {
 	return mActivePercent;
+}
+
+inline void Item::SetActivePercent(uint8_t percent)
+{
+	mActivePercent = percent;
 }
