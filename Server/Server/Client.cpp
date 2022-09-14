@@ -139,21 +139,33 @@ void Client::AddItem(uint8_t type)
 void Client::TrySetDefaultUsingItem()
 {
 	vector<SlotInfo> validUnUsingItems = GetValidUnUsingItems();
-
+	vector<uint8_t> usingItemTypes;
+	usingItemTypes.reserve(MAX_USING_ITEM);
 	if (!validUnUsingItems.empty() && GetValidUsingItems().empty())
 	{
-		for (uint8_t slot1 = 0; slot1 < MAX_USING_ITEM; ++slot1)
+		uint8_t slot1 = 0;
+		for (auto it = validUnUsingItems.begin(); it != validUnUsingItems.end();)
 		{
-			const uint8_t slot2 = validUnUsingItems.front().index;
-			SwapItem(slot1, slot2);
-			//cs_sc_changeItemSlotPacket packet(mNetworkID, slot1, slot2);
-			//mRoomPtr->SendPacketToAllClients(&packet);
-
-			validUnUsingItems.erase(validUnUsingItems.begin());
-			if (validUnUsingItems.empty())
+			// 중복 검사
+			bool isUsing = false;
+			for (auto usingItemVectorIt = usingItemTypes.begin(); usingItemVectorIt != usingItemTypes.end(); ++usingItemVectorIt)
 			{
-				break;
+				if (*usingItemVectorIt == it->item.GetType())
+				{
+					isUsing = true;
+					break;
+				}
 			}
+
+			// 중복 없을 시 장착
+			if (!isUsing)
+			{
+				const uint8_t slot2 = it->index;
+				SwapItem(slot1++, slot2);
+				it = validUnUsingItems.erase(it);
+				continue;
+			}
+			++it;
 		}
 	}
 }
