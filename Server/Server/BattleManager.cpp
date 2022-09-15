@@ -46,7 +46,7 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 		}
 
 		const Client* pClient = clientIt->GetClientPtr();
-		const Client* pMinClient;
+		const Client* pMinClient = nullptr;
 		if (minClientIt != mUnMatchingClients.end())
 		{
 			pMinClient = minClientIt->GetClientPtr();
