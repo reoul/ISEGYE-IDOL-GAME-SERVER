@@ -14,7 +14,6 @@
 #include "GlobalVariable.h"
 #include "Client.h"
 #include "reoul/logger.h"
-#include <chrono>
 
 using namespace std;
 
@@ -51,35 +50,9 @@ int main()
 	}
 	Log("{0}개의 쓰레드 작동", std::thread::hardware_concurrency());
 
-	std::chrono::system_clock::time_point lastPintTime = std::chrono::system_clock::now();
-	std::chrono::seconds tiveSecond(5);
-
-	sc_pingPacket pingPacket;
-	string str;
-	while (true)
+	while (g_bIsRunningServer)
 	{
-		// 주기적으로 클라이언트 연결 확인용 패킷 전송
-		if (std::chrono::system_clock::now() >= lastPintTime + tiveSecond)
-		{
-			size_t aliveClientCount = 0;
-			for (int i =0; i < MAX_USER; ++i)
-			{
-				if (g_clients[i].GetStatus() == ESocketStatus::ACTIVE)
-				{
-					++aliveClientCount;
-					SendPacket(i, &pingPacket);
-				}
-			}
-			lastPintTime = std::chrono::system_clock::now();
-			Log("ping 패킷 전송 (활성화된 클라이언트 : {0})", aliveClientCount);
-		}
-
 		g_roomManager.TrySendBattleInfo();
-
-		if (!g_bIsRunningServer)
-		{
-			break;
-		}
 	}
 
 	for (auto& th : workerThreads)
@@ -334,6 +307,31 @@ void WorkerThread()
 				{
 					g_clients[userID].SetPrevSize(0); //이전에 받아둔 조각이 없으니 0
 					g_clients[userID].SetSocket(clientSocket);
+
+					// keepalive 설정
+					struct tcp_keepalive
+					{
+						u_long onoff;
+						u_long keepalivetime;
+						u_long keepaliveinterval;
+					};
+
+					DWORD dwError = 0L;
+					tcp_keepalive sKA_Settings = { 0 }, sReturned = { 0 };
+					sKA_Settings.onoff = 1;
+					sKA_Settings.keepalivetime = 5500;        // Keep Alive in 5.5 sec.
+					sKA_Settings.keepaliveinterval = 500;        // Resend if No-Reply
+
+					DWORD dwBytes;
+					// SIO_KEEPALIVE_VALS 대신에 _WSAIOW(IOC_VENDOR, 4) 사용
+					// mstcpip.h 인클루드하면 error 발생
+					if (WSAIoctl(clientSocket, _WSAIOW(IOC_VENDOR, 4), &sKA_Settings,
+						sizeof(sKA_Settings), &sReturned, sizeof(sReturned), &dwBytes, NULL, NULL) != 0)
+					{
+						dwError = WSAGetLastError();
+						log_assert(false);
+						//TRACE(_T("SIO_KEEPALIVE_VALS result : %dn"), WSAGetLastError());
+					}
 
 					ZeroMemory(&g_clients[userID].GetRecvOver().over, sizeof(g_clients[userID].GetRecvOver().over));
 					g_clients[userID].GetRecvOver().type = EOperationType::Recv;
