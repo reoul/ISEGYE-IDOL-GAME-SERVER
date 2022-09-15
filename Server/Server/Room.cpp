@@ -15,7 +15,6 @@ Room::Room()
 	, mNumber(0)
 	, mIsRun(false)
 	, mCapacity(MAX_ROOM_PLAYER)
-	, mBattleReadyCount(0)
 {
 }
 
@@ -202,7 +201,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 void Room::TrySendBattleInfo()
 {
 	lock_guard<mutex> lg(cLock);
-	if (mBattleReadyCount < mSize)
+	if (GetBattleReadyCount() < mSize)
 	{
 		return;
 	}
@@ -214,16 +213,10 @@ void Room::TrySendBattleInfo()
 
 	SendRandomItemQueue();
 
-	mBattleReadyCount = 0;
-}
-
-void Room::BattleReady()
-{
+	for (Client* pClient : mClients)
 	{
-		lock_guard<mutex> lg(cLock);
-		++mBattleReadyCount;
+		pClient->SetBattleReady(false);
 	}
-	Log("{0}번 룸 전투 준비 카운트 증가 (현재 {1}/{2})", mNumber, mBattleReadyCount, mSize);
 }
 
 void Room::Init()
@@ -231,8 +224,21 @@ void Room::Init()
 	mClients.clear();
 	mSize = 0;
 	mIsRun = false;
-	mBattleReadyCount = 0;
 	Log("{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, g_roomManager.GetUsingRoomCount());
+}
+
+size_t Room::GetBattleReadyCount() const
+{
+	size_t cnt = 0;
+	for (const Client* client : mClients)
+	{
+		if(client->IsBattleReady())
+		{
+			++cnt;
+		}
+	}
+
+	return cnt;
 }
 
 void Room::SendRandomItemQueue()

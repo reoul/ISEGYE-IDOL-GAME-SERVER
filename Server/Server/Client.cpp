@@ -15,10 +15,11 @@ Client::Client()
 	, mStatus(ESocketStatus::FREE)
 	, mCharacterType(ECharacterType::Woowakgood)
 	, mRoomPtr(nullptr)
+	, mName{}
 	, mUsingItems{}
 	, mUnUsingItems{}
+	, mFirstAttackState(0)
 {
-	mName[0] = '\0';
 	static_assert(MAX_USING_ITEM == 6, "MAX_USING_ITEM is not 6");
 
 	// UsingItems 자리에 선공 확률 지정
@@ -36,7 +37,7 @@ void Client::Init()
 	mPrevSize = 0;
 	memset(mPacketBuf, 0, MAX_PACKET_SIZE);
 	mIsAlive = false;
-	mCharacterType = ECharacterType::Woowakgood;		// todo : 클라이언트 연결 끊겼을때 Init 적용하기
+	mCharacterType = ECharacterType::Woowakgood;
 	if (mRoomPtr != nullptr)
 	{
 		mRoomPtr->RemoveClient(*this);

@@ -21,11 +21,11 @@ public:
 	vector<Client*>& GetClients();
 	bool IsRun() const;
 	void SetIsRun(bool isRun);
-	void BattleReady();
 	void Init();
 	size_t GetSize() const;
 	size_t GetNumber() const;
 	void SetNumber(size_t number);
+	size_t GetBattleReadyCount() const;
 private:
 	void SendRandomItemQueue();
 	vector<Client*> mClients;
@@ -33,7 +33,6 @@ private:
 	size_t mNumber;
 	bool mIsRun;
 	const_wrapper<size_t> mCapacity;
-	int mBattleReadyCount;
 	BattleManager mBattleManager;
 };
 

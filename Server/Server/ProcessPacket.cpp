@@ -58,10 +58,14 @@ void ProcessPacket(int userID, char* buf)
 	case EPacketType::cs_battleReady:
 	{
 		const cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
-		g_clients[pPacket->networkID].TrySetDefaultUsingItem();
-		g_clients[pPacket->networkID].SetFirstAttackState(pPacket->firstAttackState);
-		g_clients[pPacket->networkID].GetRoomPtr()->BattleReady();
+		Client& client = g_clients[pPacket->networkID];
+		client.TrySetDefaultUsingItem();
+		client.SetFirstAttackState(pPacket->firstAttackState);
+		client.SetBattleReady(true);
+
 		Log("[cs_battleReady] 네트워크 {0}번 클라이언트 전투 준비 완료", pPacket->networkID);
+		const Room& room = *client.GetRoomPtr();
+		Log("{0}번 룸 전투 준비 카운트 증가 (현재 {1}/{2})", room.GetNumber(), room.GetBattleReadyCount(), room.GetSize());
 	}
 	break;
 	default:
