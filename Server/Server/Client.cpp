@@ -39,16 +39,15 @@ void Client::Init()
 	mCharacterType = ECharacterType::Woowakgood;		// todo : 클라이언트 연결 끊겼을때 Init 적용하기
 	if (mRoomPtr != nullptr)
 	{
-		lock_guard<mutex> lg(mRoomPtr->cLock);
 		mRoomPtr->RemoveClient(*this);
 		mRoomPtr = nullptr;
 	}
 	mName[0] = '\0';
-	for (Item item : mUsingItems)
+	for (Item& item : mUsingItems)
 	{
 		item.SetType(EMPTY_ITEM);
 	}
-	for (Item item : mUnUsingItems)
+	for (Item& item : mUnUsingItems)
 	{
 		item.SetType(EMPTY_ITEM);
 	}
