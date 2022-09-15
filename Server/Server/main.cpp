@@ -44,13 +44,11 @@ int main()
 	Log("서버 시작");
 
 	vector<thread> workerThreads;
-	SYSTEM_INFO si;
-	GetSystemInfo(&si);
-	for (ULONG i = 0; i < si.dwNumberOfProcessors * 2; ++i)
+	for (ULONG i = 0; i < std::thread::hardware_concurrency(); ++i)
 	{
 		workerThreads.emplace_back(WorkerThread);
 	}
-	Log("{0}개의 쓰레드 작동", si.dwNumberOfProcessors * 2);
+	Log("{0}개의 쓰레드 작동", std::thread::hardware_concurrency());
 
 	string str;
 	while (true)
