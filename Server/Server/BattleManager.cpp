@@ -92,7 +92,8 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 				}
 			}
 
-			// todo : 선공 정하는 로직 추가
+			pMinClient = minClientIt2->GetClientPtr();
+
 			int networkID1 = pClient->GetNetworkID();
 			int networkID2 = ~pMinClient->GetNetworkID();
 
