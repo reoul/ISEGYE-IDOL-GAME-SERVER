@@ -54,7 +54,6 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 
 		if (minClientIt != mUnMatchingClients.end())
 		{
-			// todo : 선공 정하는 로직 추가
 			int networkID1 = pClient->GetNetworkID();
 			int networkID2 = pMinClient->GetNetworkID();
 
