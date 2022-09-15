@@ -54,6 +54,8 @@ void Client::Init()
 		item.SetType(EMPTY_ITEM);
 	}
 	mStatus = ESocketStatus::FREE;
+	mFirstAttackState = 0;
+	mBattleReady = false;
 }
 
 vector<Item> Client::GetUsingItems() const
