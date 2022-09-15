@@ -206,7 +206,7 @@ void Room::TrySendBattleInfo()
 		return;
 	}
 
-	if (mSize <= 0)
+	if (mSize < 2)
 	{
 		return;
 	}
