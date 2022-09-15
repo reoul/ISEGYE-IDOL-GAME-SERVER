@@ -14,6 +14,7 @@
 #include "GlobalVariable.h"
 #include "Client.h"
 #include "reoul/logger.h"
+#include <chrono>
 
 using namespace std;
 
@@ -50,9 +51,29 @@ int main()
 	}
 	Log("{0}개의 쓰레드 작동", std::thread::hardware_concurrency());
 
+	std::chrono::system_clock::time_point lastPintTime = std::chrono::system_clock::now();
+	std::chrono::seconds tiveSecond(5);
+
+	sc_pingPacket pingPacket;
 	string str;
 	while (true)
 	{
+		// 주기적으로 클라이언트 연결 확인용 패킷 전송
+		if (std::chrono::system_clock::now() >= lastPintTime + tiveSecond)
+		{
+			size_t aliveClientCount = 0;
+			for (int i =0; i < MAX_USER; ++i)
+			{
+				if (g_clients[i].GetStatus() == ESocketStatus::ACTIVE)
+				{
+					++aliveClientCount;
+					SendPacket(i, &pingPacket);
+				}
+			}
+			lastPintTime = std::chrono::system_clock::now();
+			Log("ping 패킷 전송 (활성화된 클라이언트 : {0})", aliveClientCount);
+		}
+
 		g_roomManager.TrySendBattleInfo();
 
 		if (!g_bIsRunningServer)

@@ -23,6 +23,7 @@ enum class EPacketType : uint8_t
 	cs_sc_changeCharacter,
 	sc_battleInfo,
 	cs_battleReady,
+	sc_ping,
 };
 
 #pragma pack(push, 1)
@@ -220,6 +221,18 @@ struct cs_battleReadyPacket
 	const EPacketType type;
 	const int32_t networkID;
 	const int16_t firstAttackState;
+};
+
+struct sc_pingPacket
+{
+	const uint16_t size;
+	const EPacketType type;
+
+	sc_pingPacket()
+		: size(sizeof(sc_pingPacket))
+		, type(EPacketType::sc_ping)
+	{
+	}
 };
 
 #pragma pack(pop)
