@@ -19,6 +19,7 @@ Client::Client()
 	, mUsingItems{}
 	, mUnUsingItems{}
 	, mFirstAttackState(0)
+	, mBattleReady(false)
 {
 	static_assert(MAX_USING_ITEM == 6, "MAX_USING_ITEM is not 6");
 
