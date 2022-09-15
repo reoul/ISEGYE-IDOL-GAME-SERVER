@@ -57,11 +57,11 @@ void Room::RemoveClient(const Client& client)
 			mBattleManager.RemoveClient(client.GetNetworkID());
 			--mSize;
 		}
-	}
 
-	if (mSize == 0)
-	{
-		Init();
+		if (mSize == 0)
+		{
+			Init();
+		}
 	}
 }
 
