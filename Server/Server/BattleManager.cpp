@@ -1,5 +1,6 @@
 ﻿#include "BattleManager.h"
 #include <vector>
+#include <algorithm>
 #include "Random.h"
 #include "reoul/logger.h"
 #include "SettingData.h"
