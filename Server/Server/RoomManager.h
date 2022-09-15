@@ -12,6 +12,8 @@ public:
 	~RoomManager() = default;
 	Room& GetUnUsedRoom();
 	void TrySendBattleInfo();
+	size_t GetUsingRoomCount();
 private:
 	Room mRooms[MAX_ROOM_COUNT];
+	size_t mUsingRoomCount;
 };

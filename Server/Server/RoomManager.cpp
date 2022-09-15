@@ -2,6 +2,7 @@
 
 RoomManager::RoomManager()
 	: mRooms{}
+	, mUsingRoomCount(0)
 {
 	for (size_t i = 0; i < MAX_ROOM_COUNT; ++i)
 	{
@@ -35,4 +36,18 @@ void RoomManager::TrySendBattleInfo()
 			room.TrySendBattleInfo();
 		}
 	}
+}
+
+size_t RoomManager::GetUsingRoomCount()
+{
+	lock_guard<mutex> lg(cLock);
+	size_t cnt = 0;
+	for (const Room& room : mRooms)
+	{
+		if (room.IsRun())
+		{
+			++cnt;
+		}
+	}
+	return cnt;
 }
