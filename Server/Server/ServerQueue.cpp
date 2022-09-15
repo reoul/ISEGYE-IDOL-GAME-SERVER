@@ -82,7 +82,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 			node = node->Next;
 		}
 		room.AddClients(clients);
-		Log("{0}번 룸 활성화", room.GetNumber());
+		Log("{0}번 룸 활성화 (현재 활성화된 방 : {1})", room.GetNumber(), g_roomManager.GetUsingRoomCount());
 		mClientQueue = node;
 		if (node != nullptr)
 		{

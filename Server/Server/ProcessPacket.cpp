@@ -14,13 +14,13 @@ void ProcessPacket(int userID, char* buf)
 	case EPacketType::cs_startMatching:
 	{
 		const cs_startMatchingPacket* pPacket = reinterpret_cast<cs_startMatchingPacket*>(buf);
-		wcscpy(g_clients[pPacket->networkID].GetName(), pPacket->name);
-		g_clients[pPacket->networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
+		wcscpy(g_clients[userID].GetName(), pPacket->name);
+		g_clients[userID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
 
 		const Room* room = nullptr;
 		{
 			lock_guard<mutex> lg(g_serverQueue.GetMutex());
-			g_serverQueue.AddClient(&g_clients[pPacket->networkID]);
+			g_serverQueue.AddClient(&g_clients[userID]);
 			room = g_serverQueue.TryCreateRoomOrNullPtr();
 		}
 

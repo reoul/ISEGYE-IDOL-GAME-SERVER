@@ -215,6 +215,8 @@ void Disconnect(int userID)
 		g_serverQueue.RemoveClient(&g_clients[userID]);
 	}
 
+	Log("네트워크 {0}번 클라이언트 서버 접속 해제", userID);
+
 	{
 		lock_guard<mutex> lg(g_clients[userID].GetMutex());
 		g_clients[userID].SetStatus(ESocketStatus::ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
@@ -226,7 +228,6 @@ void Disconnect(int userID)
 		g_clients[userID].Init();
 	}
 
-	Log("네트워크 {0}번 클라이언트 서버 접속 해제", userID);
 }
 
 void WorkerThread()

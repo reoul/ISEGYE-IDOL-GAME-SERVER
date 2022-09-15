@@ -46,7 +46,12 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 		}
 
 		const Client* pClient = clientIt->GetClientPtr();
-		const Client* pMinClient = minClientIt->GetClientPtr();
+		const Client* pMinClient;
+		if (minClientIt != mUnMatchingClients.end())
+		{
+			pMinClient = minClientIt->GetClientPtr();
+		}
+
 		if (minClientIt != mUnMatchingClients.end())
 		{
 			// todo : 선공 정하는 로직 추가

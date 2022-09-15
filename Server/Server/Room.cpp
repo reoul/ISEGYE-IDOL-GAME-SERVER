@@ -6,6 +6,7 @@
 #include "Client.h"
 #include "Random.h"
 #include "PacketStruct.h"
+#include "GlobalVariable.h"
 
 void SendPacket(int userID, void* pPacket);
 
@@ -20,16 +21,19 @@ Room::Room()
 
 void Room::AddClients(vector<Client*>& clients)
 {
-	if (mSize == mCapacity)
 	{
-		return;
-	}
+		lock_guard<mutex> lg(cLock);
+		if (mSize == mCapacity)
+		{
+			return;
+		}
 
-	for (Client* client : clients)
-	{
-		++mSize;
-		mClients.emplace_back(client);
-		client->SetRoom(this);
+		for (Client* client : clients)
+		{
+			++mSize;
+			mClients.emplace_back(client);
+			client->SetRoom(this);
+		}
 	}
 
 	mBattleManager.SetClients(clients);
@@ -37,20 +41,23 @@ void Room::AddClients(vector<Client*>& clients)
 
 void Room::RemoveClient(const Client& client)
 {
-	auto it = mClients.cbegin();
-	for (; it != mClients.cend(); ++it)
 	{
-		if (*it == &client)
+		lock_guard<mutex> lg(cLock);
+		auto it = mClients.cbegin();
+		for (; it != mClients.cend(); ++it)
 		{
-			break;
+			if (*it == &client)
+			{
+				break;
+			}
 		}
-	}
 
-	if (it != mClients.cend())
-	{
-		mClients.erase(it);
-		mBattleManager.RemoveClient(client.GetNetworkID());
-		--mSize;
+		if (it != mClients.cend())
+		{
+			mClients.erase(it);
+			mBattleManager.RemoveClient(client.GetNetworkID());
+			--mSize;
+		}
 	}
 
 	if (mSize == 0)
@@ -86,86 +93,84 @@ vector<int32_t> Room::GetRandomItemQueue()
 
 	vector<int32_t> itemQueue;
 	itemQueue.reserve(BATTLE_ITEM_QUEUE_LENGTH);
+
+	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
-		lock_guard<mutex> lg(cLock);
-		for (auto it = mClients.begin(); it != mClients.end(); ++it)
+		itemQueue.emplace_back((*it)->GetNetworkID());
+		items = (*it)->GetValidUsingItems();
+		LogWriteTest("{0} 클라이언트 {1}개 아이템 장착중", (*it)->GetNetworkID(), items.size());
+
+		const size_t length = items.size();
+		log_assert(length <= MAX_USING_ITEM);
+
+		int sum = 0;
+		for (const SlotInfo& slotInfo : items)
 		{
-			itemQueue.emplace_back((*it)->GetNetworkID());
-			items = (*it)->GetValidUsingItems();
-			LogWriteTest("{0} 클라이언트 {1}개 아이템 장착중", (*it)->GetNetworkID(), items.size());
-
-			const size_t length = items.size();
-			log_assert(length <= MAX_USING_ITEM);
-
-			int sum = 0;
-			for (const SlotInfo& slotInfo : items)
-			{
-				sum += slotInfo.item.GetActivePercent();
-			}
-
-			items.reserve(MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT);
-			CopySelf(items, BATTLE_ITEM_QUEUE_LOOP_COUNT - 1);
-
-			{
-				if (items.empty())
-				{
-					for (size_t i = 0; i < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++i)
-					{
-						itemQueue.emplace_back(EMPTY_ITEM);
-						itemQueue.emplace_back(ACTIVATE_ITEM);
-					}
-				}
-				else
-				{
-					int loopSum = sum;
-					size_t loopLength = length;
-
-					while (!items.empty())
-					{
-						Random<int> gen(0, loopSum - 1);
-						int rand = gen();
-
-						auto iter = items.begin();
-						for (size_t i = 0; i < loopLength; ++i)
-						{
-							const int itemActivePercent = iter->item.GetActivePercent();
-							rand -= itemActivePercent;
-							if (rand < 0)
-							{
-								--loopLength;
-								loopSum -= itemActivePercent;
-								itemQueue.emplace_back(iter->index);
-								itemQueue.emplace_back(ACTIVATE_ITEM);
-								items.erase(iter);
-								break;
-							}
-							++iter;
-						}
-
-						if (loopLength == 0)
-						{
-							loopSum = sum;
-							loopLength = length;
-
-							const int lockSlotCnt = (*it)->GetLockSlotCount();
-							for (size_t i = 0; i < MAX_USING_ITEM - length - lockSlotCnt; ++i)
-							{
-								itemQueue.emplace_back(EMPTY_ITEM);
-								itemQueue.emplace_back(ACTIVATE_ITEM);
-							}
-
-							for (size_t i = 0; i < lockSlotCnt; ++i)
-							{
-								itemQueue.emplace_back(LOCK_ITEM);
-								itemQueue.emplace_back(DISABLE_ITEM);
-							}
-						}
-					}
-				}
-			}
-
-			items.clear();
+			sum += slotInfo.item.GetActivePercent();
 		}
+
+		items.reserve(MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT);
+		CopySelf(items, BATTLE_ITEM_QUEUE_LOOP_COUNT - 1);
+
+		{
+			if (items.empty())
+			{
+				for (size_t i = 0; i < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++i)
+				{
+					itemQueue.emplace_back(EMPTY_ITEM);
+					itemQueue.emplace_back(DISABLE_ITEM);
+				}
+			}
+			else
+			{
+				int loopSum = sum;
+				size_t loopLength = length;
+
+				while (!items.empty())
+				{
+					Random<int> gen(0, loopSum - 1);
+					int rand = gen();
+
+					auto iter = items.begin();
+					for (size_t i = 0; i < loopLength; ++i)
+					{
+						const int itemActivePercent = iter->item.GetActivePercent();
+						rand -= itemActivePercent;
+						if (rand < 0)
+						{
+							--loopLength;
+							loopSum -= itemActivePercent;
+							itemQueue.emplace_back(iter->index);
+							itemQueue.emplace_back(ACTIVATE_ITEM);
+							items.erase(iter);
+							break;
+						}
+						++iter;
+					}
+
+					if (loopLength == 0)
+					{
+						loopSum = sum;
+						loopLength = length;
+
+						const int lockSlotCnt = (*it)->GetLockSlotCount();
+						for (size_t i = 0; i < MAX_USING_ITEM - length - lockSlotCnt; ++i)
+						{
+							itemQueue.emplace_back(EMPTY_ITEM);
+							itemQueue.emplace_back(DISABLE_ITEM);
+						}
+
+						for (size_t i = 0; i < lockSlotCnt; ++i)
+						{
+							itemQueue.emplace_back(LOCK_ITEM);
+							itemQueue.emplace_back(DISABLE_ITEM);
+						}
+					}
+				}
+			}
+		}
+
+		items.clear();
 	}
 
 	for (size_t i = 0; i < MAX_ROOM_PLAYER - mSize; ++i)
@@ -196,25 +201,28 @@ vector<int32_t> Room::GetRandomItemQueue()
 
 void Room::TrySendBattleInfo()
 {
-	if (mSize == 0)
+	lock_guard<mutex> lg(cLock);
+	if (mBattleReadyCount < mSize)
 	{
 		return;
 	}
 
-	if (mBattleReadyCount >= mSize)
+	if (mSize <= 0)
 	{
-		{
-			lock_guard<mutex> lg(cLock);
-			mBattleReadyCount = 0;
-		}
-		SendRandomItemQueue();
+		return;
 	}
+
+	SendRandomItemQueue();
+
+	mBattleReadyCount = 0;
 }
 
 void Room::BattleReady()
 {
-	lock_guard<mutex> lg(cLock);
-	++mBattleReadyCount;
+	{
+		lock_guard<mutex> lg(cLock);
+		++mBattleReadyCount;
+	}
 	Log("{0}번 룸 전투 준비 카운트 증가 (현재 {1}/{2})", mNumber, mBattleReadyCount, mSize);
 }
 
@@ -224,13 +232,14 @@ void Room::Init()
 	mSize = 0;
 	mIsRun = false;
 	mBattleReadyCount = 0;
-	Log("{0}번 룸 비활성화", mNumber);
+	Log("{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, g_roomManager.GetUsingRoomCount());
 }
 
 void Room::SendRandomItemQueue()
 {
-	const vector<int32_t> battleOpponent = mBattleManager.GetBattleOpponent();
-	const vector<int32_t> itemQueue = GetRandomItemQueue();
+	vector<int32_t> battleOpponent = mBattleManager.GetBattleOpponent();
+	vector<int32_t> itemQueue = GetRandomItemQueue();
+
 	sc_battleInfoPacket packet(battleOpponent, itemQueue);
 	SendPacketToAllClients(&packet);
 }
