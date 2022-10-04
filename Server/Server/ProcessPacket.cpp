@@ -17,7 +17,7 @@ void ProcessPacket(int userID, char* buf)
 		wcscpy(g_clients[userID].GetName(), pPacket->name);
 		g_clients[userID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
 
-		const Room* room = nullptr;
+		Room* room = nullptr;
 		{
 			lock_guard<mutex> lg(g_serverQueue.GetMutex());
 			g_serverQueue.AddClient(&g_clients[userID]);
@@ -34,38 +34,72 @@ void ProcessPacket(int userID, char* buf)
 	case EPacketType::cs_sc_addNewItem:
 	{
 		cs_sc_AddNewItemPacket* pPacket = reinterpret_cast<cs_sc_AddNewItemPacket*>(buf);
-		Client& client = g_clients[pPacket->networkID];
+		Client& client = g_clients[userID];
 		client.AddItem(pPacket->itemCode);
 		Log("[cs_sc_addNewItem] 네트워크 {0}번 클라이언트 {1}번 아이템 추가", pPacket->networkID, pPacket->itemCode);
-		client.SendPacketInAnotherRoomClients(pPacket);
+		
+		if (g_clients[userID].GetRoomPtr() != nullptr)
+		{
+			lock_guard<mutex> lg(client.GetRoomPtr()->cLock);
+			client.SendPacketInAnotherRoomClients(pPacket);
+		}
+		else
+		{
+			log_assert(false);
+		}
 	}
 	break;
 	case EPacketType::cs_sc_changeCharacter:
 	{
 		cs_sc_changeCharacterPacket* pPacket = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
 		Log("[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, static_cast<int>(pPacket->characterType));
-		g_clients[pPacket->networkID].SendPacketInAnotherRoomClients(pPacket);
+
+		if (g_clients[userID].GetRoomPtr() != nullptr)
+		{
+			lock_guard<mutex> lg(g_clients[userID].GetRoomPtr()->cLock);
+			g_clients[userID].SendPacketInAnotherRoomClients(pPacket);
+		}
+		else
+		{
+			log_assert(false);
+		}
 	}
 	break;
 	case EPacketType::cs_sc_changeItemSlot:
 	{
 		cs_sc_changeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
-		g_clients[pPacket->networkID].SwapItem(pPacket->slot1, pPacket->slot2);
+		g_clients[userID].SwapItem(pPacket->slot1, pPacket->slot2);
 		Log("[cs_sc_changeItemSlot] 네트워크 {0}번 클라이언트 아이템 슬롯 {1} <-> {2} 교체", pPacket->networkID, pPacket->slot1, pPacket->slot2);
-		g_clients[pPacket->networkID].SendPacketInAllRoomClients(pPacket);
+		
+		if (g_clients[userID].GetRoomPtr() != nullptr)
+		{
+			lock_guard<mutex> lg(g_clients[userID].GetRoomPtr()->cLock);
+			g_clients[userID].SendPacketInAllRoomClients(pPacket);
+		}
+		else
+		{
+			log_assert(false);
+		}
 	}
 	break;
 	case EPacketType::cs_battleReady:
 	{
 		const cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
-		Client& client = g_clients[pPacket->networkID];
+		Client& client = g_clients[userID];
 		client.TrySetDefaultUsingItem();
 		client.SetFirstAttackState(pPacket->firstAttackState);
 		client.SetBattleReady(true);
 
 		Log("[cs_battleReady] 네트워크 {0}번 클라이언트 전투 준비 완료", pPacket->networkID);
-		const Room& room = *client.GetRoomPtr();
-		Log("{0}번 룸 전투 준비 카운트 증가 (현재 {1}/{2})", room.GetNumber(), room.GetBattleReadyCount(), room.GetSize());
+		if (client.GetRoomPtr() != nullptr)
+		{
+			Room& room = *client.GetRoomPtr();
+			Log("{0}번 룸 전투 준비 카운트 증가 (현재 {1}/{2})", room.GetNumber(), room.GetBattleReadyCount(), room.GetSize()); // 락 안걸어서 준비 카운팅이 겹칠수 있음
+		}
+		else
+		{
+			log_assert(false);
+		}
 	}
 	break;
 	default:
