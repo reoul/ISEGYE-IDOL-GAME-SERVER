@@ -4,10 +4,10 @@
 
 HANDLE Server::sIocp;
 SOCKET Server::sListenSocket;
-Client Server::mClients[MAX_USER];
-RoomManager Server::mRoomManager;
-bool Server::mIsRunningServer = true;
-ServerQueue Server::mServerQueue;
+Client Server::sClients[MAX_USER];
+RoomManager Server::sRoomManager;
+bool Server::sIsRunningServer = true;
+ServerQueue Server::sServerQueue;
 
 
 
@@ -15,7 +15,7 @@ void Server::Start()
 {
 	for (int i = 0; i < MAX_USER; ++i)
 	{
-		mClients[i].SetNetworkID(i);
+		sClients[i].SetNetworkID(i);
 	}
 
 	sIocp = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, NULL, 0);
@@ -61,9 +61,9 @@ void Server::Start()
 	}
 	Log("{0}개의 쓰레드 작동", std::thread::hardware_concurrency());
 
-	while (mIsRunningServer)
+	while (sIsRunningServer)
 	{
-		mRoomManager.TrySendBattleInfo();
+		sRoomManager.TrySendBattleInfo();
 	}
 
 	for (auto& th : workerThreads)
@@ -85,7 +85,7 @@ void Server::WorkerThread()
 		DWORD errorCode = ::GetLastError();
 
 		// 서버가 끝낸 상태
-		if (!mIsRunningServer)
+		if (!sIsRunningServer)
 		{
 			break;
 		}
@@ -112,7 +112,7 @@ void Server::WorkerThread()
 			}
 			else
 			{
-				Client& client = mClients[userID];
+				Client& client = sClients[userID];
 				PacketConstruct(userID, io_byte);
 				ZeroMemory(&client.GetRecvOver().over, sizeof(client.GetRecvOver().over));
 				DWORD flags = 0;
@@ -134,10 +134,10 @@ void Server::WorkerThread()
 			int userID = -1;
 			for (int i = 0; i < MAX_USER; ++i)
 			{
-				lock_guard<mutex> gl{ mClients[i].GetMutex() }; //이렇게 하면 unlock이 필요 없다. 이 블록에서 빠져나갈때 unlock을 자동으로 해준다.
-				if (ESocketStatus::FREE == mClients[i].GetStatus())
+				lock_guard<mutex> gl{ sClients[i].GetMutex() }; //이렇게 하면 unlock이 필요 없다. 이 블록에서 빠져나갈때 unlock을 자동으로 해준다.
+				if (ESocketStatus::FREE == sClients[i].GetStatus())
 				{
-					mClients[i].SetStatus(ESocketStatus::ALLOCATED);
+					sClients[i].SetStatus(ESocketStatus::ALLOCATED);
 					userID = i;
 					break;
 				}
@@ -158,8 +158,8 @@ void Server::WorkerThread()
 				}
 				else
 				{
-					mClients[userID].SetPrevSize(0); //이전에 받아둔 조각이 없으니 0
-					mClients[userID].SetSocket(clientSocket);
+					sClients[userID].SetPrevSize(0); //이전에 받아둔 조각이 없으니 0
+					sClients[userID].SetSocket(clientSocket);
 
 					// keepalive 설정
 					struct tcp_keepalive
@@ -186,17 +186,17 @@ void Server::WorkerThread()
 						//TRACE(_T("SIO_KEEPALIVE_VALS result : %dn"), WSAGetLastError());
 					}
 
-					ZeroMemory(&mClients[userID].GetRecvOver().over, sizeof(mClients[userID].GetRecvOver().over));
-					mClients[userID].GetRecvOver().type = EOperationType::Recv;
-					mClients[userID].GetRecvOver().wsabuf.buf = mClients[userID].GetRecvOver().io_buf;
-					mClients[userID].GetRecvOver().wsabuf.len = MAX_BUF_SIZE;
+					ZeroMemory(&sClients[userID].GetRecvOver().over, sizeof(sClients[userID].GetRecvOver().over));
+					sClients[userID].GetRecvOver().type = EOperationType::Recv;
+					sClients[userID].GetRecvOver().wsabuf.buf = sClients[userID].GetRecvOver().io_buf;
+					sClients[userID].GetRecvOver().wsabuf.len = MAX_BUF_SIZE;
 
 					NewClientEvent(userID);
 
-					mClients[userID].SetStatus(ESocketStatus::ACTIVE);
+					sClients[userID].SetStatus(ESocketStatus::ACTIVE);
 
 					DWORD flags = 0;
-					::WSARecv(clientSocket, &mClients[userID].GetRecvOver().wsabuf, 1, NULL, &flags, &mClients[userID].GetRecvOver().over, NULL);
+					::WSARecv(clientSocket, &sClients[userID].GetRecvOver().wsabuf, 1, NULL, &flags, &sClients[userID].GetRecvOver().over, NULL);
 				}
 			}
 			//소켓 초기화 후 다시 accept
@@ -220,27 +220,27 @@ void Server::NewClientEvent(int32_t networkID)
 
 void Server::Disconnect(int networkID)
 {
-	if (mClients[networkID].GetStatus() == ESocketStatus::FREE)
+	if (sClients[networkID].GetStatus() == ESocketStatus::FREE)
 	{
 		return;
 	}
 
 	{
-		lock_guard<mutex> lg(mServerQueue.GetMutex());
-		mServerQueue.RemoveClient(&mClients[networkID]);
+		lock_guard<mutex> lg(sServerQueue.GetMutex());
+		sServerQueue.RemoveClient(&sClients[networkID]);
 	}
 
 	Log("네트워크 {0}번 클라이언트 서버 접속 해제", networkID);
 
 	{
-		lock_guard<mutex> lg(mClients[networkID].GetMutex());
-		mClients[networkID].SetStatus(ESocketStatus::ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
+		lock_guard<mutex> lg(sClients[networkID].GetMutex());
+		sClients[networkID].SetStatus(ESocketStatus::ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
 
-		::closesocket(mClients[networkID].GetSocket());
+		::closesocket(sClients[networkID].GetSocket());
 
 		wchar_t name[MAX_USER_NAME_LENGTH];
-		wcscpy(name, mClients[networkID].GetName());
-		mClients[networkID].Init();
+		wcscpy(name, sClients[networkID].GetName());
+		sClients[networkID].Init();
 	}
 
 }
@@ -252,7 +252,7 @@ void Server::Disconnect(int networkID)
  */
 void Server::PacketConstruct(int networkID, int ioByteLength)
 {
-	Client& curUser = mClients[networkID];
+	Client& curUser = sClients[networkID];
 	Exover& recvOver = curUser.GetRecvOver();
 
 	int restByte = ioByteLength;		//이만큼 남은걸 처리해줘야 한다
@@ -314,7 +314,7 @@ void Server::PacketConstruct(int networkID, int ioByteLength)
 
 void Server::SendDisconnect(int networkID)
 {
-	if (mClients[networkID].GetStatus() != ESocketStatus::ACTIVE)
+	if (sClients[networkID].GetStatus() != ESocketStatus::ACTIVE)
 	{
 		return;
 	}
@@ -330,14 +330,14 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_startMatching:
 	{
 		const cs_startMatchingPacket* pPacket = reinterpret_cast<cs_startMatchingPacket*>(buf);
-		wcscpy(mClients[networkID].GetName(), pPacket->name);
-		mClients[networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
+		wcscpy(sClients[networkID].GetName(), pPacket->name);
+		sClients[networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
 
 		Room* room = nullptr;
 		{
-			lock_guard<mutex> lg(mServerQueue.GetMutex());
-			mServerQueue.AddClient(&mClients[networkID]);
-			room = mServerQueue.TryCreateRoomOrNullPtr();
+			lock_guard<mutex> lg(sServerQueue.GetMutex());
+			sServerQueue.AddClient(&sClients[networkID]);
+			room = sServerQueue.TryCreateRoomOrNullPtr();
 		}
 
 		if (room != nullptr) // 방을 만들 수 있다면
@@ -350,11 +350,11 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_sc_addNewItem:
 	{
 		cs_sc_AddNewItemPacket* pPacket = reinterpret_cast<cs_sc_AddNewItemPacket*>(buf);
-		Client& client = mClients[networkID];
+		Client& client = sClients[networkID];
 		client.AddItem(pPacket->itemCode);
 		Log("[cs_sc_addNewItem] 네트워크 {0}번 클라이언트 {1}번 아이템 추가", pPacket->networkID, pPacket->itemCode);
 
-		if (mClients[networkID].GetRoomPtr() != nullptr)
+		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
 			lock_guard<mutex> lg(client.GetRoomPtr()->cLock);
 			client.SendPacketInAnotherRoomClients(pPacket);
@@ -370,10 +370,10 @@ void Server::ProcessPacket(int networkID, char* buf)
 		cs_sc_changeCharacterPacket* pPacket = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
 		Log("[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, static_cast<int>(pPacket->characterType));
 
-		if (mClients[networkID].GetRoomPtr() != nullptr)
+		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
-			lock_guard<mutex> lg(mClients[networkID].GetRoomPtr()->cLock);
-			mClients[networkID].SendPacketInAnotherRoomClients(pPacket);
+			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
+			sClients[networkID].SendPacketInAnotherRoomClients(pPacket);
 		}
 		else
 		{
@@ -384,13 +384,13 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_sc_changeItemSlot:
 	{
 		cs_sc_changeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
-		mClients[networkID].SwapItem(pPacket->slot1, pPacket->slot2);
+		sClients[networkID].SwapItem(pPacket->slot1, pPacket->slot2);
 		Log("[cs_sc_changeItemSlot] 네트워크 {0}번 클라이언트 아이템 슬롯 {1} <-> {2} 교체", pPacket->networkID, pPacket->slot1, pPacket->slot2);
 
-		if (mClients[networkID].GetRoomPtr() != nullptr)
+		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
-			lock_guard<mutex> lg(mClients[networkID].GetRoomPtr()->cLock);
-			mClients[networkID].SendPacketInAllRoomClients(pPacket);
+			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
+			sClients[networkID].SendPacketInAllRoomClients(pPacket);
 		}
 		else
 		{
@@ -401,7 +401,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_battleReady:
 	{
 		const cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
-		Client& client = mClients[networkID];
+		Client& client = sClients[networkID];
 		client.TrySetDefaultUsingItem();
 		client.SetFirstAttackState(pPacket->firstAttackState);
 		client.SetBattleReady(true);
@@ -430,7 +430,7 @@ void Server::SendPacket(int networkID, void* pPacket)
 {
 	char* buf = reinterpret_cast<char*>(pPacket);
 
-	const Client& client = mClients[networkID];
+	const Client& client = sClients[networkID];
 
 	//WSASend의 두번째 인자의 over는 recv용이라 쓰면 안된다. 새로 만들어야 한다.
 	Exover* exover = new Exover;

@@ -23,8 +23,7 @@ int main()
 	std::locale::global(std::locale("Korean"));
 	SocketUtil::StaticInit();
 	LogInit();
-	Server server;
-	server.Start();
+	Server::Start();
 	
 	return 0;
 }

@@ -12,7 +12,7 @@ class Server
 {
 public:
 	Server() = default;
-	void Start();
+	static void Start();
 	static RoomManager& GetRoomManager();
 	static void SendPacket(int networkID, void* pPacket);
 	
@@ -26,13 +26,13 @@ private:
 	
 	static HANDLE sIocp;
 	static SOCKET sListenSocket;
-	static Client mClients[MAX_USER];
-	static RoomManager mRoomManager;
-	static bool mIsRunningServer;
-	static ServerQueue mServerQueue;
+	static Client sClients[MAX_USER];
+	static RoomManager sRoomManager;
+	static bool sIsRunningServer;
+	static ServerQueue sServerQueue;
 };
 
 inline RoomManager& Server::GetRoomManager()
 {
-	return mRoomManager;
+	return sRoomManager;
 }
