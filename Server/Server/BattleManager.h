@@ -23,13 +23,14 @@ private:
 		size_t battleCount;
 		BattleHistory(Client* client);
 	};
+
 	class BattleInfo
 	{
 	public:
-		BattleInfo(Client* client, const std::vector<Client*>& clients);
+		BattleInfo(Client& client, const std::vector<Client*>& clients);
 		const Client* GetClientPtr() const;
-		size_t GetBattleCount(const Client* c) const;
-		void AddBattleCount(const Client* client);
+		size_t GetBattleCount(const Client& c) const;
+		void AddBattleCount(const Client& client);
 		void RemoveClient(int32_t networkID);
 	private:
 		const_wrapper<Client*> mClient;

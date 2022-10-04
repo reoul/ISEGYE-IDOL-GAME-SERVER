@@ -211,7 +211,7 @@ void Server::WorkerThread()
 	}
 }
 
-void Server::NewClientEvent(int32_t networkID)
+void Server::NewClientEvent(int networkID)
 {
 	Log("네트워크 {0}번 클라이언트 서버 접속", networkID);
 	sc_connectServerPacket connectServerPacket(networkID);
@@ -227,7 +227,7 @@ void Server::Disconnect(int networkID)
 
 	{
 		lock_guard<mutex> lg(sServerQueue.GetMutex());
-		sServerQueue.RemoveClient(&sClients[networkID]);
+		sServerQueue.RemoveClient(sClients[networkID]);
 	}
 
 	Log("네트워크 {0}번 클라이언트 서버 접속 해제", networkID);
@@ -264,17 +264,6 @@ void Server::PacketConstruct(int networkID, int ioByteLength)
 	{
 		packetSize = reinterpret_cast<uint16_t*>(curUser.GetPacketBuf())[0]; //재조립을 기다기는 패킷 사이즈
 	}
-
-	/*cout << rest_byte << " ";
-	cs_test_data* data = reinterpret_cast<cs_test_data*>(p);
-	while (rest_byte > 0)
-	{
-		cout << data->a << " " << data->b << " " << data->c << " || ";
-		rest_byte -= sizeof(cs_test_data);
-		++data;
-	}
-
-	cout << endl;*/
 
 	LogWrite("네트워크 {0}번 클라이언트 {1}Byte 패킷 받음", networkID, ioByteLength);
 
@@ -336,7 +325,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		Room* room = nullptr;
 		{
 			lock_guard<mutex> lg(sServerQueue.GetMutex());
-			sServerQueue.AddClient(&sClients[networkID]);
+			sServerQueue.AddClient(sClients[networkID]);
 			room = sServerQueue.TryCreateRoomOrNullPtr();
 		}
 
@@ -428,7 +417,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 void Server::SendPacket(int networkID, void* pPacket)
 {
-	char* buf = reinterpret_cast<char*>(pPacket);
+	char* buf = static_cast<char*>(pPacket);
 
 	const Client& client = sClients[networkID];
 

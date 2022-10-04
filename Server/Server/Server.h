@@ -12,6 +12,8 @@ class Server
 {
 public:
 	Server() = default;
+	Server(const Server&) = delete;
+	Server& operator=(const Server&) = delete;
 	static void Start();
 	static RoomManager& GetRoomManager();
 	static void SendPacket(int networkID, void* pPacket);
@@ -19,7 +21,7 @@ public:
 private:
 	static void WorkerThread();
 	static void Disconnect(int networkID);
-	static void NewClientEvent(int32_t networkID);
+	static void NewClientEvent(int networkID);
 	static void PacketConstruct(int networkID, int ioByteLength);
 	static void SendDisconnect(int networkID);
 	static void ProcessPacket(int networkID, char* buf);

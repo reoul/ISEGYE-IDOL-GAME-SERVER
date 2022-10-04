@@ -13,11 +13,11 @@ ServerQueue::ServerQueue()
 {
 }
 
-void ServerQueue::AddClient(Client* client)
+void ServerQueue::AddClient(Client& client)
 {
 	if (mSize == 0)
 	{
-		mClientQueue = make_shared<ServerQueueNode>(client);
+		mClientQueue = make_shared<ServerQueueNode>(&client);
 	}
 	else
 	{
@@ -26,21 +26,21 @@ void ServerQueue::AddClient(Client* client)
 		{
 			node = node->Next;
 		}
-		shared_ptr<ServerQueueNode> newClient = make_shared<ServerQueueNode>(client);
+		shared_ptr<ServerQueueNode> newClient = make_shared<ServerQueueNode>(&client);
 		node->Next = newClient;
 		newClient->Previous = node;
 	}
 
 	++mSize;
-	Log("네트워크 {0}번 클라이언트 대기열 추가 (현재 {1}명 대기중)", client->GetNetworkID(), mSize);
+	Log("네트워크 {0}번 클라이언트 대기열 추가 (현재 {1}명 대기중)", client.GetNetworkID(), mSize);
 }
 
-void ServerQueue::RemoveClient(Client* client)
+void ServerQueue::RemoveClient(Client& client)
 {
 	auto node = mClientQueue;
 	for (size_t i = 0; i < mSize; ++i)
 	{
-		if (node->GetClient() == client)
+		if (node->GetClient() == &client)
 		{
 			if (node == mClientQueue)
 			{
@@ -59,7 +59,7 @@ void ServerQueue::RemoveClient(Client* client)
 				}
 			}
 			--mSize;
-			Log("네트워크 {0}번 클라이언트 대기열 제거 (현재 {1}명 대기중)", client->GetNetworkID(), mSize);
+			Log("네트워크 {0}번 클라이언트 대기열 제거 (현재 {1}명 대기중)", client.GetNetworkID(), mSize);
 			break;
 		}
 		node = node->Next;

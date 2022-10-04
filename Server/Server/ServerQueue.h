@@ -14,8 +14,8 @@ public:
 	~ServerQueue() = default;
 	ServerQueue(const ServerQueue&) = delete;
 	ServerQueue& operator=(const ServerQueue&) = delete;
-	void AddClient(Client* client);
-	void RemoveClient(Client* client);
+	void AddClient(Client& client);
+	void RemoveClient(Client& client);
 	Room* TryCreateRoomOrNullPtr();
 	std::mutex& GetMutex();
 private:

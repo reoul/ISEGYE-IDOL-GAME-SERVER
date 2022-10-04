@@ -14,7 +14,7 @@ void BattleManager::SetClients(std::vector<Client*>& clients)
 
 	for (size_t player = 0; player < MAX_ROOM_PLAYER; ++player)
 	{
-		mUnMatchingClients.emplace_back(clients[player], clients);
+		mUnMatchingClients.emplace_back(*clients[player], clients);
 	}
 }
 
@@ -37,7 +37,7 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 		size_t minCount = INT64_MAX;
 		for (auto it = clientIt + 1; it != mUnMatchingClients.end(); ++it)
 		{
-			const size_t battleCount = it->GetBattleCount(clientIt->GetClientPtr());
+			const size_t battleCount = it->GetBattleCount(*clientIt->GetClientPtr());
 			if (battleCount < minCount)
 			{
 				minClientIt = it;
@@ -71,8 +71,8 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 				list.push_back(clientFirstAttackState > minClientFirstAttackState ? networkID2 : networkID1);
 			}
 
-			clientIt->AddBattleCount(pMinClient);
-			minClientIt->AddBattleCount(pClient);
+			clientIt->AddBattleCount(*pMinClient);
+			minClientIt->AddBattleCount(*pClient);
 
 			mMatchingClients.push_back(*minClientIt);
 			mUnMatchingClients.erase(minClientIt);
@@ -83,7 +83,7 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 			minCount = INT64_MAX;
 			for (auto it = mMatchingClients.begin(); it != mMatchingClients.end(); ++it)
 			{
-				const size_t battleCount = it->GetBattleCount(clientIt->GetClientPtr());
+				const size_t battleCount = it->GetBattleCount(*clientIt->GetClientPtr());
 				if (battleCount < minCount)
 				{
 					minClientIt2 = it;
@@ -153,11 +153,11 @@ BattleManager::BattleHistory::BattleHistory(Client* client)
 {
 }
 
-BattleManager::BattleInfo::BattleInfo(Client* client, const std::vector<Client*>& clients) : mClient(client)
+BattleManager::BattleInfo::BattleInfo(Client& client, const std::vector<Client*>& clients) : mClient(&client)
 {
 	for (Client* c : clients)
 	{
-		if (client->GetNetworkID() == c->GetNetworkID())
+		if (client.GetNetworkID() == c->GetNetworkID())
 		{
 			continue;
 		}
@@ -166,11 +166,11 @@ BattleManager::BattleInfo::BattleInfo(Client* client, const std::vector<Client*>
 	}
 }
 
-size_t BattleManager::BattleInfo::GetBattleCount(const Client* c) const
+size_t BattleManager::BattleInfo::GetBattleCount(const Client& c) const
 {
 	for (BattleHistory battleHistory : mBattleInfos)
 	{
-		if (c == battleHistory.pClient)
+		if (&c == battleHistory.pClient)
 		{
 			return battleHistory.battleCount;
 		}
@@ -178,11 +178,11 @@ size_t BattleManager::BattleInfo::GetBattleCount(const Client* c) const
 	return 0;
 }
 
-void BattleManager::BattleInfo::AddBattleCount(const Client* client)
+void BattleManager::BattleInfo::AddBattleCount(const Client& client)
 {
 	for (BattleHistory& battleHistory : mBattleInfos)
 	{
-		if (battleHistory.pClient == client)
+		if (battleHistory.pClient == &client)
 		{
 			++battleHistory.battleCount;
 		}
