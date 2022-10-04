@@ -46,7 +46,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
-    <EnableUnitySupport>true</EnableUnitySupport>
+    <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -54,7 +54,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <EnableUnitySupport>true</EnableUnitySupport>
+    <EnableUnitySupport>false</EnableUnitySupport>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -168,9 +168,9 @@
     <ClCompile Include="GlobalVariable.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ProcessPacket.cpp" />
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="RoomManager.cpp" />
+    <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerQueue.cpp" />
     <ClCompile Include="ServerQueueNode.cpp" />
   </ItemGroup>
@@ -194,6 +194,7 @@
     <ClInclude Include="PacketStruct.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="RoomManager.h" />
+    <ClInclude Include="Server.h" />
     <ClInclude Include="ServerQueue.h" />
     <ClInclude Include="ServerQueueNode.h" />
     <ClInclude Include="ServerStruct.h" />

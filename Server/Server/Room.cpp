@@ -7,8 +7,7 @@
 #include "Random.h"
 #include "PacketStruct.h"
 #include "GlobalVariable.h"
-
-void SendPacket(int userID, void* pPacket);
+#include "Server.h"
 
 Room::Room()
 	: mSize(0)
@@ -69,7 +68,7 @@ void Room::SendPacketToAllClients(void* pPacket) const
 {
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
-		SendPacket((*it)->GetNetworkID(), pPacket);
+		Server::SendPacket((*it)->GetNetworkID(), pPacket);
 	}
 }
 
@@ -82,7 +81,7 @@ void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
 			continue;
 		}
 
-		SendPacket((*it)->GetNetworkID(), pPacket);
+		Server::SendPacket((*it)->GetNetworkID(), pPacket);
 	}
 }
 
@@ -224,8 +223,8 @@ void Room::Init()
 	mIsRun = false;
 
 	{
-		lock_guard<mutex> lg(g_roomManager.cLock);
-		Log("{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, g_roomManager.GetUsingRoomCount());
+		lock_guard<mutex> lg(Server::GetRoomManager().cLock);
+		Log("{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, Server::GetRoomManager().GetUsingRoomCount());
 	}
 }
 

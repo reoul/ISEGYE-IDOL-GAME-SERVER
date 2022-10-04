@@ -4,6 +4,7 @@
 #include "Client.h"
 #include "SettingData.h"
 #include "GlobalVariable.h"
+#include "Server.h"
 #include "reoul/logger.h"
 
 ServerQueue::ServerQueue()
@@ -69,7 +70,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 {
 	if (mSize >= MAX_ROOM_PLAYER)
 	{
-		Room& room = g_roomManager.GetUnUsedRoom();
+		Room& room = Server::GetRoomManager().GetUnUsedRoom();
 
 		auto node = mClientQueue;
 
@@ -82,7 +83,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 			node = node->Next;
 		}
 		room.AddClients(clients);
-		Log("{0}번 룸 활성화 (현재 활성화된 방 : {1})", room.GetNumber(), g_roomManager.GetUsingRoomCount());
+		Log("{0}번 룸 활성화 (현재 활성화된 방 : {1})", room.GetNumber(), Server::GetRoomManager().GetUsingRoomCount());
 		mClientQueue = node;
 		if (node != nullptr)
 		{
