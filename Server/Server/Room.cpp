@@ -7,8 +7,7 @@
 #include "Random.h"
 #include "PacketStruct.h"
 #include "GlobalVariable.h"
-
-void SendPacket(int userID, void* pPacket);
+#include "Server.h"
 
 Room::Room()
 	: mSize(0)
@@ -69,7 +68,7 @@ void Room::SendPacketToAllClients(void* pPacket) const
 {
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
-		SendPacket((*it)->GetNetworkID(), pPacket);
+		Server::SendPacket((*it)->GetNetworkID(), pPacket);
 	}
 }
 
@@ -82,7 +81,7 @@ void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
 			continue;
 		}
 
-		SendPacket((*it)->GetNetworkID(), pPacket);
+		Server::SendPacket((*it)->GetNetworkID(), pPacket);
 	}
 }
 
@@ -111,59 +110,57 @@ vector<int32_t> Room::GetRandomItemQueue()
 		items.reserve(MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT);
 		CopySelf(items, BATTLE_ITEM_QUEUE_LOOP_COUNT - 1);
 
+		if (items.empty())
 		{
-			if (items.empty())
+			for (size_t i = 0; i < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++i)
 			{
-				for (size_t i = 0; i < MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT; ++i)
-				{
-					itemQueue.emplace_back(EMPTY_ITEM);
-					itemQueue.emplace_back(DISABLE_ITEM);
-				}
+				itemQueue.emplace_back(EMPTY_ITEM);
+				itemQueue.emplace_back(ACTIVATE_ITEM);
 			}
-			else
+		}
+		else
+		{
+			int loopSum = sum;
+			size_t loopLength = length;
+
+			while (!items.empty())
 			{
-				int loopSum = sum;
-				size_t loopLength = length;
+				Random<int> gen(0, loopSum - 1);
+				int rand = gen();
 
-				while (!items.empty())
+				auto iter = items.begin();
+				for (size_t i = 0; i < loopLength; ++i)
 				{
-					Random<int> gen(0, loopSum - 1);
-					int rand = gen();
-
-					auto iter = items.begin();
-					for (size_t i = 0; i < loopLength; ++i)
+					const int itemActivePercent = iter->item.GetActivePercent();
+					rand -= itemActivePercent;
+					if (rand < 0)
 					{
-						const int itemActivePercent = iter->item.GetActivePercent();
-						rand -= itemActivePercent;
-						if (rand < 0)
-						{
-							--loopLength;
-							loopSum -= itemActivePercent;
-							itemQueue.emplace_back(iter->index);
-							itemQueue.emplace_back(ACTIVATE_ITEM);
-							items.erase(iter);
-							break;
-						}
-						++iter;
+						--loopLength;
+						loopSum -= itemActivePercent;
+						itemQueue.emplace_back(iter->index);
+						itemQueue.emplace_back(ACTIVATE_ITEM);
+						items.erase(iter);
+						break;
+					}
+					++iter;
+				}
+
+				if (loopLength == 0)
+				{
+					loopSum = sum;
+					loopLength = length;
+
+					const int lockSlotCnt = (*it)->GetLockSlotCount();
+					for (size_t i = 0; i < MAX_USING_ITEM - length - lockSlotCnt; ++i)
+					{
+						itemQueue.emplace_back(EMPTY_ITEM);
+						itemQueue.emplace_back(ACTIVATE_ITEM);
 					}
 
-					if (loopLength == 0)
+					for (size_t i = 0; i < lockSlotCnt; ++i)
 					{
-						loopSum = sum;
-						loopLength = length;
-
-						const int lockSlotCnt = (*it)->GetLockSlotCount();
-						for (size_t i = 0; i < MAX_USING_ITEM - length - lockSlotCnt; ++i)
-						{
-							itemQueue.emplace_back(EMPTY_ITEM);
-							itemQueue.emplace_back(DISABLE_ITEM);
-						}
-
-						for (size_t i = 0; i < lockSlotCnt; ++i)
-						{
-							itemQueue.emplace_back(LOCK_ITEM);
-							itemQueue.emplace_back(DISABLE_ITEM);
-						}
+						itemQueue.emplace_back(LOCK_ITEM);
+						itemQueue.emplace_back(DISABLE_ITEM);
 					}
 				}
 			}
@@ -224,7 +221,11 @@ void Room::Init()
 	mClients.clear();
 	mSize = 0;
 	mIsRun = false;
-	Log("{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, g_roomManager.GetUsingRoomCount());
+
+	{
+		lock_guard<mutex> lg(Server::GetRoomManager().cLock);
+		Log("{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, Server::GetRoomManager().GetUsingRoomCount());
+	}
 }
 
 size_t Room::GetBattleReadyCount() const
@@ -232,7 +233,7 @@ size_t Room::GetBattleReadyCount() const
 	size_t cnt = 0;
 	for (const Client* client : mClients)
 	{
-		if(client->IsBattleReady())
+		if (client->IsBattleReady())
 		{
 			++cnt;
 		}

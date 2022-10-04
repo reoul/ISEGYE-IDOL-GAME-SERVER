@@ -10,10 +10,12 @@ public:
 	ServerQueueNode(Client* client);
 	std::shared_ptr<ServerQueueNode> Next;
 	std::weak_ptr<ServerQueueNode> Previous;
-	inline Client* GetClient() const
-	{
-		return mClient;
-	}
+	Client* GetClient() const;
 private:
 	Client* mClient;
 };
+
+inline Client* ServerQueueNode::GetClient() const
+{
+	return mClient;
+}

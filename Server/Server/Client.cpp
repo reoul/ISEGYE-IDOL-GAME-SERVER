@@ -39,12 +39,14 @@ void Client::Init()
 	memset(mPacketBuf, 0, MAX_PACKET_SIZE);
 	mIsAlive = false;
 	mCharacterType = ECharacterType::Woowakgood;
+	mName[0] = '\0';
+
 	if (mRoomPtr != nullptr)
 	{
 		mRoomPtr->RemoveClient(*this);
 		mRoomPtr = nullptr;
 	}
-	mName[0] = '\0';
+
 	for (Item& item : mUsingItems)
 	{
 		item.SetType(EMPTY_ITEM);
@@ -53,6 +55,7 @@ void Client::Init()
 	{
 		item.SetType(EMPTY_ITEM);
 	}
+
 	mStatus = ESocketStatus::FREE;
 	mFirstAttackState = 0;
 	mBattleReady = false;
@@ -71,11 +74,8 @@ vector<SlotInfo> Client::GetValidUsingItems() const
 	vector<SlotInfo> items;
 	for (size_t i = 0; i < MAX_USING_ITEM; ++i)
 	{
-		uint8_t type = mUsingItems[i].GetType();
-		if (type < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
-		{
+		if (mUsingItems[i].GetType() != LOCK_ITEM)	// 안 잠긴 경우
 			items.emplace_back(SlotInfo(i, mUsingItems[i]));
-		}
 	}
 	return items;
 }
@@ -86,14 +86,16 @@ int Client::GetLockSlotCount() const
 	for (const Item& item : mUsingItems)
 	{
 		if (item.GetType() == LOCK_ITEM)
-		{
 			++count;
-		}
 	}
 
 	return count;
 }
 
+/**
+ * UnUsingInventory에 모든 아이템을 가져온다
+ * \return 아이템 vector
+ */
 vector<Item> Client::GetUnUsingItems() const
 {
 	vector<Item> items;
@@ -102,16 +104,17 @@ vector<Item> Client::GetUnUsingItems() const
 	return items;
 }
 
+/**
+ * UnUsingInventory에서 유효한 아이템들을 가져온다
+ * \return 아이템 vector
+ */
 vector<SlotInfo> Client::GetValidUnUsingItems() const
 {
 	vector<SlotInfo> items;
 	for (uint8_t i = 0; i < MAX_UN_USING_ITEM; ++i)
 	{
-		const uint8_t type = mUnUsingItems[i].GetType();
-		if (type < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
-		{
+		if (mUnUsingItems[i].GetType() < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
 			items.emplace_back(SlotInfo(i + MAX_USING_ITEM, mUnUsingItems[i]));
-		}
 	}
 	return items;
 }
@@ -138,7 +141,9 @@ void Client::AddItem(uint8_t type)
 	}
 }
 
-// UsingItems에 아무것도 장착되어 있지 않으면 UnUsingItems에서 가져다 장착한다
+/**
+ * UsingItems에 아무것도 장착되어 있지 않으면 UnUsingItems에서 유효한 아이템을 가져다 장착한다
+ */
 void Client::TrySetDefaultUsingItem()
 {
 	vector<SlotInfo> validUnUsingItems = GetValidUnUsingItems();
@@ -181,10 +186,12 @@ void Client::AddDefaultItem()
 
 void Client::SendPacketInAllRoomClients(void* pPacket) const
 {
-	mRoomPtr->SendPacketToAllClients(pPacket);
+	if (mRoomPtr != nullptr)
+		mRoomPtr->SendPacketToAllClients(pPacket);
 }
 
 void Client::SendPacketInAnotherRoomClients(void* pPacket) const
 {
-	mRoomPtr->SendPacketToAnotherClients(*this, pPacket);
+	if (mRoomPtr != nullptr)
+		mRoomPtr->SendPacketToAnotherClients(*this, pPacket);
 }

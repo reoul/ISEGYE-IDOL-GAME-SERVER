@@ -40,7 +40,6 @@ void RoomManager::TrySendBattleInfo()
 
 size_t RoomManager::GetUsingRoomCount()
 {
-	lock_guard<mutex> lg(cLock);
 	size_t cnt = 0;
 	for (const Room& room : mRooms)
 	{
