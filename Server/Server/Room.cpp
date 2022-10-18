@@ -14,6 +14,7 @@ Room::Room()
 	, mNumber(0)
 	, mIsRun(false)
 	, mCapacity(MAX_ROOM_PLAYER)
+	, mIsFinishChoiceCharacter(false)
 {
 }
 
@@ -221,6 +222,7 @@ void Room::Init()
 	mClients.clear();
 	mSize = 0;
 	mIsRun = false;
+	mIsFinishChoiceCharacter = false;
 
 	{
 		lock_guard<mutex> lg(Server::GetRoomManager().cLock);
@@ -242,11 +244,31 @@ size_t Room::GetBattleReadyCount() const
 	return cnt;
 }
 
+void Room::TrySendEnterInGame()
+{
+	size_t readyCount = 0;
+	for (const Client* client : mClients)
+	{
+		if (client->IsChoiceCharacter())
+		{
+			++readyCount;
+		}
+	}
+
+	if (readyCount == mClients.size() && !mIsFinishChoiceCharacter)
+	{
+		cs_sc_NotificationPacket packet(0, ENotificationType::EnterInGame);
+		SendPacketToAllClients(&packet);
+		Log("{0}번 룸 캐릭터 선택 끝남", mNumber);
+		mIsFinishChoiceCharacter = true;
+	}
+}
+
 void Room::SendRandomItemQueue()
 {
 	vector<int32_t> battleOpponent = mBattleManager.GetBattleOpponent();
 	vector<int32_t> itemQueue = GetRandomItemQueue();
 
-	sc_battleInfoPacket packet(battleOpponent, itemQueue);
+	sc_BattleInfoPacket packet(battleOpponent, itemQueue);
 	SendPacketToAllClients(&packet);
 }

@@ -61,8 +61,24 @@ void Server::Start()
 	}
 	Log("{0}개의 쓰레드 작동", std::thread::hardware_concurrency());
 
+	system_clock::time_point lastConnectCheckTime = system_clock::now();
+	constexpr milliseconds checkIntervalTime(3000);
+
 	while (sIsRunningServer)
 	{
+		if (system_clock::now() > lastConnectCheckTime + checkIntervalTime)
+		{
+			lastConnectCheckTime = system_clock::now();
+			for (Client& client : sClients)
+			{
+				if(client.GetStatus() == ESocketStatus::ACTIVE && !client.IsValidConnect())
+				{
+					Disconnect(client.GetNetworkID());
+				}
+			}
+			Log("체크");
+		}
+
 		sRoomManager.TrySendBattleInfo();
 	}
 
@@ -161,37 +177,14 @@ void Server::WorkerThread()
 					sClients[userID].SetPrevSize(0); //이전에 받아둔 조각이 없으니 0
 					sClients[userID].SetSocket(clientSocket);
 
-					// keepalive 설정
-					struct tcp_keepalive
-					{
-						u_long onoff;
-						u_long keepalivetime;
-						u_long keepaliveinterval;
-					};
-
-					DWORD dwError = 0L;
-					tcp_keepalive sKA_Settings = { 0 }, sReturned = { 0 };
-					sKA_Settings.onoff = 1;
-					sKA_Settings.keepalivetime = 5500;        // Keep Alive in 5.5 sec.
-					sKA_Settings.keepaliveinterval = 500;        // Resend if No-Reply
-
-					DWORD dwBytes;
-					// SIO_KEEPALIVE_VALS 대신에 _WSAIOW(IOC_VENDOR, 4) 사용
-					// mstcpip.h 인클루드하면 error 발생
-					if (WSAIoctl(clientSocket, _WSAIOW(IOC_VENDOR, 4), &sKA_Settings,
-						sizeof(sKA_Settings), &sReturned, sizeof(sReturned), &dwBytes, NULL, NULL) != 0)
-					{
-						dwError = WSAGetLastError();
-						log_assert(false);
-						//TRACE(_T("SIO_KEEPALIVE_VALS result : %dn"), WSAGetLastError());
-					}
-
 					ZeroMemory(&sClients[userID].GetRecvOver().over, sizeof(sClients[userID].GetRecvOver().over));
 					sClients[userID].GetRecvOver().type = EOperationType::Recv;
 					sClients[userID].GetRecvOver().wsabuf.buf = sClients[userID].GetRecvOver().io_buf;
 					sClients[userID].GetRecvOver().wsabuf.len = MAX_BUF_SIZE;
 
 					NewClientEvent(userID);
+
+					sClients[userID].SetLastConnectCheckPacketTime(system_clock::now());
 
 					sClients[userID].SetStatus(ESocketStatus::ACTIVE);
 
@@ -214,8 +207,8 @@ void Server::WorkerThread()
 void Server::NewClientEvent(int networkID)
 {
 	Log("네트워크 {0}번 클라이언트 서버 접속", networkID);
-	sc_connectServerPacket connectServerPacket(networkID);
-	SendPacket(networkID, &connectServerPacket);
+	cs_sc_NotificationPacket packet(networkID, ENotificationType::ConnectServer);
+	SendPacket(networkID, &packet);
 }
 
 void Server::Disconnect(int networkID)
@@ -232,14 +225,15 @@ void Server::Disconnect(int networkID)
 
 	Log("네트워크 {0}번 클라이언트 서버 접속 해제", networkID);
 
+	cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+	sClients[networkID].SendPacketInAnotherRoomClients(&packet);
+
 	{
 		lock_guard<mutex> lg(sClients[networkID].GetMutex());
 		sClients[networkID].SetStatus(ESocketStatus::ALLOCATED);	//처리 되기 전에 FREE하면 아직 떠나는 뒷처리가 안됐는데 새 접속을 받을 수 있음
 
 		::closesocket(sClients[networkID].GetSocket());
 
-		wchar_t name[MAX_USER_NAME_LENGTH];
-		wcscpy(name, sClients[networkID].GetName());
 		sClients[networkID].Init();
 	}
 
@@ -307,18 +301,19 @@ void Server::SendDisconnect(int networkID)
 	{
 		return;
 	}
-	sc_disconnectPacket packet(networkID);
-	SendPacket(networkID, &packet);
+	cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+	sClients[networkID].SendPacketInAnotherRoomClients(&packet);
 	Log("네트워크 {0}번 클라이언트 접속 해제 패킷 보냄", networkID);
 }
 
 void Server::ProcessPacket(int networkID, char* buf)
 {
-	switch (static_cast<EPacketType>(buf[2])) //[0,1]은 size
+	const EPacketType packetType = static_cast<EPacketType>(buf[2]);  //[0,1]은 size
+	switch (packetType)
 	{
 	case EPacketType::cs_startMatching:
 	{
-		const cs_startMatchingPacket* pPacket = reinterpret_cast<cs_startMatchingPacket*>(buf);
+		const cs_StartMatchingPacket* pPacket = reinterpret_cast<cs_StartMatchingPacket*>(buf);
 		wcscpy(sClients[networkID].GetName(), pPacket->name);
 		sClients[networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
 
@@ -331,7 +326,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		if (room != nullptr) // 방을 만들 수 있다면
 		{
-			sc_connectRoomPacket connectRoomPacket(*room);
+			sc_ConnectRoomPacket connectRoomPacket(*room);
 			room->SendPacketToAllClients(&connectRoomPacket);
 		}
 	}
@@ -356,8 +351,8 @@ void Server::ProcessPacket(int networkID, char* buf)
 	break;
 	case EPacketType::cs_sc_changeCharacter:
 	{
-		cs_sc_changeCharacterPacket* pPacket = reinterpret_cast<cs_sc_changeCharacterPacket*>(buf);
-		Log("[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, static_cast<int>(pPacket->characterType));
+		cs_sc_ChangeCharacterPacket* pPacket = reinterpret_cast<cs_sc_ChangeCharacterPacket*>(buf);
+		Log("[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, pPacket->characterType);
 
 		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
@@ -372,7 +367,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	break;
 	case EPacketType::cs_sc_changeItemSlot:
 	{
-		cs_sc_changeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_changeItemSlotPacket*>(buf);
+		cs_sc_ChangeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_ChangeItemSlotPacket*>(buf);
 		sClients[networkID].SwapItem(pPacket->slot1, pPacket->slot2);
 		Log("[cs_sc_changeItemSlot] 네트워크 {0}번 클라이언트 아이템 슬롯 {1} <-> {2} 교체", pPacket->networkID, pPacket->slot1, pPacket->slot2);
 
@@ -389,7 +384,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	break;
 	case EPacketType::cs_battleReady:
 	{
-		const cs_battleReadyPacket* pPacket = reinterpret_cast<cs_battleReadyPacket*>(buf);
+		const cs_BattleReadyPacket* pPacket = reinterpret_cast<cs_BattleReadyPacket*>(buf);
 		Client& client = sClients[networkID];
 		client.TrySetDefaultUsingItem();
 		client.SetFirstAttackState(pPacket->firstAttackState);
@@ -407,6 +402,53 @@ void Server::ProcessPacket(int networkID, char* buf)
 		}
 	}
 	break;
+	case EPacketType::cs_sc_useEmoticon:
+	{
+		const cs_sc_UseEmoticonPacket* pPacket = reinterpret_cast<cs_sc_UseEmoticonPacket*>(buf);
+		Log("[cs_sc_useEmoticon] 네트워크 {0}번 클라이언트 {1}번 이모티콘 사용", pPacket->networkID, pPacket->emoticonType);
+		sClients[networkID].SendPacketInAnotherRoomClients(buf);
+	}
+	break;
+	case EPacketType::cs_sc_upgradeItem:
+		LogWarning("[cs_sc_upgradeItem] 아직 구현 안되어 있음");
+		break;
+	case EPacketType::cs_sc_notification:
+	{
+		cs_sc_NotificationPacket* pPacket = reinterpret_cast<cs_sc_NotificationPacket*>(buf);
+		Log("[cs_sc_notification] 네트워크 {0}번 클라이언트 {1} 알림", pPacket->networkID, static_cast<int>(pPacket->notificationType.get()));
+		switch (pPacket->notificationType.get())
+		{
+		case ENotificationType::ChoiceCharacter:
+		{
+			Client& client = sClients[pPacket->networkID];
+			client.SetChoiceCharacter(true);
+
+			{
+				lock_guard<mutex> lg(client.GetRoomPtr()->cLock);
+				client.GetRoomPtr()->TrySendEnterInGame();
+			}
+
+			client.SendPacketInAnotherRoomClients(pPacket);
+		}
+		break;
+		case ENotificationType::ConnectCheck:
+			sClients[pPacket->networkID].SetLastConnectCheckPacketTime(system_clock::now());
+			break;
+		case ENotificationType::EnterInGame:
+		case ENotificationType::ConnectServer:
+		case ENotificationType::DisconnectServer:
+			LogWarning("[ENotificationType::{0}] 받으면 안되는 패킷을 받음", static_cast<int>(pPacket->notificationType.get()));
+			break;
+		default:
+			assert(false);
+			break;
+		}
+	}
+	break;
+	case EPacketType::sc_connectRoom:
+	case EPacketType::sc_battleInfo:
+		LogWarning("{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
+		break;
 	default:
 		LogWarning("미정의 패킷 받음");
 		DebugBreak();

@@ -6,26 +6,76 @@
 #include "SettingData.h"
 #include "Room.h"
 #include "reoul/logger.h"
+#include "reoul/MemoryStream.h"
 
 using namespace std;
 
 enum class ECharacterType : uint8_t;
 
+/// <summary>
+/// 패킷 타입<br/>
+/// sc : Server to Client<br/>
+/// cs : Client to Server
+/// </summary>
 enum class EPacketType : uint8_t
 {
-	sc_connectServer,
+	/// <summary> 클라이언트에게 Room 생성과 접속했음을 알리는 패킷 타입 </summary>
 	sc_connectRoom,
-	sc_disconnect,
+	/// <summary> 클라이언트가 서버에게 매칭을 시작했음을 알리는 패킷 타입 </summary>
 	cs_startMatching,
+	/// <summary> 아이템을 추가했음을 알리는 패킷 타입  </summary>
 	cs_sc_addNewItem,
+	/// <summary> 아이템을 다른 슬롯으로 이동했음을 알리는 패킷 타입 </summary>
 	cs_sc_changeItemSlot,
+	/// <summary> 아이템을 업그레이드 했음을 알리는 패킷 타입 </summary>
 	cs_sc_upgradeItem,
+	/// <summary> 선택 캐릭터가 교체되었음을 알리는 패킷 타입 </summary>
 	cs_sc_changeCharacter,
+	/// <summary> 클라이언트에게 전투 정보를 알리는 패킷 타입 </summary>
 	sc_battleInfo,
+	/// <summary> 클라이언트가 서버에게 전투 준비를 알리는 패킷 타입 </summary>
 	cs_battleReady,
+	/// <summary> 무언가를 알리는 패킷 타입 </summary>
+	cs_sc_notification,
+	/// <summary> 이모티콘을 보냈음을 알리는 패킷 타입 </summary>
+	cs_sc_useEmoticon,
+};
+
+/// <summary> cs_sc_notification의 알림 타입 </summary>
+enum class ENotificationType : uint8_t
+{
+	/// <summary> 클라이언트가 서버 접속했음을 알리는 패킷 타입 </summary>
+	ConnectServer,
+	/// <summary> 캐릭터를 선택했음을 알리는 패킷 타입 </summary>
+	ChoiceCharacter,
+	/// <summary> 캐릭터 선택 다 끝나고 인게임에 진입했을 때 </summary>
+	EnterInGame,
+	/// <summary> 클라이언트가 서버 해제했음을 알리는 패킷 타입 </summary>
+	DisconnectServer,
+	/// <summary> 서버에 계속 연결되는 상태를 알리는 패킷 타입 </summary>
+	ConnectCheck,
 };
 
 #pragma pack(push, 1)
+
+struct Packet
+{
+	uint16_t size;
+	EPacketType type;
+
+	Packet(uint16_t size, EPacketType type)
+		: size(size)
+		, type(type)
+	{
+	}
+};
+
+struct cs_StartMatchingPacket : private Packet
+{
+	int32_t networkID;
+	wchar_t name[MAX_USER_NAME_LENGTH];
+	cs_StartMatchingPacket() = delete;
+};
 
 struct UserInfo
 {
@@ -33,42 +83,11 @@ struct UserInfo
 	wchar_t name[MAX_USER_NAME_LENGTH];
 };
 
-struct cs_test_data
+struct sc_ConnectRoomPacket : private Packet
 {
-	int a;
-	int b;
-	int c;
-};
-
-struct sc_connectServerPacket
-{
-	const uint16_t size;
-	const EPacketType type;
-	int32_t networkID;
-	sc_connectServerPacket(int network_id)
-		: size(sizeof(sc_connectServerPacket))
-		, type(EPacketType::sc_connectServer)
-		, networkID(network_id)
-	{
-	}
-};
-
-struct cs_startMatchingPacket
-{
-	const uint16_t size;
-	const EPacketType type;
-	const int32_t networkID;
-	const wchar_t name[MAX_USER_NAME_LENGTH];
-};
-
-struct sc_connectRoomPacket
-{
-	const uint16_t size;
-	const EPacketType type;
 	UserInfo users[MAX_ROOM_PLAYER];
-	sc_connectRoomPacket(const Room& room)
-		: size(sizeof(sc_connectRoomPacket))
-		, type(EPacketType::sc_connectRoom)
+	sc_ConnectRoomPacket(const Room& room)
+		: Packet(sizeof(sc_ConnectRoomPacket), EPacketType::sc_connectRoom)
 		, users{}
 	{
 		const vector<Client*> clients = room.GetClients();
@@ -80,87 +99,33 @@ struct sc_connectRoomPacket
 	}
 };
 
-struct cs_sc_AddNewItemPacket
+struct cs_sc_AddNewItemPacket : private Packet
 {
-	const uint16_t size;
-	const EPacketType type;
-	const int32_t networkID;
-	const uint8_t itemCode;
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> itemCode;
+	cs_sc_AddNewItemPacket() = delete;
 };
 
-struct sc_disconnectPacket
+struct cs_sc_ChangeItemSlotPacket : private Packet
 {
-	const uint16_t size;
-	const EPacketType type;
-	int32_t networkID;
-	sc_disconnectPacket(int32_t network_id)
-		: size(sizeof(sc_disconnectPacket))
-		, type(EPacketType::sc_disconnect)
-		, networkID(network_id)
-	{
-	}
+	const_wrapper<int32_t>  networkID;
+	const_wrapper<uint8_t> slot1;
+	const_wrapper<uint8_t> slot2;
+	cs_sc_ChangeItemSlotPacket() = delete;
 };
 
-struct cs_sc_changeItemSlotPacket
+struct cs_sc_UpgradeItemPacket : private Packet
 {
-	const uint16_t size;
-	const EPacketType type;
-	const int32_t networkID;
-	const uint8_t slot1;
-	const uint8_t slot2;
-	cs_sc_changeItemSlotPacket(int32_t networkID, uint8_t slot1, uint8_t slot2)
-		: size(sizeof(cs_sc_changeItemSlotPacket))
-		, type(EPacketType::cs_sc_changeItemSlot)
-		, networkID(networkID)
-		, slot1(slot1)
-		, slot2(slot2)
-	{
-	}
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> slot;
+	cs_sc_UpgradeItemPacket() = delete;
 };
 
-struct cs_sc_upgradeItemPacket
+struct cs_sc_ChangeCharacterPacket : private Packet
 {
-	const uint16_t size;
-	const EPacketType type;
-	const int32_t networkID;
-	const uint8_t slot;
-	cs_sc_upgradeItemPacket(int32_t networkID, uint8_t slot)
-		: size(sizeof(cs_sc_upgradeItemPacket))
-		, type(EPacketType::cs_sc_upgradeItem)
-		, networkID(networkID)
-		, slot(slot)
-	{
-	}
-};
-
-struct cs_sc_battleInfoPacket
-{
-	const uint16_t size;
-	const EPacketType type;
-	const int32_t networkID1;
-	const int32_t networkID2;
-	cs_sc_battleInfoPacket(int32_t networkID1, int16_t networkID2)
-		: size(sizeof(cs_sc_battleInfoPacket))
-		, type(EPacketType::cs_sc_upgradeItem)
-		, networkID1(networkID1)
-		, networkID2(networkID2)
-	{
-	}
-};
-
-struct cs_sc_changeCharacterPacket
-{
-	const uint16_t size;
-	const EPacketType type;
-	const int32_t networkID;
-	const ECharacterType characterType;
-	cs_sc_changeCharacterPacket(int32_t networkID, ECharacterType characterType)
-		: size(sizeof(cs_sc_changeCharacterPacket))
-		, type(EPacketType::cs_sc_changeCharacter)
-		, networkID(networkID)
-		, characterType(characterType)
-	{
-	}
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> characterType;
+	cs_sc_ChangeCharacterPacket() = delete;
 };
 
 struct ItemQueueInfo
@@ -169,19 +134,16 @@ struct ItemQueueInfo
 	uint8_t itemQueue[MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2];
 };
 
-struct sc_battleInfoPacket
+struct sc_BattleInfoPacket : private Packet
 {
-	const uint16_t size;
-	const EPacketType type;
 	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
 	ItemQueueInfo itemQueueInfo[MAX_ROOM_PLAYER];
-	sc_battleInfoPacket(const vector<int32_t>& battleOpponents, const vector<int32_t>& itemQueues)
-		: size(sizeof(sc_battleInfoPacket))
-		, type(EPacketType::sc_battleInfo)
+	sc_BattleInfoPacket(const vector<int32_t>& battleOpponents, const vector<int32_t>& itemQueues)
+		: Packet(sizeof(sc_BattleInfoPacket), EPacketType::sc_battleInfo)
 	{
 		log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
 		copy(battleOpponents.begin(), battleOpponents.end(), battleOpponentQueue);
-		if(battleOpponents.size() < MAX_ROOM_PLAYER)
+		if (battleOpponents.size() < MAX_ROOM_PLAYER)
 		{
 			battleOpponentQueue[battleOpponents.size()] = INT32_MAX;
 		}
@@ -200,26 +162,31 @@ struct sc_battleInfoPacket
 	}
 };
 
-// 배틀 상대
-struct sc_battleOpponentQueuePacket
+struct cs_BattleReadyPacket : private Packet
 {
-	const uint16_t size;
-	const EPacketType type;
-	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
-	sc_battleOpponentQueuePacket(const int32_t(&playerQueue)[MAX_ROOM_PLAYER])
-		: size(sizeof(sc_battleOpponentQueuePacket))
-		, type(EPacketType::sc_battleInfo)
-	{
-		::copy_n(playerQueue, _countof(playerQueue), battleOpponentQueue);
-	}
+	const_wrapper<int32_t> networkID;
+	const_wrapper<int16_t> firstAttackState;
+	cs_BattleReadyPacket() = delete;
 };
 
-struct cs_battleReadyPacket
+struct cs_sc_UseEmoticonPacket : private Packet
 {
-	const uint16_t size;
-	const EPacketType type;
-	const int32_t networkID;
-	const int16_t firstAttackState;
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> emoticonType;
+	cs_sc_UseEmoticonPacket() = delete;
+};
+
+struct cs_sc_NotificationPacket : private Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<ENotificationType> notificationType;
+
+	cs_sc_NotificationPacket(int networkID, ENotificationType notificationType)
+		: Packet(sizeof(cs_sc_NotificationPacket), EPacketType::cs_sc_notification)
+		, networkID(networkID)
+		, notificationType(notificationType)
+	{
+	}
 };
 
 #pragma pack(pop)

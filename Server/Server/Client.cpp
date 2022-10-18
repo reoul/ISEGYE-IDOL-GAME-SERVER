@@ -20,6 +20,7 @@ Client::Client()
 	, mUnUsingItems{}
 	, mFirstAttackState(0)
 	, mBattleReady(false)
+	, mIsChoiceCharacter(false)
 {
 	static_assert(MAX_USING_ITEM == 6, "MAX_USING_ITEM is not 6");
 
@@ -59,6 +60,7 @@ void Client::Init()
 	mStatus = ESocketStatus::FREE;
 	mFirstAttackState = 0;
 	mBattleReady = false;
+	mIsChoiceCharacter = false;
 }
 
 vector<Item> Client::GetUsingItems() const
@@ -187,11 +189,25 @@ void Client::AddDefaultItem()
 void Client::SendPacketInAllRoomClients(void* pPacket) const
 {
 	if (mRoomPtr != nullptr)
+	{
 		mRoomPtr->SendPacketToAllClients(pPacket);
+	}
 }
 
 void Client::SendPacketInAnotherRoomClients(void* pPacket) const
 {
 	if (mRoomPtr != nullptr)
+	{
 		mRoomPtr->SendPacketToAnotherClients(*this, pPacket);
+	}
+}
+
+bool Client::IsValidConnect() const
+{
+	constexpr milliseconds intervalTime(3000);
+	if (mLastConnectCheckPacketTime + intervalTime < system_clock::now())	// 만약 마지막에 보낸 확인 패킷이 3초가 지났다면
+	{
+		return false;	// 유효하지 않는 연결 상태
+	}
+	return true;		// 유효한 연결 상태
 }

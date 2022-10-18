@@ -26,6 +26,8 @@ public:
 	size_t GetNumber() const;
 	void SetNumber(size_t number);
 	size_t GetBattleReadyCount() const;
+	void TrySendEnterInGame();
+	bool IsFinishChoiceCharacter() const;
 private:
 	void SendRandomItemQueue();
 	vector<Client*> mClients;
@@ -34,6 +36,7 @@ private:
 	bool mIsRun;
 	const_wrapper<size_t> mCapacity;
 	BattleManager mBattleManager;
+	bool mIsFinishChoiceCharacter;
 };
 
 inline const vector<Client*>& Room::GetClients() const
@@ -70,4 +73,9 @@ inline size_t Room::GetNumber() const
 inline void Room::SetNumber(size_t number)
 {
 	mNumber = number;
+}
+
+inline bool Room::IsFinishChoiceCharacter() const
+{
+	return mIsFinishChoiceCharacter;
 }
