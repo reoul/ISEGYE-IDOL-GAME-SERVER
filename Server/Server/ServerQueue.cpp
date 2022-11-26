@@ -78,7 +78,6 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
 			Client& client = *node->GetClient();
-			client.AddDefaultItem();
 			clients.emplace_back(&client);
 			node = node->Next;
 		}

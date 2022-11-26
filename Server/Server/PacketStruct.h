@@ -24,7 +24,7 @@ enum class EPacketType : uint8_t
 	/// <summary> 클라이언트가 서버에게 매칭을 시작했음을 알리는 패킷 타입 </summary>
 	cs_startMatching,
 	/// <summary> 아이템을 추가했음을 알리는 패킷 타입  </summary>
-	cs_sc_addNewItem,
+	sc_addNewItem,
 	/// <summary> 아이템을 다른 슬롯으로 이동했음을 알리는 패킷 타입 </summary>
 	cs_sc_changeItemSlot,
 	/// <summary> 아이템을 업그레이드 했음을 알리는 패킷 타입 </summary>
@@ -33,8 +33,6 @@ enum class EPacketType : uint8_t
 	cs_sc_changeCharacter,
 	/// <summary> 클라이언트에게 전투 정보를 알리는 패킷 타입 </summary>
 	sc_battleInfo,
-	/// <summary> 클라이언트가 서버에게 전투 준비를 알리는 패킷 타입 </summary>
-	cs_battleReady,
 	/// <summary> 무언가를 알리는 패킷 타입 </summary>
 	cs_sc_notification,
 	/// <summary> 이모티콘을 보냈음을 알리는 패킷 타입 </summary>
@@ -60,8 +58,14 @@ enum class ENotificationType : uint8_t
 
 struct Packet
 {
-	uint16_t size;
-	EPacketType type;
+	const_wrapper<uint16_t> size;
+	const_wrapper<EPacketType> type;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		memoryStream.Write(size.get());
+		memoryStream.Write(type.get());
+	}
 
 	Packet(uint16_t size, EPacketType type)
 		: size(size)
@@ -70,10 +74,21 @@ struct Packet
 	}
 };
 
-struct cs_StartMatchingPacket : private Packet
+struct cs_StartMatchingPacket : protected Packet
 {
 	int32_t networkID;
 	wchar_t name[MAX_USER_NAME_LENGTH];
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID);
+		for (wchar_t c : name)
+		{
+			memoryStream.Write(c);
+		}
+	}
+
 	cs_StartMatchingPacket() = delete;
 };
 
@@ -83,9 +98,23 @@ struct UserInfo
 	wchar_t name[MAX_USER_NAME_LENGTH];
 };
 
-struct sc_ConnectRoomPacket : private Packet
+struct sc_ConnectRoomPacket : protected Packet
 {
 	UserInfo users[MAX_ROOM_PLAYER];
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		for (const UserInfo& userInfo : users)
+		{
+			memoryStream.Write(userInfo.networkID);
+			for (wchar_t wc : userInfo.name)
+			{
+				memoryStream.Write(wc);
+			}
+		}
+	}
+
 	sc_ConnectRoomPacket(const Room& room)
 		: Packet(sizeof(sc_ConnectRoomPacket), EPacketType::sc_connectRoom)
 		, users{}
@@ -99,32 +128,70 @@ struct sc_ConnectRoomPacket : private Packet
 	}
 };
 
-struct cs_sc_AddNewItemPacket : private Packet
+struct sc_AddNewItemPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
 	const_wrapper<uint8_t> itemCode;
-	cs_sc_AddNewItemPacket() = delete;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(itemCode.get());
+	}
+
+	sc_AddNewItemPacket(int networkID, uint8_t itemCode)
+		: Packet(sizeof(sc_AddNewItemPacket), EPacketType::sc_addNewItem)
+		, networkID(networkID)
+		, itemCode(itemCode)
+	{
+	}
 };
 
-struct cs_sc_ChangeItemSlotPacket : private Packet
+struct cs_sc_ChangeItemSlotPacket : protected Packet
 {
 	const_wrapper<int32_t>  networkID;
 	const_wrapper<uint8_t> slot1;
 	const_wrapper<uint8_t> slot2;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(slot1.get());
+		memoryStream.Write(slot2.get());
+	}
+
 	cs_sc_ChangeItemSlotPacket() = delete;
 };
 
-struct cs_sc_UpgradeItemPacket : private Packet
+struct cs_sc_UpgradeItemPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
 	const_wrapper<uint8_t> slot;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(slot.get());
+	}
+
 	cs_sc_UpgradeItemPacket() = delete;
 };
 
-struct cs_sc_ChangeCharacterPacket : private Packet
+struct cs_sc_ChangeCharacterPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
 	const_wrapper<uint8_t> characterType;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(characterType.get());
+	}
+
 	cs_sc_ChangeCharacterPacket() = delete;
 };
 
@@ -134,12 +201,31 @@ struct ItemQueueInfo
 	uint8_t itemQueue[MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2];
 };
 
-struct sc_BattleInfoPacket : private Packet
+struct sc_BattleInfoPacket : protected Packet
 {
 	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
 	ItemQueueInfo itemQueueInfo[MAX_ROOM_PLAYER];
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		for (int32_t opponent : battleOpponentQueue)
+		{
+			memoryStream.Write(opponent);
+		}
+		for (const ItemQueueInfo& itemInfo : itemQueueInfo)
+		{
+			memoryStream.Write(itemInfo.networkID);
+			for (uint8_t item : itemInfo.itemQueue)
+			{
+				memoryStream.Write(item);
+			}
+		}
+	}
+
 	sc_BattleInfoPacket(const vector<int32_t>& battleOpponents, const vector<int32_t>& itemQueues)
-		: Packet(sizeof(sc_BattleInfoPacket), EPacketType::sc_battleInfo)
+		: Packet(sizeof(sc_BattleInfoPacket)
+			, EPacketType::sc_battleInfo)
 	{
 		log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
 		copy(battleOpponents.begin(), battleOpponents.end(), battleOpponentQueue);
@@ -162,24 +248,32 @@ struct sc_BattleInfoPacket : private Packet
 	}
 };
 
-struct cs_BattleReadyPacket : private Packet
-{
-	const_wrapper<int32_t> networkID;
-	const_wrapper<int16_t> firstAttackState;
-	cs_BattleReadyPacket() = delete;
-};
-
-struct cs_sc_UseEmoticonPacket : private Packet
+struct cs_sc_UseEmoticonPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
 	const_wrapper<uint8_t> emoticonType;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(emoticonType.get());
+	}
+
 	cs_sc_UseEmoticonPacket() = delete;
 };
 
-struct cs_sc_NotificationPacket : private Packet
+struct cs_sc_NotificationPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
 	const_wrapper<ENotificationType> notificationType;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(notificationType.get());
+	}
 
 	cs_sc_NotificationPacket(int networkID, ENotificationType notificationType)
 		: Packet(sizeof(cs_sc_NotificationPacket), EPacketType::cs_sc_notification)

@@ -128,7 +128,7 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 	}
 
 	log_assert(list.size() <= MAX_ROOM_PLAYER);
-	return list;
+	return std::move(list);
 }
 
 void BattleManager::RemoveClient(int32_t networkID)

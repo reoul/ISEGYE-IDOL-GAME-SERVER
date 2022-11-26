@@ -27,17 +27,6 @@ Room& RoomManager::GetUnUsedRoom()
 	return *pRet;
 }
 
-void RoomManager::TrySendBattleInfo()
-{
-	for (Room& room : mRooms)
-	{
-		if (room.IsRun())
-		{
-			room.TrySendBattleInfo();
-		}
-	}
-}
-
 size_t RoomManager::GetUsingRoomCount()
 {
 	size_t cnt = 0;

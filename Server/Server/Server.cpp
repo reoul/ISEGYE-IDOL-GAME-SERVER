@@ -71,15 +71,14 @@ void Server::Start()
 			lastConnectCheckTime = system_clock::now();
 			for (Client& client : sClients)
 			{
-				if(client.GetStatus() == ESocketStatus::ACTIVE && !client.IsValidConnect())
+				if (client.GetStatus() == ESocketStatus::ACTIVE && !client.IsValidConnect())
 				{
+					Log("{0}번 클라이언트 연결 불안으로 접속 해제", client.GetNetworkID());
 					Disconnect(client.GetNetworkID());
 				}
 			}
 			Log("체크");
 		}
-
-		sRoomManager.TrySendBattleInfo();
 	}
 
 	for (auto& th : workerThreads)
@@ -158,7 +157,6 @@ void Server::WorkerThread()
 					break;
 				}
 			}
-
 			//main에서 소켓을 worker스레드로 옮겨오기 위해 listen소켓은 전역변수로, client소켓은 멤버로 가져왔다.
 			SOCKET clientSocket = exover->c_socket;
 
@@ -182,7 +180,19 @@ void Server::WorkerThread()
 					sClients[userID].GetRecvOver().wsabuf.buf = sClients[userID].GetRecvOver().io_buf;
 					sClients[userID].GetRecvOver().wsabuf.len = MAX_BUF_SIZE;
 
-					NewClientEvent(userID);
+					// 접속 ip 계산 로직
+					sockaddr* lpLocalSockaddr = nullptr, * lpRemoteSockaddr = nullptr;
+					int localSockaddrLen = 0, remoteSockaddrLen = 0;
+					LPFN_GETACCEPTEXSOCKADDRS lpfnGetAcceptExSockaddrs = nullptr;
+					GetAcceptExSockaddrs(exover->io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &lpLocalSockaddr
+						, &localSockaddrLen, &lpRemoteSockaddr, &remoteSockaddrLen);
+
+					char ipAdress[16]{};
+					sprintf(ipAdress, "%d.%d.%d.%d", *reinterpret_cast<uint8_t*>(&lpRemoteSockaddr->sa_data[2]), *reinterpret_cast<uint8_t*>(&lpRemoteSockaddr->sa_data[3]), *reinterpret_cast<uint8_t*>(&lpRemoteSockaddr->sa_data[4]), *reinterpret_cast<uint8_t*>(&lpRemoteSockaddr->sa_data[5]));
+
+					NewClientEvent(userID, ipAdress);
+
+					sClients[userID].SetLastConnectCheckPacketTime(system_clock::now());
 
 					sClients[userID].SetLastConnectCheckPacketTime(system_clock::now());
 
@@ -204,9 +214,10 @@ void Server::WorkerThread()
 	}
 }
 
-void Server::NewClientEvent(int networkID)
+void Server::NewClientEvent(int networkID, char* ipAdress)
 {
-	Log("네트워크 {0}번 클라이언트 서버 접속", networkID);
+	Log("네트워크 {0}번 클라이언트 서버 접속 (ip주소: {1})", networkID, ipAdress);
+
 	cs_sc_NotificationPacket packet(networkID, ENotificationType::ConnectServer);
 	SendPacket(networkID, &packet);
 }
@@ -328,15 +339,18 @@ void Server::ProcessPacket(int networkID, char* buf)
 		{
 			sc_ConnectRoomPacket connectRoomPacket(*room);
 			room->SendPacketToAllClients(&connectRoomPacket);
+			unsigned threadID;
+			const HANDLE hThread = (HANDLE)_beginthreadex(nullptr, 0, &Room::ProgressThread, room, 0, &threadID);
+			CloseHandle(hThread);
 		}
 	}
 	break;
-	case EPacketType::cs_sc_addNewItem:
+	/*case EPacketType::sc_addNewItem:
 	{
-		cs_sc_AddNewItemPacket* pPacket = reinterpret_cast<cs_sc_AddNewItemPacket*>(buf);
+		sc_AddNewItemPacket* pPacket = reinterpret_cast<sc_AddNewItemPacket*>(buf);
 		Client& client = sClients[networkID];
 		client.AddItem(pPacket->itemCode);
-		Log("[cs_sc_addNewItem] 네트워크 {0}번 클라이언트 {1}번 아이템 추가", pPacket->networkID, pPacket->itemCode);
+		Log("[sc_addNewItem] 네트워크 {0}번 클라이언트 {1}번 아이템 추가", pPacket->networkID, pPacket->itemCode);
 
 		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
@@ -348,7 +362,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 			log_assert(false);
 		}
 	}
-	break;
+	break;*/
 	case EPacketType::cs_sc_changeCharacter:
 	{
 		cs_sc_ChangeCharacterPacket* pPacket = reinterpret_cast<cs_sc_ChangeCharacterPacket*>(buf);
@@ -382,26 +396,6 @@ void Server::ProcessPacket(int networkID, char* buf)
 		}
 	}
 	break;
-	case EPacketType::cs_battleReady:
-	{
-		const cs_BattleReadyPacket* pPacket = reinterpret_cast<cs_BattleReadyPacket*>(buf);
-		Client& client = sClients[networkID];
-		client.TrySetDefaultUsingItem();
-		client.SetFirstAttackState(pPacket->firstAttackState);
-		client.SetBattleReady(true);
-
-		Log("[cs_battleReady] 네트워크 {0}번 클라이언트 전투 준비 완료", pPacket->networkID);
-		if (client.GetRoomPtr() != nullptr)
-		{
-			Room& room = *client.GetRoomPtr();
-			Log("{0}번 룸 전투 준비 카운트 증가 (현재 {1}/{2})", room.GetNumber(), room.GetBattleReadyCount(), room.GetSize()); // 락 안걸어서 준비 카운팅이 겹칠수 있음
-		}
-		else
-		{
-			log_assert(false);
-		}
-	}
-	break;
 	case EPacketType::cs_sc_useEmoticon:
 	{
 		const cs_sc_UseEmoticonPacket* pPacket = reinterpret_cast<cs_sc_UseEmoticonPacket*>(buf);
@@ -415,7 +409,6 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_sc_notification:
 	{
 		cs_sc_NotificationPacket* pPacket = reinterpret_cast<cs_sc_NotificationPacket*>(buf);
-		Log("[cs_sc_notification] 네트워크 {0}번 클라이언트 {1} 알림", pPacket->networkID, static_cast<int>(pPacket->notificationType.get()));
 		switch (pPacket->notificationType.get())
 		{
 		case ENotificationType::ChoiceCharacter:
@@ -423,12 +416,8 @@ void Server::ProcessPacket(int networkID, char* buf)
 			Client& client = sClients[pPacket->networkID];
 			client.SetChoiceCharacter(true);
 
-			{
-				lock_guard<mutex> lg(client.GetRoomPtr()->cLock);
-				client.GetRoomPtr()->TrySendEnterInGame();
-			}
-
 			client.SendPacketInAnotherRoomClients(pPacket);
+			Log("[ENotificationType::ChoiceCharacter] 네트워크 {0}번 클라이언트 캐릭터 확정", pPacket->networkID);
 		}
 		break;
 		case ENotificationType::ConnectCheck:
@@ -445,6 +434,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		}
 	}
 	break;
+	case EPacketType::sc_addNewItem:
 	case EPacketType::sc_connectRoom:
 	case EPacketType::sc_battleInfo:
 		LogWarning("{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
@@ -471,6 +461,23 @@ void Server::SendPacket(int networkID, void* pPacket)
 	const ULONG length = reinterpret_cast<uint16_t*>(buf)[0];
 	exover->wsabuf.len = length;
 	memcpy(exover->io_buf, buf, length);
+
+	::WSASend(client.GetSocket(), &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
+}
+
+void Server::SendPacket(int networkID, void* pPacket, ULONG size)
+{
+	char* buf = static_cast<char*>(pPacket);
+
+	const Client& client = sClients[networkID];
+
+	//WSASend의 두번째 인자의 over는 recv용이라 쓰면 안된다. 새로 만들어야 한다.
+	Exover* exover = new Exover;
+	exover->type = EOperationType::Send;
+	ZeroMemory(&exover->over, sizeof(exover->over));
+	exover->wsabuf.buf = exover->io_buf;
+	exover->wsabuf.len = size;
+	memcpy(exover->io_buf, buf, size);
 
 	::WSASend(client.GetSocket(), &exover->wsabuf, 1, NULL, 0, &exover->over, NULL);
 }

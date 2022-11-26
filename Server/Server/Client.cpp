@@ -10,6 +10,8 @@ Client::Client()
 	, mNetworkID(0)
 	, mRecvOver()
 	, mPrevSize(0)
+	, mHp(100)
+	, mAvatarHp(100)
 	, mPacketBuf{}
 	, mIsAlive(false)
 	, mStatus(ESocketStatus::FREE)
@@ -19,7 +21,6 @@ Client::Client()
 	, mUsingItems{}
 	, mUnUsingItems{}
 	, mFirstAttackState(0)
-	, mBattleReady(false)
 	, mIsChoiceCharacter(false)
 {
 	static_assert(MAX_USING_ITEM == 6, "MAX_USING_ITEM is not 6");
@@ -59,8 +60,9 @@ void Client::Init()
 
 	mStatus = ESocketStatus::FREE;
 	mFirstAttackState = 0;
-	mBattleReady = false;
 	mIsChoiceCharacter = false;
+	mHp = 100;
+	mAvatarHp = 100;
 }
 
 vector<Item> Client::GetUsingItems() const
@@ -178,12 +180,6 @@ void Client::TrySetDefaultUsingItem()
 			++it;
 		}
 	}
-}
-
-void Client::AddDefaultItem()
-{
-	AddItem(1);
-	AddItem(6);
 }
 
 void Client::SendPacketInAllRoomClients(void* pPacket) const

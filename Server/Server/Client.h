@@ -42,14 +42,11 @@ public:
 	void						SwapItem(uint8_t index1, uint8_t index2);
 	void						AddItem(uint8_t type);
 	void						TrySetDefaultUsingItem();
-	void						AddDefaultItem();
 	void						SendPacketInAllRoomClients(void* pPacket) const;
 	void						SendPacketInAnotherRoomClients(void* pPacket) const;
 	std::mutex&					GetMutex();
 	int16_t						GetFirstAttackState() const;
 	void						SetFirstAttackState(int16_t firstAttack);
-	bool						IsBattleReady() const;
-	void						SetBattleReady(bool ready);
 	bool						IsChoiceCharacter() const;
 	void						SetChoiceCharacter(bool isChoice);
 	void						SetLastConnectCheckPacketTime(system_clock::time_point time);
@@ -60,6 +57,8 @@ private:
 	int32_t						mNetworkID;							// 클라이언트 아이디
 	Exover						mRecvOver;							// 확장 overlapped 구조체
 	int32_t						mPrevSize;							// 이전에 받아놓은 양
+	int32_t						mHp;								// 플레이어 체력
+	int32_t						mAvatarHp;							// 전투 아바타 체력
 	char						mPacketBuf[MAX_PACKET_SIZE];		// 조각난 거 받아두기 위한 버퍼
 	bool						mIsAlive;							// 플레이 도중에 살아있는지(HP가 0이 아닌경우)
 	ESocketStatus				mStatus;							// 접속했나 안했나
@@ -69,7 +68,6 @@ private:
 	Item						mUsingItems[MAX_USING_ITEM];		// 전투시에 사용되는 인벤토리
 	Item						mUnUsingItems[MAX_UN_USING_ITEM];	// 보유 유물 보관 인벤토리
 	int16_t						mFirstAttackState;					// 선공 스텟
-	bool						mBattleReady;						// 전투 준비 되었는지
 	bool						mIsChoiceCharacter;					// 캐릭터를 선택했는지
 	system_clock::time_point	mLastConnectCheckPacketTime;		// 마지막으로 연결 체크 패킷 받은 시간
 };
@@ -172,16 +170,6 @@ inline int16_t Client::GetFirstAttackState() const
 inline void Client::SetFirstAttackState(int16_t firstAttack)
 {
 	mFirstAttackState = firstAttack;
-}
-
-inline bool Client::IsBattleReady() const
-{
-	return mBattleReady;
-}
-
-inline void Client::SetBattleReady(bool ready)
-{
-	mBattleReady = ready;
 }
 
 inline bool Client::IsChoiceCharacter() const

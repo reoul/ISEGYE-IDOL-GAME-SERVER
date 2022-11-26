@@ -17,11 +17,12 @@ public:
 	static void Start();
 	static RoomManager& GetRoomManager();
 	static void SendPacket(int networkID, void* pPacket);
-	
+	static void SendPacket(int networkID, void* pPacket, ULONG size);
+	static Client& GetClients(int networkID);
 private:
 	static void WorkerThread();
 	static void Disconnect(int networkID);
-	static void NewClientEvent(int networkID);
+	static void NewClientEvent(int networkID, char* ipAdress);
 	static void PacketConstruct(int networkID, int ioByteLength);
 	static void SendDisconnect(int networkID);
 	static void ProcessPacket(int networkID, char* buf);
@@ -37,4 +38,9 @@ private:
 inline RoomManager& Server::GetRoomManager()
 {
 	return sRoomManager;
+}
+
+inline Client& Server::GetClients(int networkID)
+{
+	return sClients[networkID];
 }

@@ -8,6 +8,7 @@
 #include "PacketStruct.h"
 #include "GlobalVariable.h"
 #include "Server.h"
+#include "Items.h"
 
 Room::Room()
 	: mSize(0)
@@ -73,6 +74,14 @@ void Room::SendPacketToAllClients(void* pPacket) const
 	}
 }
 
+void Room::SendPacketToAllClients(void* pPacket, ULONG size) const
+{
+	for (auto it = mClients.begin(); it != mClients.end(); ++it)
+	{
+		Server::SendPacket((*it)->GetNetworkID(), pPacket, size);
+	}
+}
+
 void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
 {
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
@@ -83,6 +92,19 @@ void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
 		}
 
 		Server::SendPacket((*it)->GetNetworkID(), pPacket);
+	}
+}
+
+void Room::SendPacketToAnotherClients(const Client& client, void* pPacket, ULONG size) const
+{
+	for (auto it = mClients.begin(); it != mClients.end(); ++it)
+	{
+		if (&client == *it)
+		{
+			continue;
+		}
+
+		Server::SendPacket((*it)->GetNetworkID(), pPacket, size);
 	}
 }
 
@@ -196,13 +218,9 @@ vector<int32_t> Room::GetRandomItemQueue()
 	return itemQueue;
 }
 
-void Room::TrySendBattleInfo()
+void Room::SendBattleInfo()
 {
 	lock_guard<mutex> lg(cLock);
-	if (GetBattleReadyCount() < mSize)
-	{
-		return;
-	}
 
 	if (mSize < 2)
 	{
@@ -210,11 +228,6 @@ void Room::TrySendBattleInfo()
 	}
 
 	SendRandomItemQueue();
-
-	for (Client* pClient : mClients)
-	{
-		pClient->SetBattleReady(false);
-	}
 }
 
 void Room::Init()
@@ -230,23 +243,15 @@ void Room::Init()
 	}
 }
 
-size_t Room::GetBattleReadyCount() const
-{
-	size_t cnt = 0;
-	for (const Client* client : mClients)
-	{
-		if (client->IsBattleReady())
-		{
-			++cnt;
-		}
-	}
-
-	return cnt;
-}
-
 void Room::TrySendEnterInGame()
 {
 	size_t readyCount = 0;
+
+	if (mClients.size() < 2)
+	{
+		return;
+	}
+
 	for (const Client* client : mClients)
 	{
 		if (client->IsChoiceCharacter())
@@ -264,11 +269,142 @@ void Room::TrySendEnterInGame()
 	}
 }
 
+/**
+ * \brief 게임 진행 스레드 함수
+ */
+unsigned Room::ProgressThread(void* pArguments)
+{
+	Log("진행 시작");
+	Room* pRoom = static_cast<Room*>(pArguments);
+	for (int i = 0; i < CHOOSE_CHARACTER_TIME; ++i)
+	{
+		Log("{0}번 방 {1}초 선택 진행중", pRoom->GetNumber(), i);
+		Sleep(1000);
+
+		{
+			lock_guard<mutex> lg(pRoom->cLock);
+			pRoom->TrySendEnterInGame();
+		}
+
+		if (pRoom->mIsFinishChoiceCharacter)
+		{
+			Log("모두 선택 완료");
+			Sleep(5000);
+			break;
+		}
+
+		if (!pRoom->mIsRun)
+		{
+			Log("Room 진행 종료");
+			_endthreadex(0);
+			return 0;
+		}
+	}
+
+	Log("기본 템 지급 시작");
+	// 기본 템 지급
+	{
+		constexpr size_t bufferSize = sizeof(sc_AddNewItemPacket) * 2 * 8;
+		OutputMemoryStream memoryStream(bufferSize);
+
+		for (Client* client : pRoom->mClients)
+		{
+			constexpr uint8_t defaultItemCode1 = 1;	// 기본템 1
+			constexpr uint8_t defaultItemCode2 = 6;	// 기본템 2
+
+			client->AddItem(defaultItemCode1);
+			const sc_AddNewItemPacket addItemPacket(client->GetNetworkID(), defaultItemCode1);
+			addItemPacket.Write(memoryStream);
+
+			client->AddItem(defaultItemCode2);
+			const sc_AddNewItemPacket addItemPacket2(client->GetNetworkID(), defaultItemCode2);
+			addItemPacket2.Write(memoryStream);
+		}
+
+		pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+	}
+
+	Log("기본 템 지급 완료");
+
+	if (!pRoom->mIsRun)
+	{
+		Log("Room 진행 종료");
+		_endthreadex(0);
+		return 0;
+	}
+
+	while (true)
+	{
+		// 대기 시간
+		Log("준비시간 시작");
+		Sleep((BATTLE_READY_TIME + 1) * 1000);
+		Log("준비시간 끝");
+
+		if (!pRoom->mIsRun)
+		{
+			break;
+		}
+
+		// 전투
+		pRoom->SendBattleInfo();	// 전투 정보 전송
+
+		if (!pRoom->mIsRun && pRoom->GetSize() < 2)
+		{
+			break;
+		}
+
+		vector<int32_t>& battleOpponents = pRoom->GetBattleOpponents();
+		vector<int32_t>& itemQueues = pRoom->GetItemQueues();
+
+		constexpr int waitTimes[2]{ 1000, 500 };
+
+		for (size_t i = 0; i < 30; ++i)
+		{
+			// 아이템 사용했다는 패킷 보내고
+			for (size_t j = 0; j < MAX_USING_ITEM; ++j)
+			{
+				for (size_t k = 0; k < battleOpponents.size(); k += 2)
+				{
+					Client& client1 = Server::GetClients(battleOpponents[k]);
+					Client& client2 = Server::GetClients(battleOpponents[k + 1]);
+					// 아이템 사용
+					sItems[itemQueues[0]]->Use(client1, client2, 0);
+				}
+				Sleep(waitTimes[0]);
+			}
+			
+		}
+
+		Sleep(120000);
+
+		// 대기 시간
+		/*Log("준비시간 시작");
+		Sleep((BATTLE_READY_TIME + 1) * 1000);
+		Log("준비시간 끝");
+
+		if (!pRoom->mIsRun)
+		{
+			break;
+		}*/
+
+		// 크립라운드
+
+		if (!pRoom->mIsRun)
+		{
+			break;
+		}
+	}
+
+	Log("Room 진행 종료");
+	_endthreadex(0);
+	return 0;
+}
+
 void Room::SendRandomItemQueue()
 {
-	vector<int32_t> battleOpponent = mBattleManager.GetBattleOpponent();
-	vector<int32_t> itemQueue = GetRandomItemQueue();
+	mBattleOpponents = mBattleManager.GetBattleOpponent();
+	mItemQueues = GetRandomItemQueue();
 
-	sc_BattleInfoPacket packet(battleOpponent, itemQueue);
+	sc_BattleInfoPacket packet(mBattleOpponents, mItemQueues);
 	SendPacketToAllClients(&packet);
 }

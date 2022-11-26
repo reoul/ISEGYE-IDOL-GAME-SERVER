@@ -12,13 +12,17 @@ class LinkingContext;
 class OutputMemoryStream
 {
 public:
-	OutputMemoryStream()
+	OutputMemoryStream() : OutputMemoryStream(32)
+	{
+	}
+
+	OutputMemoryStream(int capacity)
 		: mBuffer(nullptr)
 		, mHead(0)
-		, mCapacity(0)
+		, mCapacity(capacity)
 		, mLinkingContext(nullptr)
 	{
-		ReallocBuffer(32);
+		ReallocBuffer(capacity);
 	}
 
 	~OutputMemoryStream()
@@ -27,7 +31,7 @@ public:
 	}
 
 	//get a pointer to the data in the stream
-	const char* GetBufferPtr() const { return mBuffer; }
+	void* GetBufferPtr() const { return mBuffer; }
 	uint32_t GetLength() const { return mHead; }
 
 	void Write(const void* inData, size_t inByteCount);
@@ -46,7 +50,6 @@ public:
 			T swappedData = ByteSwap(inData);
 			Write(&swappedData, sizeof(swappedData));
 		}
-
 	}
 
 	void Write(const std::vector< int >& inIntVector)

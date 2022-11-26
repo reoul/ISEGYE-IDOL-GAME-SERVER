@@ -14,9 +14,11 @@ public:
 	void AddClients(vector<Client*>& clients);
 	void RemoveClient(const Client& client);
 	void SendPacketToAllClients(void* pPacket) const;
+	void SendPacketToAllClients(void* pPacket, ULONG size) const;
 	void SendPacketToAnotherClients(const Client& client, void* pPacket) const;
+	void SendPacketToAnotherClients(const Client& client, void* pPacket, ULONG size) const;
 	vector<int32_t> GetRandomItemQueue();
-	void TrySendBattleInfo();
+	void SendBattleInfo();
 	const vector<Client*>& GetClients() const;
 	vector<Client*>& GetClients();
 	bool IsRun() const;
@@ -25,9 +27,11 @@ public:
 	size_t GetSize() const;
 	size_t GetNumber() const;
 	void SetNumber(size_t number);
-	size_t GetBattleReadyCount() const;
 	void TrySendEnterInGame();
 	bool IsFinishChoiceCharacter() const;
+	static unsigned __stdcall ProgressThread(void* pArguments);
+	vector<int32_t>& GetBattleOpponents();
+	vector<int32_t>& GetItemQueues();
 private:
 	void SendRandomItemQueue();
 	vector<Client*> mClients;
@@ -37,6 +41,8 @@ private:
 	const_wrapper<size_t> mCapacity;
 	BattleManager mBattleManager;
 	bool mIsFinishChoiceCharacter;
+	vector<int32_t> mBattleOpponents;
+	vector<int32_t> mItemQueues;
 };
 
 inline const vector<Client*>& Room::GetClients() const
@@ -48,7 +54,6 @@ inline vector<Client*>& Room::GetClients()
 {
 	return mClients;
 }
-
 
 inline bool Room::IsRun() const
 {
@@ -78,4 +83,14 @@ inline void Room::SetNumber(size_t number)
 inline bool Room::IsFinishChoiceCharacter() const
 {
 	return mIsFinishChoiceCharacter;
+}
+
+inline vector<int32_t>& Room::GetBattleOpponents()
+{
+	return mBattleOpponents;
+}
+
+inline vector<int32_t>& Room::GetItemQueues()
+{
+	return mItemQueues;
 }
