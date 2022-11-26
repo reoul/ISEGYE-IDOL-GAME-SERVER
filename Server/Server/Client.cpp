@@ -4,6 +4,8 @@
 #include <iostream>
 #include <iterator>
 #include "PacketStruct.h"
+#include "Random.h"
+#include "Items.h"
 
 Client::Client()
 	: mSocket(INVALID_SOCKET)
@@ -145,6 +147,13 @@ void Client::AddItem(uint8_t type)
 	}
 }
 
+/// <summary> 랜덤한 아이템 타입 가져오기 </summary>
+uint8_t Client::GetRandomItemType() const
+{
+	Random<int> gen(0, _countof(sItems) - 1);
+	return static_cast<uint8_t>(gen());
+}
+
 /**
  * UsingItems에 아무것도 장착되어 있지 않으면 UnUsingItems에서 유효한 아이템을 가져다 장착한다
  */
@@ -200,7 +209,7 @@ void Client::SendPacketInAnotherRoomClients(void* pPacket) const
 
 bool Client::IsValidConnect() const
 {
-	constexpr milliseconds intervalTime(3000);
+	constexpr milliseconds intervalTime(CONNECT_CHECK_INTERVAL * 1000);
 	if (mLastConnectCheckPacketTime + intervalTime < system_clock::now())	// 만약 마지막에 보낸 확인 패킷이 3초가 지났다면
 	{
 		return false;	// 유효하지 않는 연결 상태

@@ -62,22 +62,28 @@ void Server::Start()
 	Log("{0}개의 쓰레드 작동", std::thread::hardware_concurrency());
 
 	system_clock::time_point lastConnectCheckTime = system_clock::now();
-	constexpr milliseconds checkIntervalTime(3000);
+	constexpr milliseconds checkIntervalTime(CONNECT_CHECK_INTERVAL * 1000);
 
 	while (sIsRunningServer)
 	{
 		if (system_clock::now() > lastConnectCheckTime + checkIntervalTime)
 		{
+			int connCount = 0;
 			lastConnectCheckTime = system_clock::now();
 			for (Client& client : sClients)
 			{
-				if (client.GetStatus() == ESocketStatus::ACTIVE && !client.IsValidConnect())
+				if (client.GetStatus() == ESocketStatus::ACTIVE)
 				{
-					Log("{0}번 클라이언트 연결 불안으로 접속 해제", client.GetNetworkID());
-					Disconnect(client.GetNetworkID());
+					if (!client.IsValidConnect())
+					{
+						Log("{0}번 클라이언트 연결 불안으로 접속 해제", client.GetNetworkID());
+						Disconnect(client.GetNetworkID());
+						continue;
+					}
+					++connCount;
 				}
 			}
-			Log("체크");
+			Log("현재 유저 : {0}명", connCount);
 		}
 	}
 
@@ -191,8 +197,6 @@ void Server::WorkerThread()
 					sprintf(ipAdress, "%d.%d.%d.%d", *reinterpret_cast<uint8_t*>(&lpRemoteSockaddr->sa_data[2]), *reinterpret_cast<uint8_t*>(&lpRemoteSockaddr->sa_data[3]), *reinterpret_cast<uint8_t*>(&lpRemoteSockaddr->sa_data[4]), *reinterpret_cast<uint8_t*>(&lpRemoteSockaddr->sa_data[5]));
 
 					NewClientEvent(userID, ipAdress);
-
-					sClients[userID].SetLastConnectCheckPacketTime(system_clock::now());
 
 					sClients[userID].SetLastConnectCheckPacketTime(system_clock::now());
 
@@ -422,7 +426,18 @@ void Server::ProcessPacket(int networkID, char* buf)
 		break;
 		case ENotificationType::ConnectCheck:
 			sClients[pPacket->networkID].SetLastConnectCheckPacketTime(system_clock::now());
+			LogWrite("[ENotificationType::ConnectCheck] 네트워크 {0}번 클라이언트 연결 확인", pPacket->networkID);
 			break;
+		case ENotificationType::RequestAddRandomItem:
+		{
+			Client& client = sClients[pPacket->networkID];
+			const uint8_t newItemType = client.GetRandomItemType();
+			client.AddItem(newItemType);
+			sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), newItemType);
+			client.SendPacketInAllRoomClients(&addItemPacket);
+			Log("[ENotificationType::RequestAddRandomItem] 네트워크 {0}번 클라이언트 랜덤 아이템 추가 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+		}
+		break;
 		case ENotificationType::EnterInGame:
 		case ENotificationType::ConnectServer:
 		case ENotificationType::DisconnectServer:

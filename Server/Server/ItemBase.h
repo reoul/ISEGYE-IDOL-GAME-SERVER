@@ -7,5 +7,5 @@ class ItemBase
 public:
 	ItemBase() = default;
 	virtual ~ItemBase() = default;
-	virtual void Use(Client& me, Client& opponents, int grade) = 0;
+	virtual void Use(Client& me, Client& opponents, int upgrade) = 0;
 };

@@ -340,6 +340,30 @@ unsigned Room::ProgressThread(void* pArguments)
 		Sleep((BATTLE_READY_TIME + 1) * 1000);
 		Log("준비시간 끝");
 
+		// 기본 템 장착
+		for (Client* client : pRoom->GetClients())
+		{
+			client->TrySetDefaultUsingItem();
+		}
+
+		LogPrintf("기본 유물 장착");
+
+		{
+			vector<Client*> clients = pRoom->GetClients();
+			const size_t bufferSize = sizeof(sc_UpdateCharacterInfoPacket) * clients.size();
+			OutputMemoryStream memoryStream(bufferSize);
+
+			for (Client* client : clients)
+			{
+				sc_UpdateCharacterInfoPacket packet(*client);
+				packet.Write(memoryStream);
+			}
+
+			pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+		}
+
+		LogPrintf("캐릭터 갱신 패킷 전송");
+		
 		if (!pRoom->mIsRun)
 		{
 			break;

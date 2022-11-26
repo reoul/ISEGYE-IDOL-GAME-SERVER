@@ -37,6 +37,8 @@ enum class EPacketType : uint8_t
 	cs_sc_notification,
 	/// <summary> 이모티콘을 보냈음을 알리는 패킷 타입 </summary>
 	cs_sc_useEmoticon,
+	/// <summary> 캐릭터 정보를 갱신해주는 패킷 타입 </summary>
+	sc_updateCharacterInfo,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -52,6 +54,8 @@ enum class ENotificationType : uint8_t
 	DisconnectServer,
 	/// <summary> 서버에 계속 연결되는 상태를 알리는 패킷 타입 </summary>
 	ConnectCheck,
+	/// <summary> 랜덤 아이템 추가 요청을 알리는 패킷 타입 </summary>
+	RequestAddRandomItem,
 };
 
 #pragma pack(push, 1)
@@ -280,6 +284,63 @@ struct cs_sc_NotificationPacket : protected Packet
 		, networkID(networkID)
 		, notificationType(notificationType)
 	{
+	}
+};
+
+struct SlotItemInfo
+{
+	uint8_t type;
+	uint8_t upgrade;
+};
+
+struct sc_UpdateCharacterInfoPacket : protected Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<int16_t> hp;
+	const_wrapper<int16_t> avatarHp;
+	SlotItemInfo usingInventoryInfos[MAX_USING_ITEM];
+	SlotItemInfo unUsingInventoryInfos[MAX_UN_USING_ITEM];
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(hp.get());
+		memoryStream.Write(avatarHp.get());
+
+		for (SlotItemInfo usingInventoryInfo : usingInventoryInfos)
+		{
+			memoryStream.Write(usingInventoryInfo.type);
+			memoryStream.Write(usingInventoryInfo.upgrade);
+		}
+
+		for (SlotItemInfo unUsingInventoryInfo : unUsingInventoryInfos)
+		{
+			memoryStream.Write(unUsingInventoryInfo.type);
+			memoryStream.Write(unUsingInventoryInfo.upgrade);
+		}
+	}
+
+	sc_UpdateCharacterInfoPacket(const Client& client)
+		: Packet(sizeof(sc_UpdateCharacterInfoPacket), EPacketType::sc_updateCharacterInfo)
+		, networkID(client.GetNetworkID())
+		, hp(static_cast<int16_t>(client.GetHp()))
+		, avatarHp(static_cast<int16_t>(client.GetAvatarHp()))
+	{
+		vector<Item> usingItems = client.GetUsingItems();
+		vector<Item> unUsingItems = client.GetUnUsingItems();
+
+		for (int i = 0; i < MAX_USING_ITEM; ++i)
+		{
+			usingInventoryInfos[i].type = usingItems[i].GetType();
+			usingInventoryInfos[i].upgrade = usingItems[i].GetUpgrade();
+		}
+
+		for (int i = 0; i < MAX_UN_USING_ITEM; ++i)
+		{
+			unUsingInventoryInfos[i].type = unUsingItems[i].GetType();
+			unUsingInventoryInfos[i].upgrade = unUsingItems[i].GetUpgrade();
+		}
 	}
 };
 

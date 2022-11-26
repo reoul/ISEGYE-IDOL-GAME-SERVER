@@ -41,6 +41,7 @@ public:
 	vector<SlotInfo>			GetValidUnUsingItems() const;
 	void						SwapItem(uint8_t index1, uint8_t index2);
 	void						AddItem(uint8_t type);
+	uint8_t						GetRandomItemType() const;
 	void						TrySetDefaultUsingItem();
 	void						SendPacketInAllRoomClients(void* pPacket) const;
 	void						SendPacketInAnotherRoomClients(void* pPacket) const;
@@ -51,6 +52,13 @@ public:
 	void						SetChoiceCharacter(bool isChoice);
 	void						SetLastConnectCheckPacketTime(system_clock::time_point time);
 	bool						IsValidConnect() const;
+	void						ToDamage(int damage);
+	void						ToDamageAvatar(int damage);
+	int32_t						GetHp() const;
+	void						SetHp(int32_t hp);
+	int32_t						GetAvatarHp() const;
+	void						SetAvatarHp(int32_t hp);
+
 private:
 	std::mutex					mLock;
 	SOCKET						mSocket;
@@ -185,4 +193,24 @@ inline void Client::SetChoiceCharacter(bool isChoice)
 inline void Client::SetLastConnectCheckPacketTime(system_clock::time_point time)
 {
 	mLastConnectCheckPacketTime = time;
+}
+
+inline int32_t Client::GetHp() const
+{
+	return mHp;
+}
+
+inline void	Client::SetHp(int32_t hp)
+{
+	mHp = hp;
+}
+
+inline int32_t Client::GetAvatarHp() const
+{
+	return mAvatarHp;
+}
+
+inline void Client::SetAvatarHp(int32_t hp)
+{
+	mAvatarHp = hp;
 }

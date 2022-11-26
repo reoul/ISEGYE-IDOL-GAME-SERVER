@@ -12,10 +12,14 @@ int main()
 	std::locale::global(std::locale("Korean"));
 	SocketUtil::StaticInit();
 	LogInit();
-	Client aa;
-	Client bb;
-	sItems[0]->Use(aa, bb, 0);
-	sItems[1]->Use(aa, bb, 0);
+	//Client aa;
+	//Client bb;
+	//sItems[0]->Use(aa, bb, 0);
+	//sItems[5]->Use(aa, bb, 0);
+	//sItems[5]->Use(aa, bb, 1);
+	//sItems[5]->Use(aa, bb, 2);
+	//sItems[5]->Use(aa, bb, 3);
+	//LogPrintf("{0}", _countof(sItems));
 	Server::Start();
 	
 	return 0;

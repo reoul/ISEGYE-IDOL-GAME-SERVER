@@ -16,7 +16,7 @@ public:
 	{
 	}
 
-	OutputMemoryStream(int capacity)
+	OutputMemoryStream(size_t capacity)
 		: mBuffer(nullptr)
 		, mHead(0)
 		, mCapacity(capacity)
