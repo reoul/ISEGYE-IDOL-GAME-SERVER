@@ -274,7 +274,7 @@ void Room::TrySendEnterInGame()
  */
 unsigned Room::ProgressThread(void* pArguments)
 {
-	Log("log", "진행 시작");
+	LogPrintf("진행 시작");
 	Room* pRoom = static_cast<Room*>(pArguments);
 	for (int i = 0; i < CHOOSE_CHARACTER_TIME; ++i)
 	{
@@ -328,7 +328,7 @@ unsigned Room::ProgressThread(void* pArguments)
 
 	if (!pRoom->mIsRun)
 	{
-		Log("log", "Room 진행 종료");
+		LogPrintf("Room 진행 종료");
 		_endthreadex(0);
 		return 0;
 	}
@@ -346,8 +346,6 @@ unsigned Room::ProgressThread(void* pArguments)
 		{
 			break;
 		}
-
-		Sleep(120000);
 
 		// 대기 시간
 		if (ReadyStage(*pRoom))
@@ -374,7 +372,7 @@ unsigned Room::ProgressThread(void* pArguments)
  */
 inline bool Room::ReadyStage(Room& room)
 {
-	LogPrintf("log", "준비시간 시작");
+	LogPrintf("준비시간 시작");
 
 	{
 		sc_SetReadyTimePacket packet(BATTLE_READY_TIME);
@@ -382,7 +380,7 @@ inline bool Room::ReadyStage(Room& room)
 	}
 
 	Sleep((BATTLE_READY_TIME + 1) * 1000);
-	LogPrintf("log", "준비시간 끝");
+	LogPrintf("준비시간 끝");
 
 	// 기본 템 장착
 	for (Client* client : room.GetClients())
@@ -393,11 +391,11 @@ inline bool Room::ReadyStage(Room& room)
 	LogPrintf("기본 유물 장착");
 
 	{
-		vector<Client*> clients = room.GetClients();
+		const vector<Client*> clients = room.GetClients();
 		const size_t bufferSize = sizeof(sc_UpdateCharacterInfoPacket) * clients.size();
 		OutputMemoryStream memoryStream(bufferSize);
 
-		for (Client* client : clients)
+		for (const Client* client : clients)
 		{
 			sc_UpdateCharacterInfoPacket packet(*client);
 			packet.Write(memoryStream);
@@ -432,8 +430,8 @@ bool Room::BattleStage(Room& room)
 		return false;
 	}
 
-	vector<int32_t>& battleOpponents = room.GetBattleOpponents();
-	vector<int32_t>& itemQueues = room.GetItemQueues();
+	const vector<int32_t>& battleOpponents = room.GetBattleOpponents();
+	const vector<int32_t>& itemQueues = room.GetItemQueues();
 
 	constexpr int waitTimes[2]{ 1000, 500 };
 
