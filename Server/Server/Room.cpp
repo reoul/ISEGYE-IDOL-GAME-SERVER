@@ -339,25 +339,25 @@ unsigned Room::ProgressThread(void* pArguments)
 	while (true)
 	{
 		// 대기 시간
-		if (ReadyStage(*pRoom))
+		if (!ReadyStage(*pRoom))
 		{
 			break;
 		}
 
 		// 전투
-		if (BattleStage(*pRoom))
+		if (!BattleStage(*pRoom))
 		{
 			break;
 		}
 
 		// 대기 시간
-		if (ReadyStage(*pRoom))
+		if (!ReadyStage(*pRoom))
 		{
 			break;
 		}
 
 		// 크립라운드
-		if (CreepStage(*pRoom))
+		if (!CreepStage(*pRoom))
 		{
 			break;
 		}
