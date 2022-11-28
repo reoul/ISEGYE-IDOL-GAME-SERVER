@@ -336,90 +336,27 @@ unsigned Room::ProgressThread(void* pArguments)
 	while (true)
 	{
 		// 대기 시간
-		Log("log", "준비시간 시작");
-
-		{
-			sc_SetReadyTimePacket packet(BATTLE_READY_TIME);
-			pRoom->SendPacketToAllClients(&packet);
-		}
-
-		Sleep((BATTLE_READY_TIME + 1) * 1000);
-		Log("log", "준비시간 끝");
-
-		// 기본 템 장착
-		for (Client* client : pRoom->GetClients())
-		{
-			client->TrySetDefaultUsingItem();
-		}
-
-		LogPrintf("기본 유물 장착");
-
-		{
-			vector<Client*> clients = pRoom->GetClients();
-			const size_t bufferSize = sizeof(sc_UpdateCharacterInfoPacket) * clients.size();
-			OutputMemoryStream memoryStream(bufferSize);
-
-			for (Client* client : clients)
-			{
-				sc_UpdateCharacterInfoPacket packet(*client);
-				packet.Write(memoryStream);
-			}
-
-			pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-		}
-
-		LogPrintf("캐릭터 갱신 패킷 전송");
-		
-		if (!pRoom->mIsRun)
+		if (ReadyStage(*pRoom))
 		{
 			break;
 		}
 
 		// 전투
-		pRoom->SendBattleInfo();	// 전투 정보 전송
-
-		if (!pRoom->mIsRun && pRoom->GetSize() < 2)
+		if (BattleStage(*pRoom))
 		{
 			break;
-		}
-
-		vector<int32_t>& battleOpponents = pRoom->GetBattleOpponents();
-		vector<int32_t>& itemQueues = pRoom->GetItemQueues();
-
-		constexpr int waitTimes[2]{ 1000, 500 };
-
-		for (size_t i = 0; i < 30; ++i)
-		{
-			// 아이템 사용했다는 패킷 보내고
-			for (size_t j = 0; j < MAX_USING_ITEM; ++j)
-			{
-				for (size_t k = 0; k < battleOpponents.size(); k += 2)
-				{
-					Client& client1 = Server::GetClients(battleOpponents[k]);
-					Client& client2 = Server::GetClients(battleOpponents[k + 1]);
-					// 아이템 사용
-					sItems[itemQueues[0]]->Use(client1, client2, 0);
-				}
-				Sleep(waitTimes[0]);
-			}
-			
 		}
 
 		Sleep(120000);
 
 		// 대기 시간
-		/*Log("준비시간 시작");
-		Sleep((BATTLE_READY_TIME + 1) * 1000);
-		Log("준비시간 끝");
-
-		if (!pRoom->mIsRun)
+		if (ReadyStage(*pRoom))
 		{
 			break;
-		}*/
+		}
 
 		// 크립라운드
-
-		if (!pRoom->mIsRun)
+		if (CreepStage(*pRoom))
 		{
 			break;
 		}
@@ -428,6 +365,122 @@ unsigned Room::ProgressThread(void* pArguments)
 	Log("log", "Room 진행 종료");
 	_endthreadex(0);
 	return 0;
+}
+
+/**
+ * \brief 준비 스테이지 로직
+ * \param room 해당 Room
+ * \return Room 유지 여부
+ */
+inline bool Room::ReadyStage(Room& room)
+{
+	LogPrintf("log", "준비시간 시작");
+
+	{
+		sc_SetReadyTimePacket packet(BATTLE_READY_TIME);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep((BATTLE_READY_TIME + 1) * 1000);
+	LogPrintf("log", "준비시간 끝");
+
+	// 기본 템 장착
+	for (Client* client : room.GetClients())
+	{
+		client->TrySetDefaultUsingItem();
+	}
+
+	LogPrintf("기본 유물 장착");
+
+	{
+		vector<Client*> clients = room.GetClients();
+		const size_t bufferSize = sizeof(sc_UpdateCharacterInfoPacket) * clients.size();
+		OutputMemoryStream memoryStream(bufferSize);
+
+		for (Client* client : clients)
+		{
+			sc_UpdateCharacterInfoPacket packet(*client);
+			packet.Write(memoryStream);
+		}
+
+		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+	}
+
+	LogPrintf("캐릭터 갱신 패킷 전송");
+
+	if (!room.mIsRun)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * \brief 전투 스테이지 로직
+ * \param room 해당 Room
+ * \return Room 유지 여부
+ */
+bool Room::BattleStage(Room& room)
+{
+	LogPrintf("log", "전투 스테이지 시작");
+
+	room.SendBattleInfo();	// 전투 정보 전송
+
+	if (!room.mIsRun && room.GetSize() < 2)
+	{
+		return false;
+	}
+
+	vector<int32_t>& battleOpponents = room.GetBattleOpponents();
+	vector<int32_t>& itemQueues = room.GetItemQueues();
+
+	constexpr int waitTimes[2]{ 1000, 500 };
+
+	for (size_t i = 0; i < 30; ++i)
+	{
+		// 아이템 사용했다는 패킷 보내고
+		for (size_t j = 0; j < MAX_USING_ITEM; ++j)
+		{
+			for (size_t k = 0; k < battleOpponents.size(); k += 2)
+			{
+				Client& client1 = Server::GetClients(battleOpponents[k]);
+				Client& client2 = Server::GetClients(battleOpponents[k + 1]);
+				// 아이템 사용
+				sItems[itemQueues[0]]->Use(client1, client2, 0);
+			}
+			Sleep(waitTimes[0]);
+
+			if (!room.mIsRun)
+			{
+				return false;
+			}
+		}
+	}
+
+	if (!room.mIsRun)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * \brief 크립 스테이지 로직
+ * \param room 해당 Room
+ * \return Room 유지 여부
+ */
+bool Room::CreepStage(Room& room)
+{
+	LogPrintf("log", "크립 스테이지 시작");
+
+	if (!room.mIsRun)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 void Room::SendRandomItemQueue()

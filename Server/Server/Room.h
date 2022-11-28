@@ -32,6 +32,9 @@ public:
 	static unsigned __stdcall ProgressThread(void* pArguments);
 	vector<int32_t>& GetBattleOpponents();
 	vector<int32_t>& GetItemQueues();
+	static bool ReadyStage(Room& room);
+	static bool BattleStage(Room& room);
+	static bool CreepStage(Room& room);
 private:
 	void SendRandomItemQueue();
 	vector<Client*> mClients;
