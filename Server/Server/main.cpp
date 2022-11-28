@@ -11,7 +11,13 @@ int main()
 {
 	std::locale::global(std::locale("Korean"));
 	SocketUtil::StaticInit();
-	LogInit();
+
+	Logger::LogInit();
+	Logger::AddLogger("log", "/log.txt");
+	Logger::AddLogger("test", "/testLog.txt");
+	Logger::AddLogger("test2", "/test2.txt");
+	
+
 	//Client aa;
 	//Client bb;
 	//sItems[0]->Use(aa, bb, 0);

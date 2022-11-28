@@ -7,6 +7,8 @@
 #include "Server.h"
 #include "reoul/logger.h"
 
+using namespace Logger;
+
 ServerQueue::ServerQueue()
 	: mClientQueue(nullptr)
 	, mSize(0)
@@ -32,7 +34,7 @@ void ServerQueue::AddClient(Client& client)
 	}
 
 	++mSize;
-	Log("네트워크 {0}번 클라이언트 대기열 추가 (현재 {1}명 대기중)", client.GetNetworkID(), mSize);
+	Log("log", "네트워크 {0}번 클라이언트 대기열 추가 (현재 {1}명 대기중)", client.GetNetworkID(), mSize);
 }
 
 void ServerQueue::RemoveClient(Client& client)
@@ -59,7 +61,7 @@ void ServerQueue::RemoveClient(Client& client)
 				}
 			}
 			--mSize;
-			Log("네트워크 {0}번 클라이언트 대기열 제거 (현재 {1}명 대기중)", client.GetNetworkID(), mSize);
+			Log("log", "네트워크 {0}번 클라이언트 대기열 제거 (현재 {1}명 대기중)", client.GetNetworkID(), mSize);
 			break;
 		}
 		node = node->Next;
@@ -82,7 +84,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 			node = node->Next;
 		}
 		room.AddClients(clients);
-		Log("{0}번 룸 활성화 (현재 활성화된 방 : {1})", room.GetNumber(), Server::GetRoomManager().GetUsingRoomCount());
+		Log("log", "{0}번 룸 활성화 (현재 활성화된 방 : {1})", room.GetNumber(), Server::GetRoomManager().GetUsingRoomCount());
 		mClientQueue = node;
 		if (node != nullptr)
 		{

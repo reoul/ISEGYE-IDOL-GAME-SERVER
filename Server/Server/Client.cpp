@@ -12,8 +12,10 @@ Client::Client()
 	, mNetworkID(0)
 	, mRecvOver()
 	, mPrevSize(0)
-	, mHp(100)
-	, mAvatarHp(100)
+	, mHp(MAX_CHARACTER_MAX_HP)
+	, mAvatarMaxHp(MAX_AVATAR_MAX_HP)
+	, mAvatarHp(MAX_AVATAR_MAX_HP)
+	, mAvatarDefensive(START_AVATAR_DEFENSIVE)
 	, mPacketBuf{}
 	, mIsAlive(false)
 	, mStatus(ESocketStatus::FREE)
@@ -28,12 +30,12 @@ Client::Client()
 	static_assert(MAX_USING_ITEM == 6, "MAX_USING_ITEM is not 6");
 
 	// UsingItems 자리에 선공 확률 지정
-	mUsingItems[0].SetActivePercent(30);
-	mUsingItems[1].SetActivePercent(30);
-	mUsingItems[2].SetActivePercent(20);
-	mUsingItems[3].SetActivePercent(20);
-	mUsingItems[4].SetActivePercent(10);
-	mUsingItems[5].SetActivePercent(10);
+	mUsingItems[0].SetActivePercent(27);
+	mUsingItems[1].SetActivePercent(27);
+	mUsingItems[2].SetActivePercent(33);
+	mUsingItems[3].SetActivePercent(33);
+	mUsingItems[4].SetActivePercent(40);
+	mUsingItems[5].SetActivePercent(40);
 }
 
 void Client::Init()
@@ -63,8 +65,10 @@ void Client::Init()
 	mStatus = ESocketStatus::FREE;
 	mFirstAttackState = 0;
 	mIsChoiceCharacter = false;
-	mHp = 100;
-	mAvatarHp = 100;
+	mHp = MAX_CHARACTER_MAX_HP;
+	mAvatarMaxHp = MAX_AVATAR_MAX_HP;
+	mAvatarHp = MAX_AVATAR_MAX_HP;
+	mAvatarDefensive = START_AVATAR_DEFENSIVE;
 }
 
 vector<Item> Client::GetUsingItems() const

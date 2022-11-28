@@ -9,6 +9,7 @@
 #include "reoul/MemoryStream.h"
 
 using namespace std;
+using namespace Logger;
 
 enum class ECharacterType : uint8_t;
 
@@ -39,6 +40,8 @@ enum class EPacketType : uint8_t
 	cs_sc_useEmoticon,
 	/// <summary> 캐릭터 정보를 갱신해주는 패킷 타입 </summary>
 	sc_updateCharacterInfo,
+	/// <summary> 준비시간을 설정해주는 패킷 타입 </summary>
+	sc_setReadyTime,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -341,6 +344,23 @@ struct sc_UpdateCharacterInfoPacket : protected Packet
 			unUsingInventoryInfos[i].type = unUsingItems[i].GetType();
 			unUsingInventoryInfos[i].upgrade = unUsingItems[i].GetUpgrade();
 		}
+	}
+};
+
+struct sc_SetReadyTimePacket : protected Packet
+{
+	const_wrapper<uint8_t> time;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(time.get());
+	}
+
+	sc_SetReadyTimePacket(uint8_t time)
+		: Packet(sizeof(sc_SetReadyTimePacket), EPacketType::sc_setReadyTime)
+		, time(time)
+	{
 	}
 };
 

@@ -54,10 +54,15 @@ public:
 	bool						IsValidConnect() const;
 	void						ToDamage(int damage);
 	void						ToDamageAvatar(int damage);
+	void						ToHealAvatar(int heal);
 	int32_t						GetHp() const;
 	void						SetHp(int32_t hp);
 	int32_t						GetAvatarHp() const;
 	void						SetAvatarHp(int32_t hp);
+	int32_t						GetAvatarMaxHp() const;
+	void						SetAvatarMaxHp(int32_t maxHp);
+	int32_t						GetAvatarDefensive() const;
+	void						SetAvatarDefensive(int32_t defensive);
 
 private:
 	std::mutex					mLock;
@@ -66,7 +71,9 @@ private:
 	Exover						mRecvOver;							// 확장 overlapped 구조체
 	int32_t						mPrevSize;							// 이전에 받아놓은 양
 	int32_t						mHp;								// 플레이어 체력
+	int32_t						mAvatarMaxHp;						// 전투 아바타 최대 체력
 	int32_t						mAvatarHp;							// 전투 아바타 체력
+	int32_t						mAvatarDefensive;					// 전투 아바타 방어도
 	char						mPacketBuf[MAX_PACKET_SIZE];		// 조각난 거 받아두기 위한 버퍼
 	bool						mIsAlive;							// 플레이 도중에 살아있는지(HP가 0이 아닌경우)
 	ESocketStatus				mStatus;							// 접속했나 안했나
@@ -213,4 +220,41 @@ inline int32_t Client::GetAvatarHp() const
 inline void Client::SetAvatarHp(int32_t hp)
 {
 	mAvatarHp = hp;
+}
+
+inline void Client::ToDamage(int damage)
+{
+	mHp -= damage;
+	mHp = mHp > 0 ? mHp : 0;
+}
+
+inline void Client::ToDamageAvatar(int damage)
+{
+	mAvatarHp -= damage;
+	mAvatarHp = mAvatarHp > 0 ? mAvatarHp : 0;
+}
+
+inline void Client::ToHealAvatar(int heal)
+{
+	mAvatarHp += heal;
+}
+
+inline int32_t Client::GetAvatarMaxHp() const
+{
+	return mAvatarMaxHp;
+}
+
+inline void Client::SetAvatarMaxHp(int32_t maxHp)
+{
+	mAvatarMaxHp = maxHp;
+}
+
+inline int32_t Client::GetAvatarDefensive() const
+{
+	return mAvatarDefensive;
+}
+
+inline void	Client::SetAvatarDefensive(int32_t defensive)
+{
+	mAvatarDefensive = defensive;
 }

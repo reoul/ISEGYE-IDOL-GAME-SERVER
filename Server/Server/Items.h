@@ -1,8 +1,10 @@
 ﻿#pragma once
 #include "ItemBase.h"
 #include "Items.h"
-#include "SettingData.h"
 #include "reoul/logger.h"
+#include "Client.h"
+
+using namespace Logger;
 
 /**
  * \brief 아이템 생성 매크로
@@ -30,67 +32,74 @@ public:																					\
 		threeStarUseEffect																\
 		break;																			\
 	default:																			\
-		LogWarning("["#name"] 아이템 강화 수치가 {0}입니다", upgrade);					\
+		LogWarning("log", "["#name"] 아이템 강화 수치가 {0}입니다", upgrade);			\
 		break;																			\
 	}																					\
 	}																					\
 };																						\
 static name s##name;																	\
 
+// 낡은 채찍 : x 데미지
 ITEM(Item001,
-	LogPrintf("Item001 1성 효과");
+	opponents.ToDamageAvatar(5);
 ,
-LogPrintf("Item001 2성 효과");
+	opponents.ToDamageAvatar(7);
 ,
-LogPrintf("Item001 3성 효과");
+	opponents.ToDamageAvatar(10);
 )
 
+// 오베인 게르크 티 : 방어도를 X만큼 획득
 ITEM(Item002,
-	LogPrintf("Item002 1성 효과");
+	me.SetAvatarDefensive(me.GetAvatarDefensive() + 3);
 ,
-LogPrintf("Item002 2성 효과");
+	me.SetAvatarDefensive(me.GetAvatarDefensive() + 5);
 ,
-LogPrintf("Item002 3성 효과");
+	me.SetAvatarDefensive(me.GetAvatarDefensive() + 7);
 )
 
+// 귀상어두 가면 : 상대방 약화
 ITEM(Item003,
-	LogPrintf("Item003 1성 효과");
+	LogPrintf("log", "Item003 1성 효과");
 ,
-LogPrintf("Item003 2성 효과");
+LogPrintf("log", "Item003 2성 효과");
 ,
-LogPrintf("Item003 3성 효과");
+LogPrintf("log", "Item003 3성 효과");
 )
 
+// 왁엔터 사장 명패 : 
 ITEM(Item004,
-	LogPrintf("Item004 1성 효과");
+	LogPrintf("log", "Item004 1성 효과");
 ,
-LogPrintf("Item004 2성 효과");
+LogPrintf("log", "Item004 2성 효과");
 ,
-LogPrintf("Item004 3성 효과");
+LogPrintf("log", "Item004 3성 효과");
 )
 
+// 가지치기용 도끼 : 본인 방어력 비례 데미지 기본 데미지 + 방어력 * x
 ITEM(Item005,
-	LogPrintf("Item005 1성 효과");
+	LogPrintf("log", "Item005 1성 효과");
 ,
-LogPrintf("Item005 2성 효과");
+LogPrintf("log", "Item005 2성 효과");
 ,
-LogPrintf("Item005 3성 효과");
+LogPrintf("log", "Item005 3성 효과");
 )
 
+// 홍삼스틱
 ITEM(Item006,
-	LogPrintf("Item006 1성 효과");
+	LogPrintf("log", "Item006 1성 효과");
 ,
-LogPrintf("Item006 2성 효과");
+LogPrintf("log", "Item006 2성 효과");
 ,
-LogPrintf("Item006 3성 효과");
+LogPrintf("log", "Item006 3성 효과");
 )
 
+// 햄버거
 ITEM(Item007,
-	LogPrintf("Item007 1성 효과");
+	LogPrintf("log", "Item007 1성 효과");
 ,
-	LogPrintf("Item007 2성 효과");
+	LogPrintf("log", "Item007 2성 효과");
 ,
-	LogPrintf("Item007 3성 효과");
+	LogPrintf("log", "Item007 3성 효과");
 )
 
 static ItemBase* sItems[]{ &sItem001, &sItem002, &sItem003, &sItem004, &sItem005, &sItem006, &sItem007 };

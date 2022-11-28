@@ -119,7 +119,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 	{
 		itemQueue.emplace_back((*it)->GetNetworkID());
 		items = (*it)->GetValidUsingItems();
-		LogWriteTest("{0} 클라이언트 {1}개 아이템 장착중", (*it)->GetNetworkID(), items.size());
+		LogWriteTest("log", "{0} 클라이언트 {1}개 아이템 장착중", (*it)->GetNetworkID(), items.size());
 
 		const size_t length = items.size();
 		log_assert(length <= MAX_USING_ITEM);
@@ -208,7 +208,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 		for (size_t j = 0; j < BATTLE_ITEM_QUEUE_LOOP_COUNT; ++j)
 		{
 			size_t index2 = index + j * (MAX_USING_ITEM * 2);
-			LogWriteTest("[아이템순서] 네트워크 {0}번 클라이언트 : {1}번째 순서 === {2}:{3}  {4}:{5}  {6}:{7}  {8}:{9}  {10}:{11}  {12}:{13} ",
+			LogWriteTest("log", "[아이템순서] 네트워크 {0}번 클라이언트 : {1}번째 순서 === {2}:{3}  {4}:{5}  {6}:{7}  {8}:{9}  {10}:{11}  {12}:{13} ",
 				itemQueue[index], j, itemQueue[index2 + 1], itemQueue[index2 + 2], itemQueue[index2 + 3], itemQueue[index2 + 4],
 				itemQueue[index2 + 5], itemQueue[index2 + 6], itemQueue[index2 + 7], itemQueue[index2 + 8],
 				itemQueue[index2 + 9], itemQueue[index2 + 10], itemQueue[index2 + 11], itemQueue[index2 + 12]);
@@ -239,7 +239,7 @@ void Room::Init()
 
 	{
 		lock_guard<mutex> lg(Server::GetRoomManager().cLock);
-		Log("{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, Server::GetRoomManager().GetUsingRoomCount());
+		Log("log", "{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, Server::GetRoomManager().GetUsingRoomCount());
 	}
 }
 
@@ -264,7 +264,7 @@ void Room::TrySendEnterInGame()
 	{
 		cs_sc_NotificationPacket packet(0, ENotificationType::EnterInGame);
 		SendPacketToAllClients(&packet);
-		Log("{0}번 룸 캐릭터 선택 끝남", mNumber);
+		Log("log", "{0}번 룸 캐릭터 선택 끝남", mNumber);
 		mIsFinishChoiceCharacter = true;
 	}
 }
@@ -274,11 +274,11 @@ void Room::TrySendEnterInGame()
  */
 unsigned Room::ProgressThread(void* pArguments)
 {
-	Log("진행 시작");
+	Log("log", "진행 시작");
 	Room* pRoom = static_cast<Room*>(pArguments);
 	for (int i = 0; i < CHOOSE_CHARACTER_TIME; ++i)
 	{
-		Log("{0}번 방 {1}초 선택 진행중", pRoom->GetNumber(), i);
+		Log("log", "{0}번 방 {1}초 선택 진행중", pRoom->GetNumber(), i);
 		Sleep(1000);
 
 		{
@@ -288,20 +288,20 @@ unsigned Room::ProgressThread(void* pArguments)
 
 		if (pRoom->mIsFinishChoiceCharacter)
 		{
-			Log("모두 선택 완료");
+			Log("log", "모두 선택 완료");
 			Sleep(5000);
 			break;
 		}
 
 		if (!pRoom->mIsRun)
 		{
-			Log("Room 진행 종료");
+			Log("log", "Room 진행 종료");
 			_endthreadex(0);
 			return 0;
 		}
 	}
 
-	Log("기본 템 지급 시작");
+	Log("log", "기본 템 지급 시작");
 	// 기본 템 지급
 	{
 		constexpr size_t bufferSize = sizeof(sc_AddNewItemPacket) * 2 * 8;
@@ -324,11 +324,11 @@ unsigned Room::ProgressThread(void* pArguments)
 		pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 	}
 
-	Log("기본 템 지급 완료");
+	Log("log", "기본 템 지급 완료");
 
 	if (!pRoom->mIsRun)
 	{
-		Log("Room 진행 종료");
+		Log("log", "Room 진행 종료");
 		_endthreadex(0);
 		return 0;
 	}
@@ -336,9 +336,9 @@ unsigned Room::ProgressThread(void* pArguments)
 	while (true)
 	{
 		// 대기 시간
-		Log("준비시간 시작");
+		Log("log", "준비시간 시작");
 		Sleep((BATTLE_READY_TIME + 1) * 1000);
-		Log("준비시간 끝");
+		Log("log", "준비시간 끝");
 
 		// 기본 템 장착
 		for (Client* client : pRoom->GetClients())
@@ -419,7 +419,7 @@ unsigned Room::ProgressThread(void* pArguments)
 		}
 	}
 
-	Log("Room 진행 종료");
+	Log("log", "Room 진행 종료");
 	_endthreadex(0);
 	return 0;
 }

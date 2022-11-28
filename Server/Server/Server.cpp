@@ -22,7 +22,7 @@ void Server::Start()
 	sListenSocket = ::WSASocketW(AF_INET, SOCK_STREAM, 0, nullptr, 0, WSA_FLAG_OVERLAPPED);
 	if (sListenSocket == INVALID_SOCKET)
 	{
-		Log("Listen 소켓 생성 실패");
+		Log("log", "Listen 소켓 생성 실패");
 	}
 
 	sockaddr_in serverAddr;
@@ -34,13 +34,13 @@ void Server::Start()
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(sListenSocket), sIocp, 9957, 0);
 
 	if (::bind(sListenSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
-		Log("바인드 에러");
+		Log("log", "바인드 에러");
 		::closesocket(sListenSocket);
 		assert(false);
 	}
 
 	if (::listen(sListenSocket, SOMAXCONN) == SOCKET_ERROR) {
-		Log("Listen 에러");
+		Log("log", "Listen 에러");
 		::closesocket(sListenSocket);
 		assert(false);
 	}
@@ -52,14 +52,14 @@ void Server::Start()
 	ZeroMemory(&accept_over, sizeof(accept_over.over));
 	accept_over.type = EOperationType::Accept;
 	::AcceptEx(sListenSocket, clientSocket, accept_over.io_buf, NULL, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, NULL, &accept_over.over);
-	Log("서버 시작");
+	Log("log", "서버 시작");
 
 	vector<thread> workerThreads;
 	for (ULONG i = 0; i < std::thread::hardware_concurrency(); ++i)
 	{
 		workerThreads.emplace_back(WorkerThread);
 	}
-	Log("{0}개의 쓰레드 작동", std::thread::hardware_concurrency());
+	Log("log", "{0}개의 쓰레드 작동", std::thread::hardware_concurrency());
 
 	system_clock::time_point lastConnectCheckTime = system_clock::now();
 	constexpr milliseconds checkIntervalTime(CONNECT_CHECK_INTERVAL * 1000);
@@ -76,14 +76,14 @@ void Server::Start()
 				{
 					if (!client.IsValidConnect())
 					{
-						Log("{0}번 클라이언트 연결 불안으로 접속 해제", client.GetNetworkID());
+						Log("log", "{0}번 클라이언트 연결 불안으로 접속 해제", client.GetNetworkID());
 						Disconnect(client.GetNetworkID());
 						continue;
 					}
 					++connCount;
 				}
 			}
-			Log("현재 유저 : {0}명", connCount);
+			Log("log", "현재 유저 : {0}명", connCount);
 		}
 	}
 
@@ -147,7 +147,7 @@ void Server::WorkerThread()
 				Disconnect(userID);
 			}
 
-			LogWrite("네트워크 {0}번 클라이언트 {1}Byte 패킷 전송", userID, io_byte);
+			LogWrite("log", "네트워크 {0}번 클라이언트 {1}Byte 패킷 전송", userID, io_byte);
 			delete exover;
 			break;
 		case EOperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
@@ -173,7 +173,7 @@ void Server::WorkerThread()
 				const HANDLE result = ::CreateIoCompletionPort(reinterpret_cast<HANDLE>(clientSocket), sIocp, userID, 0);
 				if (result == NULL)
 				{
-					LogWarning("{0}번 소켓 IOCP 등록 실패", userID);
+					LogWarning("log", "{0}번 소켓 IOCP 등록 실패", userID);
 					::closesocket(clientSocket);
 				}
 				else
@@ -220,7 +220,7 @@ void Server::WorkerThread()
 
 void Server::NewClientEvent(int networkID, char* ipAdress)
 {
-	Log("네트워크 {0}번 클라이언트 서버 접속 (ip주소: {1})", networkID, ipAdress);
+	Log("log", "네트워크 {0}번 클라이언트 서버 접속 (ip주소: {1})", networkID, ipAdress);
 
 	cs_sc_NotificationPacket packet(networkID, ENotificationType::ConnectServer);
 	SendPacket(networkID, &packet);
@@ -238,7 +238,7 @@ void Server::Disconnect(int networkID)
 		sServerQueue.RemoveClient(sClients[networkID]);
 	}
 
-	Log("네트워크 {0}번 클라이언트 서버 접속 해제", networkID);
+	Log("log", "네트워크 {0}번 클라이언트 서버 접속 해제", networkID);
 
 	cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
 	sClients[networkID].SendPacketInAnotherRoomClients(&packet);
@@ -274,7 +274,7 @@ void Server::PacketConstruct(int networkID, int ioByteLength)
 		packetSize = reinterpret_cast<uint16_t*>(curUser.GetPacketBuf())[0]; //재조립을 기다기는 패킷 사이즈
 	}
 
-	LogWrite("네트워크 {0}번 클라이언트 {1}Byte 패킷 받음", networkID, ioByteLength);
+	LogWrite("log", "네트워크 {0}번 클라이언트 {1}Byte 패킷 받음", networkID, ioByteLength);
 
 	while (restByte > 0)	//처리해야할 데이터가 남아있으면 처리해야한다.
 	{
@@ -318,7 +318,7 @@ void Server::SendDisconnect(int networkID)
 	}
 	cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
 	sClients[networkID].SendPacketInAnotherRoomClients(&packet);
-	Log("네트워크 {0}번 클라이언트 접속 해제 패킷 보냄", networkID);
+	Log("log", "네트워크 {0}번 클라이언트 접속 해제 패킷 보냄", networkID);
 }
 
 void Server::ProcessPacket(int networkID, char* buf)
@@ -370,7 +370,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_sc_changeCharacter:
 	{
 		cs_sc_ChangeCharacterPacket* pPacket = reinterpret_cast<cs_sc_ChangeCharacterPacket*>(buf);
-		Log("[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, pPacket->characterType);
+		Log("log", "[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, pPacket->characterType);
 
 		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
@@ -387,7 +387,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	{
 		cs_sc_ChangeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_ChangeItemSlotPacket*>(buf);
 		sClients[networkID].SwapItem(pPacket->slot1, pPacket->slot2);
-		Log("[cs_sc_changeItemSlot] 네트워크 {0}번 클라이언트 아이템 슬롯 {1} <-> {2} 교체", pPacket->networkID, pPacket->slot1, pPacket->slot2);
+		Log("log", "[cs_sc_changeItemSlot] 네트워크 {0}번 클라이언트 아이템 슬롯 {1} <-> {2} 교체", pPacket->networkID, pPacket->slot1, pPacket->slot2);
 
 		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
@@ -403,12 +403,12 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_sc_useEmoticon:
 	{
 		const cs_sc_UseEmoticonPacket* pPacket = reinterpret_cast<cs_sc_UseEmoticonPacket*>(buf);
-		Log("[cs_sc_useEmoticon] 네트워크 {0}번 클라이언트 {1}번 이모티콘 사용", pPacket->networkID, pPacket->emoticonType);
+		Log("log", "[cs_sc_useEmoticon] 네트워크 {0}번 클라이언트 {1}번 이모티콘 사용", pPacket->networkID, pPacket->emoticonType);
 		sClients[networkID].SendPacketInAnotherRoomClients(buf);
 	}
 	break;
 	case EPacketType::cs_sc_upgradeItem:
-		LogWarning("[cs_sc_upgradeItem] 아직 구현 안되어 있음");
+		LogWarning("log", "[cs_sc_upgradeItem] 아직 구현 안되어 있음");
 		break;
 	case EPacketType::cs_sc_notification:
 	{
@@ -421,12 +421,12 @@ void Server::ProcessPacket(int networkID, char* buf)
 			client.SetChoiceCharacter(true);
 
 			client.SendPacketInAnotherRoomClients(pPacket);
-			Log("[ENotificationType::ChoiceCharacter] 네트워크 {0}번 클라이언트 캐릭터 확정", pPacket->networkID);
+			Log("log", "[ENotificationType::ChoiceCharacter] 네트워크 {0}번 클라이언트 캐릭터 확정", pPacket->networkID);
 		}
 		break;
 		case ENotificationType::ConnectCheck:
 			sClients[pPacket->networkID].SetLastConnectCheckPacketTime(system_clock::now());
-			LogWrite("[ENotificationType::ConnectCheck] 네트워크 {0}번 클라이언트 연결 확인", pPacket->networkID);
+			LogWrite("log", "[ENotificationType::ConnectCheck] 네트워크 {0}번 클라이언트 연결 확인", pPacket->networkID);
 			break;
 		case ENotificationType::RequestAddRandomItem:
 		{
@@ -435,13 +435,13 @@ void Server::ProcessPacket(int networkID, char* buf)
 			client.AddItem(newItemType);
 			sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), newItemType);
 			client.SendPacketInAllRoomClients(&addItemPacket);
-			Log("[ENotificationType::RequestAddRandomItem] 네트워크 {0}번 클라이언트 랜덤 아이템 추가 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+			Log("log", "[ENotificationType::RequestAddRandomItem] 네트워크 {0}번 클라이언트 랜덤 아이템 추가 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 		}
 		break;
 		case ENotificationType::EnterInGame:
 		case ENotificationType::ConnectServer:
 		case ENotificationType::DisconnectServer:
-			LogWarning("[ENotificationType::{0}] 받으면 안되는 패킷을 받음", static_cast<int>(pPacket->notificationType.get()));
+			LogWarning("log", "[ENotificationType::{0}] 받으면 안되는 패킷을 받음", static_cast<int>(pPacket->notificationType.get()));
 			break;
 		default:
 			assert(false);
@@ -452,10 +452,10 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::sc_addNewItem:
 	case EPacketType::sc_connectRoom:
 	case EPacketType::sc_battleInfo:
-		LogWarning("{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
+		LogWarning("log", "{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
 		break;
 	default:
-		LogWarning("미정의 패킷 받음");
+		LogWarning("log", "미정의 패킷 받음");
 		DebugBreak();
 		//exit(-1);
 		break;
