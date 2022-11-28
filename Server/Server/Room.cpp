@@ -16,6 +16,7 @@ Room::Room()
 	, mIsRun(false)
 	, mCapacity(MAX_ROOM_PLAYER)
 	, mIsFinishChoiceCharacter(false)
+	, mOpenCount(0)
 {
 }
 
@@ -274,11 +275,13 @@ void Room::TrySendEnterInGame()
  */
 unsigned Room::ProgressThread(void* pArguments)
 {
+
 	LogPrintf("진행 시작");
 	Room* pRoom = static_cast<Room*>(pArguments);
+	const size_t roomOpenCount = pRoom->GetOpenCount();
+
 	for (int i = 0; i < CHOOSE_CHARACTER_TIME; ++i)
 	{
-		Log("log", "{0}번 방 {1}초 선택 진행중", pRoom->GetNumber(), i);
 		Sleep(1000);
 
 		{
@@ -293,7 +296,7 @@ unsigned Room::ProgressThread(void* pArguments)
 			break;
 		}
 
-		if (!pRoom->mIsRun)
+		if (!pRoom->mIsRun || pRoom->GetOpenCount() != roomOpenCount)
 		{
 			Log("log", "Room 진행 종료");
 			_endthreadex(0);
@@ -326,7 +329,7 @@ unsigned Room::ProgressThread(void* pArguments)
 
 	Log("log", "기본 템 지급 완료");
 
-	if (!pRoom->mIsRun)
+	if (!pRoom->mIsRun || pRoom->GetOpenCount() != roomOpenCount)
 	{
 		LogPrintf("Room 진행 종료");
 		_endthreadex(0);
@@ -372,6 +375,8 @@ unsigned Room::ProgressThread(void* pArguments)
  */
 inline bool Room::ReadyStage(Room& room)
 {
+	const size_t roomOpenCount = room.GetOpenCount();
+
 	LogPrintf("준비시간 시작");
 
 	{
@@ -379,7 +384,16 @@ inline bool Room::ReadyStage(Room& room)
 		room.SendPacketToAllClients(&packet);
 	}
 
-	Sleep((BATTLE_READY_TIME + 1) * 1000);
+	for (size_t i = 0; i < BATTLE_READY_TIME + 1; ++i)
+	{
+		Sleep(1000);
+
+		if (!room.mIsRun || room.GetOpenCount() != roomOpenCount)
+		{
+			return false;
+		}
+	}
+
 	LogPrintf("준비시간 끝");
 
 	// 기본 템 장착
@@ -406,7 +420,7 @@ inline bool Room::ReadyStage(Room& room)
 
 	LogPrintf("캐릭터 갱신 패킷 전송");
 
-	if (!room.mIsRun)
+	if (!room.mIsRun || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
@@ -421,11 +435,13 @@ inline bool Room::ReadyStage(Room& room)
  */
 bool Room::BattleStage(Room& room)
 {
+	const size_t roomOpenCount = room.GetOpenCount();
+
 	LogPrintf("전투 스테이지 시작");
 
 	room.SendBattleInfo();	// 전투 정보 전송
 
-	if (!room.mIsRun && room.GetSize() < 2)
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
@@ -449,14 +465,14 @@ bool Room::BattleStage(Room& room)
 			}
 			Sleep(waitTimes[0]);
 
-			if (!room.mIsRun)
+			if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 			{
 				return false;
 			}
 		}
 	}
 
-	if (!room.mIsRun)
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
@@ -471,9 +487,11 @@ bool Room::BattleStage(Room& room)
  */
 bool Room::CreepStage(Room& room)
 {
+	const size_t roomOpenCount = room.GetOpenCount();
+
 	LogPrintf("크립 스테이지 시작");
 
-	if (!room.mIsRun)
+	if (!room.mIsRun || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}

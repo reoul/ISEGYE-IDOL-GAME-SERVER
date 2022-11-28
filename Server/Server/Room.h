@@ -35,6 +35,8 @@ public:
 	static bool ReadyStage(Room& room);
 	static bool BattleStage(Room& room);
 	static bool CreepStage(Room& room);
+	size_t GetOpenCount() const;
+	void AddOpenCount();
 private:
 	void SendRandomItemQueue();
 	vector<Client*> mClients;
@@ -46,6 +48,7 @@ private:
 	bool mIsFinishChoiceCharacter;
 	vector<int32_t> mBattleOpponents;
 	vector<int32_t> mItemQueues;
+	size_t mOpenCount;	// 룸 열린 횟수, Room 진행이 스레드로 돌아서 해제되면서 바로 열리면 스레드가 계속 진행되므로 구별 변수
 };
 
 inline const vector<Client*>& Room::GetClients() const
@@ -96,4 +99,14 @@ inline vector<int32_t>& Room::GetBattleOpponents()
 inline vector<int32_t>& Room::GetItemQueues()
 {
 	return mItemQueues;
+}
+
+inline size_t Room::GetOpenCount() const
+{
+	return mOpenCount;
+}
+
+inline void Room::AddOpenCount()
+{
+	++mOpenCount;
 }

@@ -23,6 +23,8 @@ Room& RoomManager::GetUnUsedRoom()
 			break;
 		}
 	}
+
+	pRet->AddOpenCount();
 	
 	return *pRet;
 }
