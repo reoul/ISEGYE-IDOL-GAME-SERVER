@@ -337,6 +337,12 @@ unsigned Room::ProgressThread(void* pArguments)
 	{
 		// 대기 시간
 		Log("log", "준비시간 시작");
+
+		{
+			sc_SetReadyTimePacket packet(BATTLE_READY_TIME);
+			pRoom->SendPacketToAllClients(&packet);
+		}
+
 		Sleep((BATTLE_READY_TIME + 1) * 1000);
 		Log("log", "준비시간 끝");
 
