@@ -59,47 +59,47 @@ ITEM(Item002,
 
 // 귀상어두 가면 : 상대방 약화
 ITEM(Item003,
-	LogPrintf("log", "Item003 1성 효과");
+	LogPrintf("Item003 1성 효과");
 ,
-LogPrintf("log", "Item003 2성 효과");
+LogPrintf("Item003 2성 효과");
 ,
-LogPrintf("log", "Item003 3성 효과");
+LogPrintf("Item003 3성 효과");
 )
 
 // 왁엔터 사장 명패 : 
 ITEM(Item004,
-	LogPrintf("log", "Item004 1성 효과");
+	LogPrintf("Item004 1성 효과");
 ,
-LogPrintf("log", "Item004 2성 효과");
+LogPrintf("Item004 2성 효과");
 ,
-LogPrintf("log", "Item004 3성 효과");
+LogPrintf("Item004 3성 효과");
 )
 
 // 가지치기용 도끼 : 본인 방어력 비례 데미지 기본 데미지 + 방어력 * x
 ITEM(Item005,
-	LogPrintf("log", "Item005 1성 효과");
+	LogPrintf("Item005 1성 효과");
 ,
-LogPrintf("log", "Item005 2성 효과");
+LogPrintf("Item005 2성 효과");
 ,
-LogPrintf("log", "Item005 3성 효과");
+LogPrintf("Item005 3성 효과");
 )
 
 // 홍삼스틱
 ITEM(Item006,
-	LogPrintf("log", "Item006 1성 효과");
+	LogPrintf("Item006 1성 효과");
 ,
-LogPrintf("log", "Item006 2성 효과");
+LogPrintf("Item006 2성 효과");
 ,
-LogPrintf("log", "Item006 3성 효과");
+LogPrintf("Item006 3성 효과");
 )
 
 // 햄버거
 ITEM(Item007,
-	LogPrintf("log", "Item007 1성 효과");
+	LogPrintf("Item007 1성 효과");
 ,
-	LogPrintf("log", "Item007 2성 효과");
+	LogPrintf("Item007 2성 효과");
 ,
-	LogPrintf("log", "Item007 3성 효과");
+	LogPrintf("Item007 3성 효과");
 )
 
 static ItemBase* sItems[]{ &sItem001, &sItem002, &sItem003, &sItem004, &sItem005, &sItem006, &sItem007 };

@@ -421,7 +421,7 @@ inline bool Room::ReadyStage(Room& room)
  */
 bool Room::BattleStage(Room& room)
 {
-	LogPrintf("log", "전투 스테이지 시작");
+	LogPrintf("전투 스테이지 시작");
 
 	room.SendBattleInfo();	// 전투 정보 전송
 
@@ -471,7 +471,7 @@ bool Room::BattleStage(Room& room)
  */
 bool Room::CreepStage(Room& room)
 {
-	LogPrintf("log", "크립 스테이지 시작");
+	LogPrintf("크립 스테이지 시작");
 
 	if (!room.mIsRun)
 	{
