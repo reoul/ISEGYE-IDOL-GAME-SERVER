@@ -84,7 +84,7 @@ vector<SlotInfo> Client::GetValidUsingItems() const
 	vector<SlotInfo> items;
 	for (size_t i = 0; i < MAX_USING_ITEM; ++i)
 	{
-		if (mUsingItems[i].GetType() != LOCK_ITEM)	// 안 잠긴 경우
+		if (mUsingItems[i].GetType() < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
 			items.emplace_back(SlotInfo(i, mUsingItems[i]));
 	}
 	return items;
