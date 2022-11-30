@@ -118,9 +118,16 @@ vector<int32_t> Room::GetRandomItemQueue()
 
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
-		itemQueue.emplace_back((*it)->GetNetworkID());
-		items = (*it)->GetValidUsingItems();
-		LogWriteTest("log", "{0} 클라이언트 {1}개 아이템 장착중", (*it)->GetNetworkID(), items.size());
+		Client& client = **it;
+		itemQueue.emplace_back(client.GetNetworkID());
+
+		const vector<Item> usingItems = client.GetUsingItems();
+		for (size_t i = 0; i < MAX_USING_ITEM; ++i)
+		{
+			items.emplace_back(i, usingItems[i]);
+		}
+
+		LogWriteTest("log", "{0} 클라이언트 {1}개 아이템 장착중", client.GetNetworkID(), items.size());
 
 		const size_t length = items.size();
 		log_assert(length <= MAX_USING_ITEM);
@@ -174,7 +181,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 					loopSum = sum;
 					loopLength = length;
 
-					const int lockSlotCnt = (*it)->GetLockSlotCount();
+					const int lockSlotCnt = client.GetLockSlotCount();
 					for (size_t i = 0; i < MAX_USING_ITEM - length - lockSlotCnt; ++i)
 					{
 						itemQueue.emplace_back(EMPTY_ITEM);
