@@ -438,9 +438,11 @@ void Server::ProcessPacket(int networkID, char* buf)
 			Log("log", "[ENotificationType::RequestAddRandomItem] 네트워크 {0}번 클라이언트 랜덤 아이템 추가 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 		}
 		break;
-		case ENotificationType::EnterInGame:
+		case ENotificationType::ChoiceAllCharacter:
 		case ENotificationType::ConnectServer:
 		case ENotificationType::DisconnectServer:
+		case ENotificationType::EnterReadyStage:
+		case ENotificationType::EnterCutSceneStage:
 			LogWarning("log", "[ENotificationType::{0}] 받으면 안되는 패킷을 받음", static_cast<int>(pPacket->notificationType.get()));
 			break;
 		default:

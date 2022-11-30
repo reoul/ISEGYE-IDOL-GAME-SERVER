@@ -51,14 +51,18 @@ enum class ENotificationType : uint8_t
 	ConnectServer,
 	/// <summary> 캐릭터를 선택했음을 알리는 패킷 타입 </summary>
 	ChoiceCharacter,
-	/// <summary> 캐릭터 선택 다 끝나고 인게임에 진입했을 때 </summary>
-	EnterInGame,
+	/// <summary> 캐릭터 선택 다 끝났을 때 </summary>
+	ChoiceAllCharacter,
 	/// <summary> 클라이언트가 서버 해제했음을 알리는 패킷 타입 </summary>
 	DisconnectServer,
 	/// <summary> 서버에 계속 연결되는 상태를 알리는 패킷 타입 </summary>
 	ConnectCheck,
 	/// <summary> 랜덤 아이템 추가 요청을 알리는 패킷 타입 </summary>
 	RequestAddRandomItem,
+	/// <summary> 준비 스테이지에 진입했음을 알리는 패킷 타입 </summary>
+	EnterReadyStage,
+	/// <summary> 컷신 스테이지에 진입했음을 알리는 패킷 타입 </summary>
+	EnterCutSceneStage,
 };
 
 #pragma pack(push, 1)

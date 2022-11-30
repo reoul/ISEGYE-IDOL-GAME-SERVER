@@ -270,7 +270,7 @@ void Room::TrySendEnterInGame()
 
 	if (readyCount == mClients.size() && !mIsFinishChoiceCharacter)
 	{
-		cs_sc_NotificationPacket packet(0, ENotificationType::EnterInGame);
+		cs_sc_NotificationPacket packet(0, ENotificationType::ChoiceAllCharacter);
 		SendPacketToAllClients(&packet);
 		Log("log", "{0}번 룸 캐릭터 선택 끝남", mNumber);
 		mIsFinishChoiceCharacter = true;
@@ -309,6 +309,17 @@ unsigned Room::ProgressThread(void* pArguments)
 			_endthreadex(0);
 			return 0;
 		}
+	}
+
+	{
+		cs_sc_NotificationPacket packet(0, ENotificationType::EnterCutSceneStage);
+		pRoom->SendPacketToAllClients(&packet);
+		Sleep(10000);
+	}
+
+	{
+		cs_sc_NotificationPacket packet(0, ENotificationType::EnterReadyStage);
+		pRoom->SendPacketToAllClients(&packet);
 	}
 
 	Log("log", "기본 템 지급 시작");
