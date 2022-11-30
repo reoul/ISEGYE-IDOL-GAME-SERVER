@@ -193,6 +193,13 @@ void Client::TrySetDefaultUsingItem()
 			++it;
 		}
 	}
+
+	Logger::LogWrite("SetDefaultUsingItem", "{0}번 클라이언트 기본템 장착 결과", mNetworkID);
+	Logger::LogWrite("SetDefaultUsingItem", "  UsingItems : {0} {1} {2} {3} {4} {5}",
+		mUsingItems[0].GetType(), mUsingItems[1].GetType(), mUsingItems[2].GetType(), mUsingItems[3].GetType(), mUsingItems[4].GetType(), mUsingItems[5].GetType());
+	Logger::LogWrite("SetDefaultUsingItem", "UnUsingItems : {0} {1} {2} {3} {4} {5} {6} {7} {8} {9}",
+		mUnUsingItems[0].GetType(), mUnUsingItems[1].GetType(), mUnUsingItems[2].GetType(), mUnUsingItems[3].GetType(), mUnUsingItems[4].GetType(),
+		mUnUsingItems[5].GetType(), mUnUsingItems[6].GetType(), mUnUsingItems[7].GetType(), mUnUsingItems[8].GetType(), mUnUsingItems[9].GetType());
 }
 
 void Client::SendPacketInAllRoomClients(void* pPacket) const
