@@ -332,20 +332,29 @@ void Server::ProcessPacket(int networkID, char* buf)
 		wcscpy(sClients[networkID].GetName(), pPacket->name);
 		sClients[networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
 
-		Room* room = nullptr;
+		Room* pRoom = nullptr;
 		{
 			lock_guard<mutex> lg(sServerQueue.GetMutex());
 			sServerQueue.AddClient(sClients[networkID]);
-			room = sServerQueue.TryCreateRoomOrNullPtr();
+			pRoom = sServerQueue.TryCreateRoomOrNullPtr();
 		}
 
-		if (room != nullptr) // 방을 만들 수 있다면
+		if (pRoom != nullptr) // 방을 만들 수 있다면
 		{
-			sc_ConnectRoomPacket connectRoomPacket(*room);
-			room->SendPacketToAllClients(&connectRoomPacket);
-			Sleep(50);
+			{
+				constexpr size_t bufferSize = sizeof(sc_SetChoiceCharacterTimePacket) + sizeof(sc_ConnectRoomPacket);
+				OutputMemoryStream memoryStream(bufferSize);
+
+				const sc_SetChoiceCharacterTimePacket setChoiceCharacterTimePacket(CHOICE_CHARACTER_TIME);
+				setChoiceCharacterTimePacket.Write(memoryStream);
+				const sc_ConnectRoomPacket connectRoomPacket(*pRoom);
+				connectRoomPacket.Write(memoryStream);
+
+				pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+			}
+			
 			unsigned threadID;
-			const HANDLE hThread = (HANDLE)_beginthreadex(nullptr, 0, &Room::ProgressThread, room, 0, &threadID);
+			const HANDLE hThread = (HANDLE)_beginthreadex(nullptr, 0, &Room::ProgressThread, pRoom, 0, &threadID);
 			CloseHandle(hThread);
 		}
 	}

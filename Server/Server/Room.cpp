@@ -287,12 +287,6 @@ unsigned Room::ProgressThread(void* pArguments)
 	Room* pRoom = static_cast<Room*>(pArguments);
 	const size_t roomOpenCount = pRoom->GetOpenCount();
 
-	{
-		// 캐릭터 선택 시간 전송
-		sc_SetChoiceCharacterTimePacket packet(CHOICE_CHARACTER_TIME);
-		pRoom->SendPacketToAllClients(&packet);
-	}
-
 	for (int i = 0; i < CHOICE_CHARACTER_TIME; ++i)
 	{
 		Sleep(1000);
