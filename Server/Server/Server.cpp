@@ -375,7 +375,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
 			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
-			sClients[networkID].SendPacketInAnotherRoomClients(pPacket);
+			sClients[networkID].SendPacketInAllRoomClients(pPacket);
 		}
 		else
 		{
