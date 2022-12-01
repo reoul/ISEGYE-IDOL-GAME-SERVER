@@ -420,7 +420,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 			Client& client = sClients[pPacket->networkID];
 			client.SetChoiceCharacter(true);
 
-			client.SendPacketInAnotherRoomClients(pPacket);
+			client.SendPacketInAllRoomClients(pPacket);
 			Log("log", "[ENotificationType::ChoiceCharacter] 네트워크 {0}번 클라이언트 캐릭터 확정", pPacket->networkID);
 		}
 		break;
