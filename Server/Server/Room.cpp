@@ -320,14 +320,19 @@ unsigned Room::ProgressThread(void* pArguments)
 	}
 
 	{
+		LogWrite("Check", "캐릭터 선택 상태");
+
 		// 캐릭터 선택 동기화
 		const size_t bufferSize = sizeof(cs_sc_ChangeCharacterPacket) * pRoom->GetSize();
 		OutputMemoryStream memoryStream(bufferSize);
+
 		for (const Client* client : pRoom->GetClients())
 		{
 			cs_sc_ChangeCharacterPacket packet(client->GetNetworkID(), client->GetCharacterType());
 			packet.Write(memoryStream);
+			LogWrite("Check", "{0} : {1}", client->GetNetworkID(), static_cast<uint8_t>(client->GetCharacterType()));
 		}
+
 		pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 	}
 	

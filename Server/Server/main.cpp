@@ -16,6 +16,7 @@ int main()
 	Logger::AddLogger("log", "/log.txt");
 	Logger::AddLogger("test", "/testLog.txt");
 	Logger::AddLogger("SetDefaultUsingItem", "/SetDefaultUsingItem.txt");
+	Logger::AddLogger("Check", "/Check.txt");
 	
 
 	//Client aa;

@@ -196,7 +196,7 @@ struct cs_sc_UpgradeItemPacket : protected Packet
 struct cs_sc_ChangeCharacterPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
-	const_wrapper<uint8_t> characterType;
+	const_wrapper<ECharacterType> characterType;
 
 	void Write(OutputMemoryStream& memoryStream) const
 	{
@@ -208,7 +208,7 @@ struct cs_sc_ChangeCharacterPacket : protected Packet
 	cs_sc_ChangeCharacterPacket(int32_t networkID, ECharacterType characterType)
 		: Packet(sizeof(cs_sc_ChangeCharacterPacket), EPacketType::cs_sc_changeCharacter)
 		, networkID(networkID)
-		, characterType(static_cast<uint8_t>(characterType))
+		, characterType(characterType)
 	{
 	}
 };

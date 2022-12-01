@@ -29,6 +29,7 @@ public:
 	ESocketStatus				GetStatus() const;
 	void						SetStatus(ESocketStatus status);
 	ECharacterType				GetCharacterType() const;
+	void						SetCharacterType(ECharacterType characterType);
 	Room*						GetRoomPtr();
 	const Room*					GetRoomPtr() const;
 	void						SetRoom(Room* room);
@@ -145,6 +146,11 @@ inline void Client::SetStatus(ESocketStatus status)
 inline ECharacterType Client::GetCharacterType() const
 {
 	return mCharacterType;
+}
+
+inline void Client::SetCharacterType(ECharacterType characterType)
+{
+	mCharacterType = characterType;
 }
 
 inline Room* Client::GetRoomPtr()

@@ -380,11 +380,12 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_sc_changeCharacter:
 	{
 		cs_sc_ChangeCharacterPacket* pPacket = reinterpret_cast<cs_sc_ChangeCharacterPacket*>(buf);
-		Log("log", "[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, pPacket->characterType);
+		Log("log", "[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, static_cast<uint8_t>(pPacket->characterType.get()));
 
 		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
 			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
+			sClients[networkID].SetCharacterType(pPacket->characterType);
 			sClients[networkID].SendPacketInAllRoomClients(pPacket);
 		}
 		else
