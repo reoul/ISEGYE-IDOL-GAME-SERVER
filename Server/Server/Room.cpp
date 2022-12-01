@@ -287,7 +287,13 @@ unsigned Room::ProgressThread(void* pArguments)
 	Room* pRoom = static_cast<Room*>(pArguments);
 	const size_t roomOpenCount = pRoom->GetOpenCount();
 
-	for (int i = 0; i < CHOOSE_CHARACTER_TIME; ++i)
+	{
+		// 캐릭터 선택 시간 전송
+		sc_SetChoiceCharacterTimePacket packet(CHOICE_CHARACTER_TIME);
+		pRoom->SendPacketToAllClients(&packet);
+	}
+
+	for (int i = 0; i < CHOICE_CHARACTER_TIME; ++i)
 	{
 		Sleep(1000);
 
@@ -296,6 +302,7 @@ unsigned Room::ProgressThread(void* pArguments)
 			pRoom->TrySendEnterInGame();
 		}
 
+		// 모두 선택 완료했을 때
 		if (pRoom->mIsFinishChoiceCharacter)
 		{
 			Log("log", "모두 선택 완료");
@@ -311,6 +318,25 @@ unsigned Room::ProgressThread(void* pArguments)
 		}
 	}
 
+	if (!pRoom->mIsRun || pRoom->GetOpenCount() != roomOpenCount)
+	{
+		Log("log", "Room 진행 종료");
+		_endthreadex(0);
+		return 0;
+	}
+
+	{
+		// 캐릭터 선택 동기화
+		const size_t bufferSize = sizeof(cs_sc_ChangeCharacterPacket) * pRoom->GetSize();
+		OutputMemoryStream memoryStream(bufferSize);
+		for (const Client* client : pRoom->GetClients())
+		{
+			cs_sc_ChangeCharacterPacket packet(client->GetNetworkID(), client->GetCharacterType());
+			packet.Write(memoryStream);
+		}
+		pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+	}
+	
 	{
 		cs_sc_NotificationPacket packet(0, ENotificationType::EnterCutSceneStage);
 		pRoom->SendPacketToAllClients(&packet);

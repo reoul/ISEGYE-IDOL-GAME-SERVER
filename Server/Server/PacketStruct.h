@@ -40,6 +40,8 @@ enum class EPacketType : uint8_t
 	cs_sc_useEmoticon,
 	/// <summary> 캐릭터 정보를 갱신해주는 패킷 타입 </summary>
 	sc_updateCharacterInfo,
+	/// <summary> 캐릭터 선택 시간을 설정해주는 패킷 타입 </summary>
+	sc_setChoiceCharacterTime,
 	/// <summary> 준비시간을 설정해주는 패킷 타입 </summary>
 	sc_setReadyTime,
 };
@@ -203,7 +205,12 @@ struct cs_sc_ChangeCharacterPacket : protected Packet
 		memoryStream.Write(characterType.get());
 	}
 
-	cs_sc_ChangeCharacterPacket() = delete;
+	cs_sc_ChangeCharacterPacket(int32_t networkID, ECharacterType characterType)
+		: Packet(sizeof(cs_sc_ChangeCharacterPacket), EPacketType::cs_sc_changeCharacter)
+		, networkID(networkID)
+		, characterType(static_cast<uint8_t>(characterType))
+	{
+	}
 };
 
 struct ItemQueueInfo
@@ -363,6 +370,23 @@ struct sc_SetReadyTimePacket : protected Packet
 
 	sc_SetReadyTimePacket(uint8_t time)
 		: Packet(sizeof(sc_SetReadyTimePacket), EPacketType::sc_setReadyTime)
+		, time(time)
+	{
+	}
+};
+
+struct sc_SetChoiceCharacterTimePacket : protected Packet
+{
+	const_wrapper<uint8_t> time;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(time.get());
+	}
+
+	sc_SetChoiceCharacterTimePacket(uint8_t time)
+		: Packet(sizeof(sc_SetChoiceCharacterTimePacket), EPacketType::sc_setChoiceCharacterTime)
 		, time(time)
 	{
 	}

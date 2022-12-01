@@ -343,6 +343,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		{
 			sc_ConnectRoomPacket connectRoomPacket(*room);
 			room->SendPacketToAllClients(&connectRoomPacket);
+			Sleep(50);
 			unsigned threadID;
 			const HANDLE hThread = (HANDLE)_beginthreadex(nullptr, 0, &Room::ProgressThread, room, 0, &threadID);
 			CloseHandle(hThread);
@@ -454,6 +455,9 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::sc_addNewItem:
 	case EPacketType::sc_connectRoom:
 	case EPacketType::sc_battleInfo:
+	case EPacketType::sc_updateCharacterInfo:
+	case EPacketType::sc_setChoiceCharacterTime:
+	case EPacketType::sc_setReadyTime:
 		LogWarning("log", "{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
 		break;
 	default:
