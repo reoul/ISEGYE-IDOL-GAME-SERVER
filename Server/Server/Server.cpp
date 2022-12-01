@@ -83,7 +83,7 @@ void Server::Start()
 					++connCount;
 				}
 			}
-			Log("log", "현재 유저 : {0}명", connCount);
+			LogWrite("log", "현재 유저 : {0}명", connCount);
 		}
 	}
 
