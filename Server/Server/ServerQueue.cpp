@@ -3,7 +3,6 @@
 
 #include "Client.h"
 #include "SettingData.h"
-#include "GlobalVariable.h"
 #include "Server.h"
 #include "reoul/logger.h"
 

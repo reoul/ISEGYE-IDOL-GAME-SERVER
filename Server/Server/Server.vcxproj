@@ -165,7 +165,6 @@
     <ClCompile Include="..\..\Server-Library\Source\UDPSocket.cpp" />
     <ClCompile Include="BattleManager.cpp" />
     <ClCompile Include="Client.cpp" />
-    <ClCompile Include="GlobalVariable.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="Items.cpp" />
     <ClCompile Include="main.cpp" />
@@ -190,7 +189,6 @@
     <ClInclude Include="..\..\Server-Library\Header\UDPSocket.h" />
     <ClInclude Include="BattleManager.h" />
     <ClInclude Include="Client.h" />
-    <ClInclude Include="GlobalVariable.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemBase.h" />
     <ClInclude Include="Items.h" />

@@ -18,7 +18,7 @@ public:
 	void SendPacketToAnotherClients(const Client& client, void* pPacket) const;
 	void SendPacketToAnotherClients(const Client& client, void* pPacket, ULONG size) const;
 	vector<int32_t> GetRandomItemQueue();
-	void SendBattleInfo();
+	void SetBattleInfo();
 	const vector<Client*>& GetClients() const;
 	vector<Client*>& GetClients();
 	bool IsRun() const;
@@ -38,7 +38,6 @@ public:
 	size_t GetOpenCount() const;
 	void AddOpenCount();
 private:
-	void SendRandomItemQueue();
 	vector<Client*> mClients;
 	size_t mSize;
 	size_t mNumber;

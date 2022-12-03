@@ -6,7 +6,6 @@
 #include "Client.h"
 #include "Random.h"
 #include "PacketStruct.h"
-#include "GlobalVariable.h"
 #include "Server.h"
 #include "Items.h"
 
@@ -226,7 +225,7 @@ vector<int32_t> Room::GetRandomItemQueue()
 	return itemQueue;
 }
 
-void Room::SendBattleInfo()
+void Room::SetBattleInfo()
 {
 	lock_guard<mutex> lg(cLock);
 
@@ -235,7 +234,8 @@ void Room::SendBattleInfo()
 		return;
 	}
 
-	SendRandomItemQueue();
+	mBattleOpponents = mBattleManager.GetBattleOpponent();
+	mItemQueues = GetRandomItemQueue();
 }
 
 void Room::Init()
@@ -300,11 +300,10 @@ unsigned Room::ProgressThread(void* pArguments)
 		if (pRoom->mIsFinishChoiceCharacter)
 		{
 			Log("log", "모두 선택 완료");
-			Sleep(5000);
 			break;
 		}
 
-		if (!pRoom->mIsRun || pRoom->GetOpenCount() != roomOpenCount)
+		if (!pRoom->mIsRun || pRoom->GetSize() < 2 || pRoom->GetOpenCount() != roomOpenCount)
 		{
 			Log("log", "Room 진행 종료");
 			_endthreadex(0);
@@ -312,18 +311,53 @@ unsigned Room::ProgressThread(void* pArguments)
 		}
 	}
 
-	if (!pRoom->mIsRun || pRoom->GetOpenCount() != roomOpenCount)
+	// 모두 선택 했을 때
+	if (pRoom->mIsFinishChoiceCharacter)
 	{
-		Log("log", "Room 진행 종료");
-		_endthreadex(0);
-		return 0;
-	}
+		LogWrite("Check", "캐릭터 선택 상태");
 
+		{
+			// 캐릭터 선택 동기화
+			const size_t bufferSize = sizeof(cs_sc_ChangeCharacterPacket) * pRoom->GetSize();
+			OutputMemoryStream memoryStream(bufferSize);
+
+			for (const Client* client : pRoom->GetClients())
+			{
+				cs_sc_ChangeCharacterPacket packet(client->GetNetworkID(), client->GetCharacterType());
+				packet.Write(memoryStream);
+				LogWrite("Check", "{0} : {1}", client->GetNetworkID(), static_cast<uint8_t>(client->GetCharacterType()));
+			}
+
+			pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+
+			Sleep(5000);
+		}
+
+		if (!pRoom->mIsRun || pRoom->GetSize() < 2 || pRoom->GetOpenCount() != roomOpenCount)
+		{
+			Log("log", "Room 진행 종료");
+			_endthreadex(0);
+			return 0;
+		}
+		
+		{
+			const size_t bufferSize = sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket);
+			OutputMemoryStream memoryStream(bufferSize);
+			const cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCutSceneStage);
+			notificationPacket.Write(memoryStream);
+
+			const sc_SetReadyTimePacket setReadyTimePacket(BATTLE_READY_TIME);
+			setReadyTimePacket.Write(memoryStream);
+
+			pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+		}
+	}
+	else
 	{
 		LogWrite("Check", "캐릭터 선택 상태");
 
 		// 캐릭터 선택 동기화
-		const size_t bufferSize = sizeof(cs_sc_ChangeCharacterPacket) * pRoom->GetSize();
+		const size_t bufferSize = sizeof(cs_sc_ChangeCharacterPacket) * pRoom->GetSize() + sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket);
 		OutputMemoryStream memoryStream(bufferSize);
 
 		for (const Client* client : pRoom->GetClients())
@@ -333,17 +367,33 @@ unsigned Room::ProgressThread(void* pArguments)
 			LogWrite("Check", "{0} : {1}", client->GetNetworkID(), static_cast<uint8_t>(client->GetCharacterType()));
 		}
 
+		const cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCutSceneStage);
+		notificationPacket.Write(memoryStream);
+
+		const sc_SetReadyTimePacket setReadyTimePacket(BATTLE_READY_TIME);
+		setReadyTimePacket.Write(memoryStream);
+
 		pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 	}
-	
+
+	if (!pRoom->mIsRun || pRoom->GetSize() < 2 || pRoom->GetOpenCount() != roomOpenCount)
 	{
-		cs_sc_NotificationPacket packet(0, ENotificationType::EnterCutSceneStage);
-		pRoom->SendPacketToAllClients(&packet);
-		Sleep(10000);
+		Log("log", "Room 진행 종료");
+		_endthreadex(0);
+		return 0;
+	}
+
+	Sleep(10000);
+
+	if (!pRoom->mIsRun || pRoom->GetSize() < 2 || pRoom->GetOpenCount() != roomOpenCount)
+	{
+		LogPrintf("Room 진행 종료");
+		_endthreadex(0);
+		return 0;
 	}
 
 	{
-		cs_sc_NotificationPacket packet(0, ENotificationType::EnterReadyStage);
+		cs_sc_NotificationPacket packet(0, ENotificationType::FinishCutSceneStage);
 		pRoom->SendPacketToAllClients(&packet);
 	}
 
@@ -371,13 +421,6 @@ unsigned Room::ProgressThread(void* pArguments)
 	}
 
 	Log("log", "기본 템 지급 완료");
-
-	if (!pRoom->mIsRun || pRoom->GetOpenCount() != roomOpenCount)
-	{
-		LogPrintf("Room 진행 종료");
-		_endthreadex(0);
-		return 0;
-	}
 
 	while (true)
 	{
@@ -422,8 +465,13 @@ inline bool Room::ReadyStage(Room& room)
 
 	LogPrintf("준비시간 시작");
 
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
-		sc_SetReadyTimePacket packet(BATTLE_READY_TIME);
+		return false;
+	}
+
+	{
+		cs_sc_NotificationPacket packet(0, ENotificationType::EnterReadyStage);
 		room.SendPacketToAllClients(&packet);
 	}
 
@@ -431,7 +479,7 @@ inline bool Room::ReadyStage(Room& room)
 	{
 		Sleep(1000);
 
-		if (!room.mIsRun || room.GetOpenCount() != roomOpenCount)
+		if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 		{
 			return false;
 		}
@@ -463,7 +511,7 @@ inline bool Room::ReadyStage(Room& room)
 
 	LogPrintf("캐릭터 갱신 패킷 전송");
 
-	if (!room.mIsRun || room.GetOpenCount() != roomOpenCount)
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
@@ -482,7 +530,27 @@ bool Room::BattleStage(Room& room)
 
 	LogPrintf("전투 스테이지 시작");
 
-	room.SendBattleInfo();	// 전투 정보 전송
+	room.SetBattleInfo();	// 전투 정보 전송
+
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
+	{
+		return false;
+	}
+
+	{
+		constexpr size_t bufferSize = sizeof(sc_BattleInfoPacket) + sizeof(cs_sc_NotificationPacket);
+		OutputMemoryStream memoryStream(bufferSize);
+
+		lock_guard<mutex> lg(room.cLock);
+
+		const sc_BattleInfoPacket battleInfoPacket(room.GetBattleOpponents(), room.GetItemQueues());
+		battleInfoPacket.Write(memoryStream);
+
+		const cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterBattleStage);
+		notificationPacket.Write(memoryStream);
+
+		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+	}
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
@@ -534,19 +602,15 @@ bool Room::CreepStage(Room& room)
 
 	LogPrintf("크립 스테이지 시작");
 
-	if (!room.mIsRun || room.GetOpenCount() != roomOpenCount)
+	{
+		cs_sc_NotificationPacket packet(0, ENotificationType::EnterCreepStage);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
-
+	
 	return true;
-}
-
-void Room::SendRandomItemQueue()
-{
-	mBattleOpponents = mBattleManager.GetBattleOpponent();
-	mItemQueues = GetRandomItemQueue();
-
-	sc_BattleInfoPacket packet(mBattleOpponents, mItemQueues);
-	SendPacketToAllClients(&packet);
 }

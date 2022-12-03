@@ -454,6 +454,9 @@ void Server::ProcessPacket(int networkID, char* buf)
 		case ENotificationType::DisconnectServer:
 		case ENotificationType::EnterReadyStage:
 		case ENotificationType::EnterCutSceneStage:
+		case ENotificationType::FinishCutSceneStage:
+		case ENotificationType::EnterBattleStage:
+		case ENotificationType::EnterCreepStage:
 			LogWarning("log", "[ENotificationType::{0}] 받으면 안되는 패킷을 받음", static_cast<int>(pPacket->notificationType.get()));
 			break;
 		default:

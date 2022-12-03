@@ -65,6 +65,12 @@ enum class ENotificationType : uint8_t
 	EnterReadyStage,
 	/// <summary> 컷신 스테이지에 진입했음을 알리는 패킷 타입 </summary>
 	EnterCutSceneStage,
+	/// <summary> 컷신 스테이지에 끝났음을 알리는 패킷 타입 </summary>
+	FinishCutSceneStage,
+	/// <summary> 전투 스테이지에 진입했음을 알리는 패킷 타입 </summary>
+	EnterBattleStage,
+	/// <summary> 크립라운드 스테이지에 진입했음을 알리는 패킷 타입 </summary>
+	EnterCreepStage,
 };
 
 #pragma pack(push, 1)
