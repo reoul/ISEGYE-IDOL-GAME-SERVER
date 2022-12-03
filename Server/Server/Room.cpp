@@ -339,7 +339,7 @@ unsigned Room::ProgressThread(void* pArguments)
 			_endthreadex(0);
 			return 0;
 		}
-		
+
 		{
 			const size_t bufferSize = sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket);
 			OutputMemoryStream memoryStream(bufferSize);
@@ -352,28 +352,49 @@ unsigned Room::ProgressThread(void* pArguments)
 			pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 		}
 	}
-	else
+	else  // 확정없이 준비시간이 다 지났을 때
 	{
 		LogWrite("Check", "캐릭터 선택 상태");
 
 		// 캐릭터 선택 동기화
-		const size_t bufferSize = sizeof(cs_sc_ChangeCharacterPacket) * pRoom->GetSize() + sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket);
-		OutputMemoryStream memoryStream(bufferSize);
-
-		for (const Client* client : pRoom->GetClients())
 		{
-			cs_sc_ChangeCharacterPacket packet(client->GetNetworkID(), client->GetCharacterType());
-			packet.Write(memoryStream);
-			LogWrite("Check", "{0} : {1}", client->GetNetworkID(), static_cast<uint8_t>(client->GetCharacterType()));
+			OutputMemoryStream memoryStream(512);
+
+			size_t bufferSize = 0;
+			for (Client* client : pRoom->GetClients())
+			{
+				if (client->GetCharacterType() == ECharacterType::Empty)
+				{
+					client->SetCharacterType(ECharacterType::Woowakgood);
+					cs_sc_ChangeCharacterPacket changeCharacterPacket(client->GetNetworkID(), ECharacterType::Woowakgood);
+					changeCharacterPacket.Write(memoryStream);
+					bufferSize += sizeof(cs_sc_ChangeCharacterPacket);
+				}
+				if (!client->IsChoiceCharacter())
+				{
+					cs_sc_NotificationPacket notificationPacket(client->GetNetworkID(), ENotificationType::ChoiceCharacter);
+					notificationPacket.Write(memoryStream);
+					bufferSize += sizeof(cs_sc_NotificationPacket);
+				}
+				LogWrite("Check", "{0} : {1}", client->GetNetworkID(), static_cast<uint8_t>(client->GetCharacterType()));
+			}
+			pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 		}
 
-		const cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCutSceneStage);
-		notificationPacket.Write(memoryStream);
+		Sleep(1000);
 
-		const sc_SetReadyTimePacket setReadyTimePacket(BATTLE_READY_TIME);
-		setReadyTimePacket.Write(memoryStream);
+		{
+			constexpr size_t bufferSize = sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket);
+			OutputMemoryStream memoryStream(bufferSize);
 
-		pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+			const cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCutSceneStage);
+			notificationPacket.Write(memoryStream);
+
+			const sc_SetReadyTimePacket setReadyTimePacket(BATTLE_READY_TIME);
+			setReadyTimePacket.Write(memoryStream);
+
+			pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+		}
 	}
 
 	if (!pRoom->mIsRun || pRoom->GetSize() < 2 || pRoom->GetOpenCount() != roomOpenCount)
@@ -611,6 +632,6 @@ bool Room::CreepStage(Room& room)
 	{
 		return false;
 	}
-	
+
 	return true;
 }

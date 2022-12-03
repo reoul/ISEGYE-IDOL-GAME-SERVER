@@ -19,7 +19,7 @@ Client::Client()
 	, mPacketBuf{}
 	, mIsAlive(false)
 	, mStatus(ESocketStatus::FREE)
-	, mCharacterType(ECharacterType::Woowakgood)
+	, mCharacterType(ECharacterType::Empty)
 	, mRoomPtr(nullptr)
 	, mName{}
 	, mUsingItems{}
@@ -44,7 +44,7 @@ void Client::Init()
 	mPrevSize = 0;
 	memset(mPacketBuf, 0, MAX_PACKET_SIZE);
 	mIsAlive = false;
-	mCharacterType = ECharacterType::Woowakgood;
+	mCharacterType = ECharacterType::Empty;
 	mName[0] = '\0';
 
 	if (mRoomPtr != nullptr)

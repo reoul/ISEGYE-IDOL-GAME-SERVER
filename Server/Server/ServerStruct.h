@@ -15,7 +15,7 @@ enum class EOperationType { Send, Recv, Accept };
  * ACTIVE : 사용 불가능, 접근 가능
  */
 enum class ESocketStatus : uint8_t { FREE, ALLOCATED, ACTIVE };
-enum class ECharacterType : uint8_t { Woowakgood, Ine, Jingberger, Lilpa, Jururu, Gosegu, Viichan };
+enum class ECharacterType : uint8_t { Woowakgood, Ine, Jingberger, Lilpa, Jururu, Gosegu, Viichan, Empty };
 
 //확장 overlapped 구조체
 struct Exover
