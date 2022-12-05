@@ -71,6 +71,8 @@ enum class ENotificationType : uint8_t
 	EnterBattleStage,
 	/// <summary> 크립라운드 스테이지에 진입했음을 알리는 패킷 타입 </summary>
 	EnterCreepStage,
+	/// <summary> 캐릭터 선택이 끝났음을 알리는 패킷 타입 </summary>
+	FinishChoiceCharacterTime,
 };
 
 #pragma pack(push, 1)

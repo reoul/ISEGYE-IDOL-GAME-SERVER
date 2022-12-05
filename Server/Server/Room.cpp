@@ -378,6 +378,14 @@ unsigned Room::ProgressThread(void* pArguments)
 				}
 				LogWrite("Check", "{0} : {1}", client->GetNetworkID(), static_cast<uint8_t>(client->GetCharacterType()));
 			}
+
+			{
+				// 캐릭터 선택 시간 끝났다고 알림
+				cs_sc_NotificationPacket packet(0, ENotificationType::FinishChoiceCharacterTime);
+				packet.Write(memoryStream);
+				bufferSize += sizeof(cs_sc_NotificationPacket);
+			}
+
 			pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 		}
 
