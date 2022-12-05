@@ -139,16 +139,27 @@ void Client::SwapItem(const uint8_t index1, const uint8_t index2)
 	item1.SetType(type2);
 }
 
-void Client::AddItem(uint8_t type)
+uint8_t Client::AddItem(uint8_t type)
 {
-	for (Item& item : mUnUsingItems)
+	for (uint8_t i = 0; i < MAX_UN_USING_ITEM; ++i)
 	{
-		if (item.GetType() == EMPTY_ITEM)
+		if (mUnUsingItems[i].GetType() == EMPTY_ITEM)
 		{
-			item.SetType(type);
-			break;
+			mUnUsingItems[i].SetType(type);
+			return i;
 		}
 	}
+
+	for (uint8_t i = 0; i < MAX_USING_ITEM; ++i)
+	{
+		if (mUsingItems[i].GetType() == EMPTY_ITEM)
+		{
+			mUsingItems[i].SetType(type);
+			return i + MAX_UN_USING_ITEM;
+		}
+	}
+
+	return MAX_UN_USING_ITEM + MAX_USING_ITEM;
 }
 
 /// <summary> 랜덤한 아이템 타입 가져오기 </summary>
@@ -226,4 +237,35 @@ bool Client::IsValidConnect() const
 		return false;	// 유효하지 않는 연결 상태
 	}
 	return true;		// 유효한 연결 상태
+}
+
+void Client::SetItem(uint8_t index, uint8_t type)
+{
+	if (index > MAX_USING_ITEM + MAX_UN_USING_ITEM)
+	{
+		return;
+	}
+
+	Item& item = index < MAX_USING_ITEM ? mUsingItems[index] : mUnUsingItems[index - MAX_USING_ITEM];
+	item.SetType(type);
+}
+
+uint8_t Client::FindEmptyItemSlotIndex() const
+{
+	for (uint8_t i = 0; i < MAX_UN_USING_ITEM; ++i)
+	{
+		if(mUnUsingItems[i].GetType() == EMPTY_ITEM)
+		{
+			return i;
+		}
+	}
+
+	for (uint8_t i = 0; i < MAX_USING_ITEM; ++i)
+	{
+		if (mUsingItems[i].GetType() == EMPTY_ITEM)
+		{
+			return i + MAX_UN_USING_ITEM;
+		}
+	}
+	return MAX_UN_USING_ITEM + MAX_USING_ITEM;
 }

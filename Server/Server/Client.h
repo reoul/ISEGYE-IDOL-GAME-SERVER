@@ -41,7 +41,7 @@ public:
 	vector<Item>				GetUnUsingItems() const;
 	vector<SlotInfo>			GetValidUnUsingItems() const;
 	void						SwapItem(uint8_t index1, uint8_t index2);
-	void						AddItem(uint8_t type);
+	uint8_t						AddItem(uint8_t type);
 	uint8_t						GetRandomItemType() const;
 	void						TrySetDefaultUsingItem();
 	void						SendPacketInAllRoomClients(void* pPacket) const;
@@ -64,7 +64,9 @@ public:
 	void						SetAvatarMaxHp(int32_t maxHp);
 	int32_t						GetAvatarDefensive() const;
 	void						SetAvatarDefensive(int32_t defensive);
-
+	Item&						GetItem(uint8_t index);
+	void						SetItem(uint8_t index, uint8_t type);
+	uint8_t						FindEmptyItemSlotIndex() const;
 private:
 	std::mutex					mLock;
 	SOCKET						mSocket;
@@ -263,4 +265,9 @@ inline int32_t Client::GetAvatarDefensive() const
 inline void	Client::SetAvatarDefensive(int32_t defensive)
 {
 	mAvatarDefensive = defensive;
+}
+
+inline Item& Client::GetItem(uint8_t index)
+{
+	return index < MAX_USING_ITEM ? mUsingItems[index] : mUnUsingItems[index - MAX_USING_ITEM];
 }

@@ -44,6 +44,10 @@ enum class EPacketType : uint8_t
 	sc_setChoiceCharacterTime,
 	/// <summary> 준비시간을 설정해주는 패킷 타입 </summary>
 	sc_setReadyTime,
+	/// <summary> 아이템 드랍 패킷 타입 </summary>
+	cs_sc_dropItem,
+	/// <summary> 아이템 조합 요청 패킷 타입 </summary>
+	cs_requestCombinationItem,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -152,18 +156,21 @@ struct sc_ConnectRoomPacket : protected Packet
 struct sc_AddNewItemPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> slot;
 	const_wrapper<uint8_t> itemCode;
 
 	void Write(OutputMemoryStream& memoryStream) const
 	{
 		Packet::Write(memoryStream);
 		memoryStream.Write(networkID.get());
+		memoryStream.Write(slot.get());
 		memoryStream.Write(itemCode.get());
 	}
 
-	sc_AddNewItemPacket(int networkID, uint8_t itemCode)
+	sc_AddNewItemPacket(int networkID, uint8_t slot, uint8_t itemCode)
 		: Packet(sizeof(sc_AddNewItemPacket), EPacketType::sc_addNewItem)
 		, networkID(networkID)
+		, slot(slot)
 		, itemCode(itemCode)
 	{
 	}
@@ -398,6 +405,36 @@ struct sc_SetChoiceCharacterTimePacket : protected Packet
 		, time(time)
 	{
 	}
+};
+
+struct cs_sc_DropItemPacket : protected Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> index;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(index.get());
+	}
+
+	cs_sc_DropItemPacket(int32_t networkID, uint8_t index)
+		: Packet(sizeof(cs_sc_DropItemPacket), EPacketType::cs_sc_dropItem)
+		, networkID(networkID)
+		, index(index)
+	{
+	}
+};
+
+struct cs_RequestCombinationItemPacket : private Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> index1;
+	const_wrapper<uint8_t> index2;
+	const_wrapper<uint8_t> index3;
+	
+	cs_RequestCombinationItemPacket() = delete;
 };
 
 #pragma pack(pop)

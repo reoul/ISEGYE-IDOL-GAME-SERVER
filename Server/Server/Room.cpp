@@ -437,12 +437,12 @@ unsigned Room::ProgressThread(void* pArguments)
 			constexpr uint8_t defaultItemCode1 = 1;	// 기본템 1
 			constexpr uint8_t defaultItemCode2 = 6;	// 기본템 2
 
-			client->AddItem(defaultItemCode1);
-			const sc_AddNewItemPacket addItemPacket(client->GetNetworkID(), defaultItemCode1);
+			uint8_t slot1 = client->AddItem(defaultItemCode1);
+			const sc_AddNewItemPacket addItemPacket(client->GetNetworkID(), slot1, defaultItemCode1);
 			addItemPacket.Write(memoryStream);
 
-			client->AddItem(defaultItemCode2);
-			const sc_AddNewItemPacket addItemPacket2(client->GetNetworkID(), defaultItemCode2);
+			uint8_t slot2 = client->AddItem(defaultItemCode2);
+			const sc_AddNewItemPacket addItemPacket2(client->GetNetworkID(), slot2, defaultItemCode2);
 			addItemPacket2.Write(memoryStream);
 		}
 

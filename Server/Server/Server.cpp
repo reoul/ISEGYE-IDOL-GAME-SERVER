@@ -352,7 +352,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 				pRoom->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 			}
-			
+
 			unsigned threadID;
 			const HANDLE hThread = (HANDLE)_beginthreadex(nullptr, 0, &Room::ProgressThread, pRoom, 0, &threadID);
 			CloseHandle(hThread);
@@ -443,8 +443,8 @@ void Server::ProcessPacket(int networkID, char* buf)
 		{
 			Client& client = sClients[pPacket->networkID];
 			const uint8_t newItemType = client.GetRandomItemType();
-			client.AddItem(newItemType);
-			sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), newItemType);
+			uint8_t slot = client.AddItem(newItemType);
+			sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
 			client.SendPacketInAllRoomClients(&addItemPacket);
 			Log("log", "[ENotificationType::RequestAddRandomItem] 네트워크 {0}번 클라이언트 랜덤 아이템 추가 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 		}
@@ -464,6 +464,58 @@ void Server::ProcessPacket(int networkID, char* buf)
 			assert(false);
 			break;
 		}
+	}
+	break;
+	case EPacketType::cs_sc_dropItem:
+	{
+		cs_sc_DropItemPacket* pPacket = reinterpret_cast<cs_sc_DropItemPacket*>(buf);
+
+		Item& item = sClients[pPacket->networkID].GetItem(pPacket->index);
+		if (item.GetType() >= LOCK_ITEM)
+		{
+			return;
+		}
+
+		item.SetType(EMPTY_ITEM);
+
+		sClients[pPacket->networkID].SendPacketInAllRoomClients(pPacket);
+
+		LogWrite("log", "[EPacketType::cs_sc_dropItem] 네트워크 {0}번 클라이언트 {1}번 아이템 버림}", pPacket->index.get());
+	}
+	break;
+	case EPacketType::cs_requestCombinationItem:
+	{
+		constexpr size_t bufferSize = sizeof(cs_sc_DropItemPacket) * 3 + sizeof(sc_AddNewItemPacket);
+		OutputMemoryStream memoryStream(bufferSize);
+
+		cs_RequestCombinationItemPacket* pPacket = reinterpret_cast<cs_RequestCombinationItemPacket*>(buf);
+		Client& client = sClients[pPacket->networkID];
+
+		Item& item1 = client.GetItem(pPacket->index1);
+		Item& item2 = client.GetItem(pPacket->index2);
+		Item& item3 = client.GetItem(pPacket->index3);
+		if (item1.GetType() >= LOCK_ITEM || item2.GetType() >= LOCK_ITEM || item3.GetType() >= LOCK_ITEM)
+		{
+			return;
+		}
+
+		const cs_sc_DropItemPacket packet1(pPacket->networkID, pPacket->index1);
+		packet1.Write(memoryStream);
+		const cs_sc_DropItemPacket packet2(pPacket->networkID, pPacket->index2);
+		packet2.Write(memoryStream);
+		const cs_sc_DropItemPacket packet3(pPacket->networkID, pPacket->index3);
+		packet3.Write(memoryStream);
+
+		item1.SetType(EMPTY_ITEM);
+		item2.SetType(EMPTY_ITEM);
+		item3.SetType(EMPTY_ITEM);
+
+		uint8_t newItemType = client.GetRandomItemType();
+		uint8_t findEmptyItemSlot = client.FindEmptyItemSlotIndex();
+		sc_AddNewItemPacket addNewItemPacket(pPacket->networkID, findEmptyItemSlot, newItemType);
+		addNewItemPacket.Write(memoryStream);
+		
+		client.SetItem(findEmptyItemSlot, newItemType);
 	}
 	break;
 	case EPacketType::sc_addNewItem:
