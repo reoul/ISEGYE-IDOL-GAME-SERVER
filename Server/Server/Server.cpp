@@ -516,6 +516,8 @@ void Server::ProcessPacket(int networkID, char* buf)
 		addNewItemPacket.Write(memoryStream);
 		
 		client.SetItem(findEmptyItemSlot, newItemType);
+
+		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 	}
 	break;
 	case EPacketType::sc_addNewItem:
