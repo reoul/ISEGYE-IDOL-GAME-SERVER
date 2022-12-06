@@ -146,7 +146,7 @@ uint8_t Client::AddItem(uint8_t type)
 		if (mUnUsingItems[i].GetType() == EMPTY_ITEM)
 		{
 			mUnUsingItems[i].SetType(type);
-			return i;
+			return i + MAX_USING_ITEM;
 		}
 	}
 
@@ -155,7 +155,7 @@ uint8_t Client::AddItem(uint8_t type)
 		if (mUsingItems[i].GetType() == EMPTY_ITEM)
 		{
 			mUsingItems[i].SetType(type);
-			return i + MAX_UN_USING_ITEM;
+			return i;
 		}
 	}
 
@@ -256,7 +256,7 @@ uint8_t Client::FindEmptyItemSlotIndex() const
 	{
 		if(mUnUsingItems[i].GetType() == EMPTY_ITEM)
 		{
-			return i;
+			return i + MAX_USING_ITEM;
 		}
 	}
 
@@ -264,7 +264,7 @@ uint8_t Client::FindEmptyItemSlotIndex() const
 	{
 		if (mUsingItems[i].GetType() == EMPTY_ITEM)
 		{
-			return i + MAX_UN_USING_ITEM;
+			return i;
 		}
 	}
 	return MAX_UN_USING_ITEM + MAX_USING_ITEM;
