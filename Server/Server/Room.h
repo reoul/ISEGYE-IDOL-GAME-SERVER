@@ -3,6 +3,20 @@
 #include "BattleManager.h"
 #include "ServerStruct.h"
 
+enum class ERoomStatusType
+{
+	/// <summary> 캐릭터 선택창 </summary>
+	ChoiceCharacter,
+	/// <summary> 컷신 스테이지 </summary>
+	CutSceneStage,
+	/// <summary> 준비 스테이지 </summary>
+	ReadyStage,
+	/// <summary> 전투 스테이지 </summary>
+	BattleStage,
+	/// <summary> 크립 스테이지 </summary>
+	CreepStage,
+};
+
 class Room
 {
 public:
@@ -17,8 +31,7 @@ public:
 	void SendPacketToAllClients(void* pPacket, ULONG size) const;
 	void SendPacketToAnotherClients(const Client& client, void* pPacket) const;
 	void SendPacketToAnotherClients(const Client& client, void* pPacket, ULONG size) const;
-	vector<int32_t> GetRandomItemQueue();
-	void SetBattleInfo();
+	void ApplyRandomBattleOpponent();
 	const vector<Client*>& GetClients() const;
 	vector<Client*>& GetClients();
 	bool IsRun() const;
@@ -32,11 +45,13 @@ public:
 	static unsigned __stdcall ProgressThread(void* pArguments);
 	vector<int32_t>& GetBattleOpponents();
 	vector<int32_t>& GetItemQueues();
-	static bool ReadyStage(Room& room);
+	static bool ReadyStage(Room& room, bool isNextStageBattle);
 	static bool BattleStage(Room& room);
 	static bool CreepStage(Room& room);
 	size_t GetOpenCount() const;
 	void AddOpenCount();
+	int GetRound() const;
+	ERoomStatusType GetCurRoomStatusType() const;
 private:
 	vector<Client*> mClients;
 	size_t mSize;
@@ -48,6 +63,8 @@ private:
 	vector<int32_t> mBattleOpponents;
 	vector<int32_t> mItemQueues;
 	size_t mOpenCount;	// 룸 열린 횟수, Room 진행이 스레드로 돌아서 해제되면서 바로 열리면 스레드가 계속 진행되므로 구별 변수
+	int mRound;	// 진행 라운드
+	ERoomStatusType mCurRoomStatusType;	// Room 진행 상황
 };
 
 inline const vector<Client*>& Room::GetClients() const
@@ -108,4 +125,14 @@ inline size_t Room::GetOpenCount() const
 inline void Room::AddOpenCount()
 {
 	++mOpenCount;
+}
+
+inline int Room::GetRound() const
+{
+	return mRound;
+}
+
+inline ERoomStatusType Room::GetCurRoomStatusType() const
+{
+	return mCurRoomStatusType;
 }

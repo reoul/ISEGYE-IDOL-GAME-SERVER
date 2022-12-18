@@ -1,10 +1,9 @@
 ﻿#pragma once
 #include <cstdint>
 
-#define LOCK_ITEM (254)
-#define EMPTY_ITEM (255)
-#define ACTIVATE_ITEM (1)
-#define DISABLE_ITEM (0)
+constexpr int EMPTY_ITEM = (0);
+constexpr int ACTIVATE_ITEM = (1);
+constexpr int DISABLE_ITEM = (0);
 
 class Item
 {

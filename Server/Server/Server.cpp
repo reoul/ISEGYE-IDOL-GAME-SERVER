@@ -1,5 +1,8 @@
 ﻿#include "Server.h"
 #include <MSWSock.h>
+
+#include "ItemBase.h"
+#include "Items.h"
 #include "PacketStruct.h"
 
 HANDLE Server::sIocp;
@@ -324,10 +327,16 @@ void Server::SendDisconnect(int networkID)
 void Server::ProcessPacket(int networkID, char* buf)
 {
 	const EPacketType packetType = static_cast<EPacketType>(buf[2]);  //[0,1]은 size
+
 	switch (packetType)
 	{
 	case EPacketType::cs_startMatching:
 	{
+		if (sClients[networkID].GetRoomPtr() != nullptr)	// 방이 있으면 매칭을 돌리면 안됨
+		{
+			return;
+		}
+
 		const cs_StartMatchingPacket* pPacket = reinterpret_cast<cs_StartMatchingPacket*>(buf);
 		wcscpy(sClients[networkID].GetName(), pPacket->name);
 		sClients[networkID].GetName()[MAX_USER_NAME_LENGTH - 1] = '\0';
@@ -359,27 +368,16 @@ void Server::ProcessPacket(int networkID, char* buf)
 		}
 	}
 	break;
-	/*case EPacketType::sc_addNewItem:
-	{
-		sc_AddNewItemPacket* pPacket = reinterpret_cast<sc_AddNewItemPacket*>(buf);
-		Client& client = sClients[networkID];
-		client.AddItem(pPacket->itemCode);
-		Log("[sc_addNewItem] 네트워크 {0}번 클라이언트 {1}번 아이템 추가", pPacket->networkID, pPacket->itemCode);
-
-		if (sClients[networkID].GetRoomPtr() != nullptr)
-		{
-			lock_guard<mutex> lg(client.GetRoomPtr()->cLock);
-			client.SendPacketInAnotherRoomClients(pPacket);
-		}
-		else
-		{
-			log_assert(false);
-		}
-	}
-	break;*/
 	case EPacketType::cs_sc_changeCharacter:
 	{
 		cs_sc_ChangeCharacterPacket* pPacket = reinterpret_cast<cs_sc_ChangeCharacterPacket*>(buf);
+
+		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
+		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ChoiceCharacter)
+		{
+			return;
+		}
+
 		Log("log", "[cs_sc_changeCharacter] 네트워크 {0}번 클라이언트 캐릭터 {1}번 교체", pPacket->networkID, static_cast<uint8_t>(pPacket->characterType.get()));
 
 		if (sClients[networkID].GetRoomPtr() != nullptr)
@@ -397,6 +395,13 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_sc_changeItemSlot:
 	{
 		cs_sc_ChangeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_ChangeItemSlotPacket*>(buf);
+
+		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
+		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		{
+			return;
+		}
+
 		sClients[networkID].SwapItem(pPacket->slot1, pPacket->slot2);
 		Log("log", "[cs_sc_changeItemSlot] 네트워크 {0}번 클라이언트 아이템 슬롯 {1} <-> {2} 교체", pPacket->networkID, pPacket->slot1, pPacket->slot2);
 
@@ -413,21 +418,41 @@ void Server::ProcessPacket(int networkID, char* buf)
 	break;
 	case EPacketType::cs_sc_useEmoticon:
 	{
+		const Room* room = sClients[networkID].GetRoomPtr();
+		if (room == nullptr)
+		{
+			return;
+		}
+
 		const cs_sc_UseEmoticonPacket* pPacket = reinterpret_cast<cs_sc_UseEmoticonPacket*>(buf);
 		Log("log", "[cs_sc_useEmoticon] 네트워크 {0}번 클라이언트 {1}번 이모티콘 사용", pPacket->networkID, pPacket->emoticonType);
 		sClients[networkID].SendPacketInAnotherRoomClients(buf);
 	}
 	break;
 	case EPacketType::cs_sc_upgradeItem:
+	{
 		LogWarning("log", "[cs_sc_upgradeItem] 아직 구현 안되어 있음");
-		break;
+
+		const Room* room = sClients[networkID].GetRoomPtr();
+		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		{
+			return;
+		}
+	}
+	break;
 	case EPacketType::cs_sc_notification:
 	{
 		cs_sc_NotificationPacket* pPacket = reinterpret_cast<cs_sc_NotificationPacket*>(buf);
+		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
 		switch (pPacket->notificationType.get())
 		{
 		case ENotificationType::ChoiceCharacter:
 		{
+			if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ChoiceCharacter)
+			{
+				return;
+			}
+
 			Client& client = sClients[pPacket->networkID];
 			client.SetChoiceCharacter(true);
 
@@ -439,14 +464,88 @@ void Server::ProcessPacket(int networkID, char* buf)
 			sClients[pPacket->networkID].SetLastConnectCheckPacketTime(system_clock::now());
 			LogWrite("log", "[ENotificationType::ConnectCheck] 네트워크 {0}번 클라이언트 연결 확인", pPacket->networkID);
 			break;
-		case ENotificationType::RequestAddRandomItem:
+		case ENotificationType::UseNormalItemTicket:
 		{
+			if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+			{
+				return;
+			}
+
 			Client& client = sClients[pPacket->networkID];
-			const uint8_t newItemType = client.GetRandomItemType();
-			uint8_t slot = client.AddItem(newItemType);
-			sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
-			client.SendPacketInAllRoomClients(&addItemPacket);
-			Log("log", "[ENotificationType::RequestAddRandomItem] 네트워크 {0}번 클라이언트 랜덤 아이템 추가 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+			const uint8_t newItemType = client.GetRandomItemTypeOfNormalItemTicket();
+			if (newItemType != EMPTY_ITEM)
+			{
+				uint8_t slot = client.AddItem(newItemType);
+				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
+				client.SendPacketInAllRoomClients(&addItemPacket);
+
+				client.SetNormalItemTicketCount(client.GetNormalItemTicketCount() - 1);
+
+				Log("log", "[ENotificationType::UseNormalItemTicket] 네트워크 {0}번 클라이언트 일반 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+			}
+		}
+		break;
+		case ENotificationType::UseAdvancedItemTicket:
+		{
+			if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+			{
+				return;
+			}
+
+			Client& client = sClients[pPacket->networkID];
+			const uint8_t newItemType = client.GetRandomItemTypeOfAdvancedItemTicket();
+			if (newItemType != EMPTY_ITEM)
+			{
+				uint8_t slot = client.AddItem(newItemType);
+				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
+				client.SendPacketInAllRoomClients(&addItemPacket);
+
+				client.SetAdvancedItemTicketCount(client.GetAdvancedItemTicketCount() - 1);
+
+				Log("log", "[ENotificationType::UseAdvancedItemTicket] 네트워크 {0}번 클라이언트 고급 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+			}
+		}
+		break;
+		case ENotificationType::UseTopItemTicket:
+		{
+			if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+			{
+				return;
+			}
+
+			Client& client = sClients[pPacket->networkID];
+			const uint8_t newItemType = client.GetRandomItemTypeOfTopItemTicket();
+			if (newItemType != EMPTY_ITEM)
+			{
+				uint8_t slot = client.AddItem(newItemType);
+				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
+				client.SendPacketInAllRoomClients(&addItemPacket);
+
+				client.SetTopItemTicketCount(client.GetTopItemTicketCount() - 1);
+
+				Log("log", "[ENotificationType::UseTopItemTicket] 네트워크 {0}번 클라이언트 최고급 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+			}
+		}
+		break;
+		case ENotificationType::UseSupremeItemTicket:
+		{
+			if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+			{
+				return;
+			}
+
+			Client& client = sClients[pPacket->networkID];
+			const uint8_t newItemType = client.GetRandomItemTypeOfSupremeItemTicket();
+			if (newItemType != EMPTY_ITEM)
+			{
+				uint8_t slot = client.AddItem(newItemType);
+				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
+				client.SendPacketInAllRoomClients(&addItemPacket);
+
+				client.SetSupremeItemTicketCount(client.GetSupremeItemTicketCount() - 1);
+
+				Log("log", "[ENotificationType::UseSupremeItemTicket] 네트워크 {0}번 클라이언트 지존 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+			}
 		}
 		break;
 		case ENotificationType::ChoiceAllCharacter:
@@ -458,6 +557,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		case ENotificationType::EnterBattleStage:
 		case ENotificationType::EnterCreepStage:
 		case ENotificationType::FinishChoiceCharacterTime:
+		case ENotificationType::InitBattleSlot:
 			LogWarning("log", "[ENotificationType::{0}] 받으면 안되는 패킷을 받음", static_cast<int>(pPacket->notificationType.get()));
 			break;
 		default:
@@ -470,8 +570,15 @@ void Server::ProcessPacket(int networkID, char* buf)
 	{
 		cs_sc_DropItemPacket* pPacket = reinterpret_cast<cs_sc_DropItemPacket*>(buf);
 
+		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
+		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		{
+			return;
+		}
+
 		Item& item = sClients[pPacket->networkID].GetItem(pPacket->index);
-		if (item.GetType() >= LOCK_ITEM)
+
+		if (item.GetType() == EMPTY_ITEM)
 		{
 			return;
 		}
@@ -485,19 +592,25 @@ void Server::ProcessPacket(int networkID, char* buf)
 	break;
 	case EPacketType::cs_requestCombinationItem:
 	{
-		constexpr size_t bufferSize = sizeof(cs_sc_DropItemPacket) * 3 + sizeof(sc_AddNewItemPacket);
+		constexpr size_t bufferSize = sizeof(cs_sc_DropItemPacket) * 3 + sizeof(sc_AddNewItemPacket) + sizeof(cs_sc_UpgradeItemPacket);
 		OutputMemoryStream memoryStream(bufferSize);
 
 		cs_RequestCombinationItemPacket* pPacket = reinterpret_cast<cs_RequestCombinationItemPacket*>(buf);
 		Client& client = sClients[pPacket->networkID];
 
-		Item& item1 = client.GetItem(pPacket->index1);
-		Item& item2 = client.GetItem(pPacket->index2);
-		Item& item3 = client.GetItem(pPacket->index3);
-		if (item1.GetType() >= LOCK_ITEM || item2.GetType() >= LOCK_ITEM || item3.GetType() >= LOCK_ITEM)
+		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
+		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
 		{
 			return;
 		}
+
+		Item& item1 = client.GetItem(pPacket->index1);
+		Item& item2 = client.GetItem(pPacket->index2);
+		Item& item3 = client.GetItem(pPacket->index3);
+
+		if (item1.GetType() == EMPTY_ITEM) return;
+		if (item2.GetType() == EMPTY_ITEM) return;
+		if (item3.GetType() == EMPTY_ITEM) return;
 
 		const cs_sc_DropItemPacket packet1(pPacket->networkID, pPacket->index1);
 		packet1.Write(memoryStream);
@@ -506,15 +619,25 @@ void Server::ProcessPacket(int networkID, char* buf)
 		const cs_sc_DropItemPacket packet3(pPacket->networkID, pPacket->index3);
 		packet3.Write(memoryStream);
 
+
+		uint8_t tier1 = item1.GetType();
+		uint8_t tier2 = item2.GetType();
+		uint8_t tier3 = item3.GetType();
+
+		const EItemTierType maxTier = static_cast<EItemTierType>(max(max(tier1, tier2), tier3));
+
 		item1.SetType(EMPTY_ITEM);
 		item2.SetType(EMPTY_ITEM);
 		item3.SetType(EMPTY_ITEM);
 
-		uint8_t newItemType = client.GetRandomItemType();
+		uint8_t newItemType = client.GetRandomItemTypeByCombination(maxTier);
 		uint8_t findEmptyItemSlot = client.FindEmptyItemSlotIndex();
 		sc_AddNewItemPacket addNewItemPacket(pPacket->networkID, findEmptyItemSlot, newItemType);
 		addNewItemPacket.Write(memoryStream);
-		
+
+		cs_sc_UpgradeItemPacket upgradeItemPacket(pPacket->networkID, findEmptyItemSlot, 1);
+		upgradeItemPacket.Write(memoryStream);
+
 		client.SetItem(findEmptyItemSlot, newItemType);
 
 		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
@@ -526,6 +649,11 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::sc_updateCharacterInfo:
 	case EPacketType::sc_setChoiceCharacterTime:
 	case EPacketType::sc_setReadyTime:
+	case EPacketType::sc_setItemTicket:
+	case EPacketType::sc_activeItem:
+	case EPacketType::sc_fadeIn:
+	case EPacketType::sc_fadeOut:
+	case EPacketType::sc_battleOpponents:
 		LogWarning("log", "{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
 		break;
 	default:

@@ -5,11 +5,16 @@
 #include <chrono>
 
 #include "ServerStruct.h"
+#include "reoul/logger.h"
+
 
 class Room;
 
 using namespace std;
 using namespace chrono;
+using namespace Logger;
+
+enum class EItemTierType;
 
 class Client
 {
@@ -37,12 +42,14 @@ public:
 	const wchar_t*				GetName() const;
 	vector<Item>				GetUsingItems() const;
 	vector<SlotInfo>			GetValidUsingItems() const;
-	int							GetLockSlotCount() const;
 	vector<Item>				GetUnUsingItems() const;
 	vector<SlotInfo>			GetValidUnUsingItems() const;
 	void						SwapItem(uint8_t index1, uint8_t index2);
 	uint8_t						AddItem(uint8_t type);
-	uint8_t						GetRandomItemType() const;
+	uint8_t						GetRandomItemTypeOfNormalItemTicket() const;
+	uint8_t						GetRandomItemTypeOfAdvancedItemTicket() const;
+	uint8_t						GetRandomItemTypeOfTopItemTicket() const;
+	uint8_t						GetRandomItemTypeOfSupremeItemTicket() const;
 	void						TrySetDefaultUsingItem();
 	void						SendPacketInAllRoomClients(void* pPacket) const;
 	void						SendPacketInAnotherRoomClients(void* pPacket) const;
@@ -67,27 +74,54 @@ public:
 	Item&						GetItem(uint8_t index);
 	void						SetItem(uint8_t index, uint8_t type);
 	uint8_t						FindEmptyItemSlotIndex() const;
+	int32_t						GetNormalItemTicketCount() const;
+	void						SetNormalItemTicketCount(int32_t count);
+	int32_t						GetAdvancedItemTicketCount() const;
+	void						SetAdvancedItemTicketCount(int32_t count);
+	int32_t						GetTopItemTicketCount() const;
+	void						SetTopItemTicketCount(int32_t count);
+	int32_t						GetSupremeItemTicketCount() const;
+	void						SetSupremeItemTicketCount(int32_t count);
+	uint8_t						GetRandomItemTypeByCombination(EItemTierType topTier);
+	vector<SlotInfo>			GetItemActiveQueue() const;
+	Item						GetBattleItem(int index) const;
+	void						SetBattleItem(int index, Item item);
 private:
 	std::mutex					mLock;
 	SOCKET						mSocket;
-	int32_t						mNetworkID;							// 클라이언트 아이디
-	Exover						mRecvOver;							// 확장 overlapped 구조체
-	int32_t						mPrevSize;							// 이전에 받아놓은 양
-	int32_t						mHp;								// 플레이어 체력
-	int32_t						mAvatarMaxHp;						// 전투 아바타 최대 체력
-	int32_t						mAvatarHp;							// 전투 아바타 체력
-	int32_t						mAvatarDefensive;					// 전투 아바타 방어도
-	char						mPacketBuf[MAX_PACKET_SIZE];		// 조각난 거 받아두기 위한 버퍼
-	bool						mIsAlive;							// 플레이 도중에 살아있는지(HP가 0이 아닌경우)
-	ESocketStatus				mStatus;							// 접속했나 안했나
-	ECharacterType				mCharacterType;						// 플레이어 캐릭터
-	Room*						mRoomPtr;							// 클라이언트가 속한 룸
-	wchar_t						mName[MAX_USER_NAME_LENGTH];		// 플레이어 이름
-	Item						mUsingItems[MAX_USING_ITEM];		// 전투시에 사용되는 인벤토리
-	Item						mUnUsingItems[MAX_UN_USING_ITEM];	// 보유 유물 보관 인벤토리
-	int16_t						mFirstAttackState;					// 선공 스텟
-	bool						mIsChoiceCharacter;					// 캐릭터를 선택했는지
-	system_clock::time_point	mLastConnectCheckPacketTime;		// 마지막으로 연결 체크 패킷 받은 시간
+	int32_t						mNetworkID;								// 클라이언트 아이디
+	Exover						mRecvOver;								// 확장 overlapped 구조체
+	int32_t						mPrevSize;								// 이전에 받아놓은 양
+	int32_t						mHp;									// 플레이어 체력
+	int32_t						mAvatarMaxHp;							// 전투 아바타 최대 체력
+	int32_t						mAvatarHp;								// 전투 아바타 체력
+	int32_t						mAvatarDefensive;						// 전투 아바타 방어도
+	char						mPacketBuf[MAX_PACKET_SIZE];			// 조각난 거 받아두기 위한 버퍼
+	bool						mIsAlive;								// 플레이 도중에 살아있는지(HP가 0이 아닌경우)
+	ESocketStatus				mStatus;								// 접속했나 안했나
+	ECharacterType				mCharacterType;							// 플레이어 캐릭터
+	Room*						mRoomPtr;								// 클라이언트가 속한 룸
+	wchar_t						mName[MAX_USER_NAME_LENGTH];			// 플레이어 이름
+	Item						mUsingItems[MAX_USING_ITEM_COUNT];			// 전투시에 사용되는 인벤토리
+	Item						mUnUsingItems[MAX_UN_USING_ITEM_COUNT];		// 보유 유물 보관 인벤토리
+	int16_t						mFirstAttackState;						// 선공 스텟
+	bool						mIsChoiceCharacter;						// 캐릭터를 선택했는지
+	system_clock::time_point	mLastConnectCheckPacketTime;			// 마지막으로 연결 체크 패킷 받은 시간
+	int							mNormalItemTicketCount;					// 일반 아이템 뽑기권 개수
+	int							mAdvancedItemTicketCount;				// 고급 아이템 뽑기권 개수
+	int							mTopItemTicketCount;					// 최고급 아이템 뽑기권 개수
+	int							mSupremeItemTicketCount;				// 지존 아이템 뽑기권 개수
+	Item						mBattleItems[MAX_USING_ITEM_COUNT];			// 전투에서 사용되는 아이템
+	static constexpr int		sItemProbability[6][MAX_ITEM_UPGRADE]	// 라운드에 따른 아이템 확률
+	{
+		//1티어		2티어	3티어	4티어	5티어
+		{100,	0,		0,		0,		0},		// 1라운드
+		{75,	25,		0,		0,		0},		// 2라운드 
+		{55,	30,		15,		0,		0},		// 3라운드 
+		{25,	40,		30,		5,		0},		// 4라운드 
+		{16,	20,		35,		25,		4},		// 5라운드 
+		{9,		15,		36,		30,		10}		// 6라운드부터
+	};
 };
 
 inline const SOCKET& Client::GetSocket() const
@@ -269,5 +303,57 @@ inline void	Client::SetAvatarDefensive(int32_t defensive)
 
 inline Item& Client::GetItem(uint8_t index)
 {
-	return index < MAX_USING_ITEM ? mUsingItems[index] : mUnUsingItems[index - MAX_USING_ITEM];
+	return index < MAX_USING_ITEM_COUNT ? mUsingItems[index] : mUnUsingItems[index - MAX_USING_ITEM_COUNT];
+}
+
+inline int32_t Client::GetNormalItemTicketCount() const
+{
+	return mNormalItemTicketCount;
+}
+
+inline void Client::SetNormalItemTicketCount(int32_t count)
+{
+	mNormalItemTicketCount = count;
+}
+
+inline int32_t Client::GetAdvancedItemTicketCount() const
+{
+	return mAdvancedItemTicketCount;
+}
+
+inline void Client::SetAdvancedItemTicketCount(int32_t count)
+{
+	mAdvancedItemTicketCount = count;
+}
+
+inline int32_t Client::GetTopItemTicketCount() const
+{
+	return mTopItemTicketCount;
+}
+
+inline void Client::SetTopItemTicketCount(int32_t count)
+{
+	mTopItemTicketCount = count;
+}
+
+inline int32_t Client::GetSupremeItemTicketCount() const
+{
+	return mSupremeItemTicketCount;
+}
+
+inline void Client::SetSupremeItemTicketCount(int32_t count)
+{
+	mSupremeItemTicketCount = count;
+}
+
+inline Item Client::GetBattleItem(int index) const
+{
+	log_assert(index < MAX_USING_ITEM_COUNT);
+	return mBattleItems[index];
+}
+
+inline void Client::SetBattleItem(int index, Item item)
+{
+	log_assert(index < MAX_USING_ITEM_COUNT);
+	mBattleItems[index] = item;
 }

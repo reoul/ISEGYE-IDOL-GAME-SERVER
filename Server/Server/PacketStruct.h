@@ -12,6 +12,7 @@ using namespace std;
 using namespace Logger;
 
 enum class ECharacterType : uint8_t;
+enum class EItemTicketType : uint8_t;
 
 /// <summary>
 /// 패킷 타입<br/>
@@ -48,6 +49,16 @@ enum class EPacketType : uint8_t
 	cs_sc_dropItem,
 	/// <summary> 아이템 조합 요청 패킷 타입 </summary>
 	cs_requestCombinationItem,
+	/// <summary> 아이템 뽑기권 개수 지정 패킷 타입 </summary>
+	sc_setItemTicket,
+	/// <summary> 아이템 발동 패킷 타입 </summary>
+	sc_activeItem,
+	/// <summary> 화면이 서서히 어두어지는 FadeIn 패킷 타입 </summary>
+	sc_fadeIn,
+	/// <summary> 화면이 서서히 밝아지는 FadeOut 패킷 타입 </summary>
+	sc_fadeOut,
+	/// <summary> 전투 상대 정보 패킷 타입 </summary>
+	sc_battleOpponents,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -63,8 +74,6 @@ enum class ENotificationType : uint8_t
 	DisconnectServer,
 	/// <summary> 서버에 계속 연결되는 상태를 알리는 패킷 타입 </summary>
 	ConnectCheck,
-	/// <summary> 랜덤 아이템 추가 요청을 알리는 패킷 타입 </summary>
-	RequestAddRandomItem,
 	/// <summary> 준비 스테이지에 진입했음을 알리는 패킷 타입 </summary>
 	EnterReadyStage,
 	/// <summary> 컷신 스테이지에 진입했음을 알리는 패킷 타입 </summary>
@@ -77,6 +86,16 @@ enum class ENotificationType : uint8_t
 	EnterCreepStage,
 	/// <summary> 캐릭터 선택이 끝났음을 알리는 패킷 타입 </summary>
 	FinishChoiceCharacterTime,
+	/// <summary> 전투 필드 아이템 초기화 패킷 타입 </summary>
+	InitBattleSlot,
+	/// <summary> 일반 아이템 뽑기권 사용을 알리는 패킷 타입 </summary>
+	UseNormalItemTicket,
+	/// <summary> 고급 아이템 뽑기권 사용을 알리는 패킷 타입 </summary>
+	UseAdvancedItemTicket,
+	/// <summary> 최고급 아이템 뽑기권 사용을 알리는 패킷 타입 </summary>
+	UseTopItemTicket,
+	/// <summary> 지존 아이템 뽑기권 사용을 알리는 패킷 타입 </summary>
+	UseSupremeItemTicket,
 };
 
 #pragma pack(push, 1)
@@ -197,15 +216,23 @@ struct cs_sc_UpgradeItemPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
 	const_wrapper<uint8_t> slot;
+	const_wrapper<uint8_t> upgrade;
 
 	void Write(OutputMemoryStream& memoryStream) const
 	{
 		Packet::Write(memoryStream);
 		memoryStream.Write(networkID.get());
 		memoryStream.Write(slot.get());
+		memoryStream.Write(upgrade.get());
 	}
 
-	cs_sc_UpgradeItemPacket() = delete;
+	cs_sc_UpgradeItemPacket(int32_t networkID, uint8_t slot, uint8_t upgrade)
+		: Packet(sizeof(cs_sc_UpgradeItemPacket), EPacketType::cs_sc_upgradeItem)
+		, networkID(networkID)
+		, slot(slot)
+		, upgrade(upgrade)
+	{
+	}
 };
 
 struct cs_sc_ChangeCharacterPacket : protected Packet
@@ -231,7 +258,7 @@ struct cs_sc_ChangeCharacterPacket : protected Packet
 struct ItemQueueInfo
 {
 	int32_t networkID;
-	uint8_t itemQueue[MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2];
+	uint8_t itemQueue[MAX_USING_ITEM_COUNT * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2];
 };
 
 struct sc_BattleInfoPacket : protected Packet
@@ -270,7 +297,7 @@ struct sc_BattleInfoPacket : protected Packet
 		log_assert(itemQueues.size() == BATTLE_ITEM_QUEUE_LENGTH);
 		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
-			constexpr int itemQueueCount = MAX_USING_ITEM * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2;
+			constexpr int itemQueueCount = MAX_USING_ITEM_COUNT * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2;
 			itemQueueInfo[i].networkID = itemQueues[i * itemQueueCount + i];
 
 			for (size_t j = 0; j < itemQueueCount; ++j)
@@ -327,8 +354,8 @@ struct sc_UpdateCharacterInfoPacket : protected Packet
 	const_wrapper<int32_t> networkID;
 	const_wrapper<int16_t> hp;
 	const_wrapper<int16_t> avatarHp;
-	SlotItemInfo usingInventoryInfos[MAX_USING_ITEM];
-	SlotItemInfo unUsingInventoryInfos[MAX_UN_USING_ITEM];
+	SlotItemInfo usingInventoryInfos[MAX_USING_ITEM_COUNT];
+	SlotItemInfo unUsingInventoryInfos[MAX_UN_USING_ITEM_COUNT];
 
 	void Write(OutputMemoryStream& memoryStream) const
 	{
@@ -356,16 +383,16 @@ struct sc_UpdateCharacterInfoPacket : protected Packet
 		, hp(static_cast<int16_t>(client.GetHp()))
 		, avatarHp(static_cast<int16_t>(client.GetAvatarHp()))
 	{
-		vector<Item> usingItems = client.GetUsingItems();
-		vector<Item> unUsingItems = client.GetUnUsingItems();
+		const vector<Item> usingItems = client.GetUsingItems();
+		const vector<Item> unUsingItems = client.GetUnUsingItems();
 
-		for (int i = 0; i < MAX_USING_ITEM; ++i)
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
 		{
 			usingInventoryInfos[i].type = usingItems[i].GetType();
 			usingInventoryInfos[i].upgrade = usingItems[i].GetUpgrade();
 		}
 
-		for (int i = 0; i < MAX_UN_USING_ITEM; ++i)
+		for (int i = 0; i < MAX_UN_USING_ITEM_COUNT; ++i)
 		{
 			unUsingInventoryInfos[i].type = unUsingItems[i].GetType();
 			unUsingInventoryInfos[i].upgrade = unUsingItems[i].GetUpgrade();
@@ -437,4 +464,102 @@ struct cs_RequestCombinationItemPacket : private Packet
 	cs_RequestCombinationItemPacket() = delete;
 };
 
+struct sc_SetItemTicketPacket : private Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<EItemTicketType> itemTicketType;
+	const_wrapper<uint8_t> count;
+
+	/**
+	 * \param networkID 네트워크 아이디
+	 * \param itemTicketType 뽑기권 타입
+	 * \param count 개수
+	 */
+	sc_SetItemTicketPacket(int32_t networkID, EItemTicketType itemTicketType, uint8_t count)
+		: Packet(sizeof(sc_SetItemTicketPacket),  EPacketType::sc_setItemTicket)
+		, networkID(networkID)
+		, itemTicketType(itemTicketType)
+		, count(count)
+	{
+	}
+};
+
+struct sc_ActiveItemPacket : private Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> slot;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(slot.get());
+	}
+
+	/**
+	 * \param networkID 네트워크 아이디
+	 * \param slot 발동 슬롯 번호
+	 * \param active 발동 여부
+	 */
+	sc_ActiveItemPacket(int32_t networkID, uint8_t slot)
+		: Packet(sizeof(sc_ActiveItemPacket), EPacketType::sc_setItemTicket)
+		, networkID(networkID)
+		, slot(slot)
+	{
+	}
+};
+
+struct sc_FadeInPacket : private Packet
+{
+	const_wrapper<uint8_t> seconds;
+
+	/**
+	 * \param seconds Fade 시간
+	 */
+	sc_FadeInPacket(uint8_t seconds)
+		: Packet(sizeof(sc_FadeInPacket), EPacketType::sc_fadeIn)
+		, seconds(seconds)
+	{
+	}
+};
+
+struct sc_FadeOutPacket : private Packet
+{
+	const_wrapper<uint8_t> seconds;
+
+	/**
+	 * \param seconds Fade 시간
+	 */
+	sc_FadeOutPacket(uint8_t seconds)
+		: Packet(sizeof(sc_FadeOutPacket), EPacketType::sc_fadeOut)
+		, seconds(seconds)
+	{
+	}
+};
+
+struct sc_BattleOpponentsPacket : private Packet
+{
+	int32_t battleOpponentQueue[MAX_ROOM_PLAYER];
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		for (int32_t opponent : battleOpponentQueue)
+		{
+			memoryStream.Write(opponent);
+		}
+	}
+
+	sc_BattleOpponentsPacket(const vector<int32_t>& battleOpponents)
+		: Packet(sizeof(sc_BattleOpponentsPacket), EPacketType::sc_battleOpponents)
+	{
+		log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
+
+		copy(battleOpponents.begin(), battleOpponents.end(), battleOpponentQueue);
+		if (battleOpponents.size() < MAX_ROOM_PLAYER)
+		{
+			battleOpponentQueue[battleOpponents.size()] = INT32_MAX;
+		}
+	}
+};
 #pragma pack(pop)

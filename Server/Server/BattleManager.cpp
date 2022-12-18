@@ -128,8 +128,9 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 	{
 		Logger::LogWriteTest("log", "선공 {0} - {1}", list[i * 2], list[i * 2 + 1]);
 	}
+
 	log_assert(list.size() <= MAX_ROOM_PLAYER);
-	return std::move(list);
+	return list;
 }
 
 void BattleManager::RemoveClient(int32_t networkID)

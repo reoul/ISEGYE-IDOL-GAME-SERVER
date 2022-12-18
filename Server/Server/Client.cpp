@@ -26,8 +26,25 @@ Client::Client()
 	, mUnUsingItems{}
 	, mFirstAttackState(0)
 	, mIsChoiceCharacter(false)
+	, mNormalItemTicketCount(0)
+	, mAdvancedItemTicketCount(0)
+	, mTopItemTicketCount(0)
+	, mSupremeItemTicketCount(0)
 {
-	static_assert(MAX_USING_ITEM == 6, "MAX_USING_ITEM is not 6");
+	static_assert(MAX_USING_ITEM_COUNT == 6, "MAX_USING_ITEM_COUNT is not 6");
+
+	static_assert(sItemProbability[0][0] + sItemProbability[0][1] + sItemProbability[0][2] +
+		sItemProbability[0][3] + sItemProbability[0][4] == 100, "Sum is Not 100");
+	static_assert(sItemProbability[1][0] + sItemProbability[1][1] + sItemProbability[1][2] +
+		sItemProbability[1][3] + sItemProbability[1][4] == 100, "Sum is Not 100");
+	static_assert(sItemProbability[2][0] + sItemProbability[2][1] + sItemProbability[2][2] +
+		sItemProbability[2][3] + sItemProbability[2][4] == 100, "Sum is Not 100");
+	static_assert(sItemProbability[3][0] + sItemProbability[3][1] + sItemProbability[3][2] +
+		sItemProbability[3][3] + sItemProbability[3][4] == 100, "Sum is Not 100");
+	static_assert(sItemProbability[4][0] + sItemProbability[4][1] + sItemProbability[4][2] +
+		sItemProbability[4][3] + sItemProbability[4][4] == 100, "Sum is Not 100");
+	static_assert(sItemProbability[5][0] + sItemProbability[5][1] + sItemProbability[5][2] +
+		sItemProbability[5][3] + sItemProbability[5][4] == 100, "Sum is Not 100");
 
 	// UsingItems 자리에 선공 확률 지정
 	mUsingItems[0].SetActivePercent(27);
@@ -69,37 +86,29 @@ void Client::Init()
 	mAvatarMaxHp = MAX_AVATAR_MAX_HP;
 	mAvatarHp = MAX_AVATAR_MAX_HP;
 	mAvatarDefensive = START_AVATAR_DEFENSIVE;
+	mNormalItemTicketCount = 0;
+	mAdvancedItemTicketCount = 0;
+	mTopItemTicketCount = 0;
+	mSupremeItemTicketCount = 0;
 }
 
 vector<Item> Client::GetUsingItems() const
 {
 	vector<Item> items;
-	items.reserve(MAX_USING_ITEM);
-	copy_n(mUsingItems, MAX_USING_ITEM, back_inserter(items));
+	items.reserve(MAX_USING_ITEM_COUNT);
+	copy_n(mUsingItems, MAX_USING_ITEM_COUNT, back_inserter(items));
 	return items;
 }
 
 vector<SlotInfo> Client::GetValidUsingItems() const
 {
 	vector<SlotInfo> items;
-	for (size_t i = 0; i < MAX_USING_ITEM; ++i)
+	for (size_t i = 0; i < MAX_USING_ITEM_COUNT; ++i)
 	{
-		if (mUsingItems[i].GetType() < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
+		if (mUsingItems[i].GetType() > EMPTY_ITEM)	// 비어있지 않은 경우
 			items.emplace_back(SlotInfo(i, mUsingItems[i]));
 	}
 	return items;
-}
-
-int Client::GetLockSlotCount() const
-{
-	int count = 0;
-	for (const Item& item : mUsingItems)
-	{
-		if (item.GetType() == LOCK_ITEM)
-			++count;
-	}
-
-	return count;
 }
 
 /**
@@ -109,8 +118,8 @@ int Client::GetLockSlotCount() const
 vector<Item> Client::GetUnUsingItems() const
 {
 	vector<Item> items;
-	items.reserve(MAX_UN_USING_ITEM);
-	copy_n(mUnUsingItems, MAX_UN_USING_ITEM, back_inserter(items));
+	items.reserve(MAX_UN_USING_ITEM_COUNT);
+	copy_n(mUnUsingItems, MAX_UN_USING_ITEM_COUNT, back_inserter(items));
 	return items;
 }
 
@@ -121,18 +130,18 @@ vector<Item> Client::GetUnUsingItems() const
 vector<SlotInfo> Client::GetValidUnUsingItems() const
 {
 	vector<SlotInfo> items;
-	for (uint8_t i = 0; i < MAX_UN_USING_ITEM; ++i)
+	for (uint8_t i = 0; i < MAX_UN_USING_ITEM_COUNT; ++i)
 	{
-		if (mUnUsingItems[i].GetType() < LOCK_ITEM)	// 비어있지 않거나 안 잠긴 경우
-			items.emplace_back(SlotInfo(i + MAX_USING_ITEM, mUnUsingItems[i]));
+		if (mUnUsingItems[i].GetType() > EMPTY_ITEM)	// 비어있지 않은 경우
+			items.emplace_back(SlotInfo(i + MAX_USING_ITEM_COUNT, mUnUsingItems[i]));
 	}
 	return items;
 }
 
 void Client::SwapItem(const uint8_t index1, const uint8_t index2)
 {
-	Item& item1 = index1 < MAX_USING_ITEM ? mUsingItems[index1] : mUnUsingItems[index1 - MAX_USING_ITEM];
-	Item& item2 = index2 < MAX_USING_ITEM ? mUsingItems[index2] : mUnUsingItems[index2 - MAX_USING_ITEM];
+	Item& item1 = index1 < MAX_USING_ITEM_COUNT ? mUsingItems[index1] : mUnUsingItems[index1 - MAX_USING_ITEM_COUNT];
+	Item& item2 = index2 < MAX_USING_ITEM_COUNT ? mUsingItems[index2] : mUnUsingItems[index2 - MAX_USING_ITEM_COUNT];
 
 	const uint8_t type2 = item2.GetType();
 	item2.SetType(item1.GetType());
@@ -141,16 +150,16 @@ void Client::SwapItem(const uint8_t index1, const uint8_t index2)
 
 uint8_t Client::AddItem(uint8_t type)
 {
-	for (uint8_t i = 0; i < MAX_UN_USING_ITEM; ++i)
+	for (uint8_t i = 0; i < MAX_UN_USING_ITEM_COUNT; ++i)
 	{
 		if (mUnUsingItems[i].GetType() == EMPTY_ITEM)
 		{
 			mUnUsingItems[i].SetType(type);
-			return i + MAX_USING_ITEM;
+			return i + MAX_USING_ITEM_COUNT;
 		}
 	}
 
-	for (uint8_t i = 0; i < MAX_USING_ITEM; ++i)
+	for (uint8_t i = 0; i < MAX_USING_ITEM_COUNT; ++i)
 	{
 		if (mUsingItems[i].GetType() == EMPTY_ITEM)
 		{
@@ -159,14 +168,76 @@ uint8_t Client::AddItem(uint8_t type)
 		}
 	}
 
-	return MAX_UN_USING_ITEM + MAX_USING_ITEM;
+	return MAX_UN_USING_ITEM_COUNT + MAX_USING_ITEM_COUNT;
 }
 
-/// <summary> 랜덤한 아이템 타입 가져오기 </summary>
-uint8_t Client::GetRandomItemType() const
+/// <summary> 일반 뽑기권에서 랜덤한 아이템 타입 가져오기 </summary>
+uint8_t Client::GetRandomItemTypeOfNormalItemTicket() const
 {
-	Random<int> gen(0, _countof(sItems) - 1);
-	return static_cast<uint8_t>(gen());
+	if (mNormalItemTicketCount == 0)
+	{
+		return EMPTY_ITEM;
+	}
+
+	const int roomRound = min(mRoomPtr->GetRound(), 5);
+	Random<int> gen(0, 99);
+	int rand = gen();
+
+	int tier;
+	for (tier = 0; tier < MAX_ITEM_UPGRADE; ++tier)
+	{
+		rand -= sItemProbability[roomRound][tier];
+
+		if (rand < 0)
+		{
+			break;
+		}
+	}
+
+	const vector<const ItemBase*>* pItemVec = sTierItems[tier];
+
+	Random<int> itemGen(0, pItemVec->size() - 1);
+	return static_cast<uint8_t>(pItemVec->operator[](itemGen())->CODE);
+}
+
+/// <summary> 고급 뽑기권(2~3티어)에서 랜덤한 아이템 타입 가져오기 </summary>
+uint8_t Client::GetRandomItemTypeOfAdvancedItemTicket() const
+{
+	if (mAdvancedItemTicketCount == 0)
+	{
+		return EMPTY_ITEM;
+	}
+
+	Random<int> tierGen(0, 1);
+	const vector<const ItemBase*>& itemList = tierGen() == 0 ? _sTwoTierItems : _sThreeTierItems;
+
+	Random<int> itemGen(0, itemList.size() - 1);
+	return static_cast<uint8_t>(itemList[itemGen()]->CODE);
+}
+
+uint8_t Client::GetRandomItemTypeOfTopItemTicket() const
+{
+	if (mTopItemTicketCount == 0)
+	{
+		return EMPTY_ITEM;
+	}
+
+	Random<int> tierGen(0, 1);
+	const vector<const ItemBase*>& itemList = tierGen() == 0 ? _sThreeTierItems : _sFourTierItems;
+
+	Random<int> itemGen(0, itemList.size() - 1);
+	return static_cast<uint8_t>(itemList[itemGen()]->CODE);
+}
+
+uint8_t Client::GetRandomItemTypeOfSupremeItemTicket() const
+{
+	if (mSupremeItemTicketCount == 0)
+	{
+		return EMPTY_ITEM;
+	}
+
+	Random<int> itemGen(0, _sFiveTierItems.size() - 1);
+	return static_cast<uint8_t>(_sFiveTierItems[itemGen()]->CODE);
 }
 
 /**
@@ -176,7 +247,7 @@ void Client::TrySetDefaultUsingItem()
 {
 	vector<SlotInfo> validUnUsingItems = GetValidUnUsingItems();
 	vector<uint8_t> usingItemTypes;
-	usingItemTypes.reserve(MAX_USING_ITEM);
+	usingItemTypes.reserve(MAX_USING_ITEM_COUNT);
 	if (!validUnUsingItems.empty() && GetValidUsingItems().empty())
 	{
 		uint8_t slot1 = 0;
@@ -241,31 +312,83 @@ bool Client::IsValidConnect() const
 
 void Client::SetItem(uint8_t index, uint8_t type)
 {
-	if (index > MAX_USING_ITEM + MAX_UN_USING_ITEM)
+	if (index > MAX_USING_ITEM_COUNT + MAX_UN_USING_ITEM_COUNT)
 	{
 		return;
 	}
 
-	Item& item = index < MAX_USING_ITEM ? mUsingItems[index] : mUnUsingItems[index - MAX_USING_ITEM];
+	Item& item = index < MAX_USING_ITEM_COUNT ? mUsingItems[index] : mUnUsingItems[index - MAX_USING_ITEM_COUNT];
 	item.SetType(type);
 }
 
 uint8_t Client::FindEmptyItemSlotIndex() const
 {
-	for (uint8_t i = 0; i < MAX_UN_USING_ITEM; ++i)
+	for (uint8_t i = 0; i < MAX_UN_USING_ITEM_COUNT; ++i)
 	{
-		if(mUnUsingItems[i].GetType() == EMPTY_ITEM)
+		if (mUnUsingItems[i].GetType() == EMPTY_ITEM)
 		{
-			return i + MAX_USING_ITEM;
+			return i + MAX_USING_ITEM_COUNT;
 		}
 	}
 
-	for (uint8_t i = 0; i < MAX_USING_ITEM; ++i)
+	for (uint8_t i = 0; i < MAX_USING_ITEM_COUNT; ++i)
 	{
 		if (mUsingItems[i].GetType() == EMPTY_ITEM)
 		{
 			return i;
 		}
 	}
-	return MAX_UN_USING_ITEM + MAX_USING_ITEM;
+	return MAX_UN_USING_ITEM_COUNT + MAX_USING_ITEM_COUNT;
+}
+
+uint8_t Client::GetRandomItemTypeByCombination(EItemTierType topTier)
+{
+	const int top = static_cast<int>(topTier);
+	const int maxTier = min(top + 1, 4);
+
+	Random<int> gen(top, maxTier);
+
+	const vector<const ItemBase*>* pItemVec = sTierItems[gen()];
+
+	Random<int> itemGen(0, pItemVec->size() - 1);
+	return static_cast<uint8_t>(pItemVec->operator[](itemGen())->CODE);
+}
+
+vector<SlotInfo> Client::GetItemActiveQueue() const
+{
+	vector<SlotInfo> activeQueue;
+	bool isIncludeList[MAX_USING_ITEM_COUNT]{};	// 발동 순서에 포함 시켰는지 여부
+
+	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+	{
+		int sum = 0;
+		for (int j = 0; j < MAX_USING_ITEM_COUNT; ++j)
+		{
+			if (isIncludeList[j] == false)
+			{
+				sum += mUsingItems[j].GetActivePercent();
+			}
+		}
+
+		Random<int> gen(0, sum - 1);
+		int rand = gen();
+
+		for (int j = 0; j < MAX_USING_ITEM_COUNT; ++j)
+		{
+			if (isIncludeList[j] == false)
+			{
+				rand -= mUsingItems[j].GetActivePercent();
+				if (rand < 0)
+				{
+					activeQueue.emplace_back(j, mUsingItems[j]);
+					isIncludeList[j] = true;
+					break;
+				}
+			}
+		}
+	}
+
+	log_assert(activeQueue.size() == MAX_USING_ITEM_COUNT);
+
+	return activeQueue;
 }
