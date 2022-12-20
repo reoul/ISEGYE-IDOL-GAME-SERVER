@@ -433,6 +433,8 @@ void Server::ProcessPacket(int networkID, char* buf)
 	{
 		LogWarning("log", "[cs_sc_upgradeItem] 아직 구현 안되어 있음");
 
+			//cs_sc_
+
 		const Room* room = sClients[networkID].GetRoomPtr();
 		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
 		{
@@ -620,9 +622,9 @@ void Server::ProcessPacket(int networkID, char* buf)
 		packet3.Write(memoryStream);
 
 
-		uint8_t tier1 = item1.GetType();
-		uint8_t tier2 = item2.GetType();
-		uint8_t tier3 = item3.GetType();
+		uint8_t tier1 = static_cast<uint8_t>(sItems[item1.GetType()]->TIER_TYPE);
+		uint8_t tier2 = static_cast<uint8_t>(sItems[item2.GetType()]->TIER_TYPE);
+		uint8_t tier3 = static_cast<uint8_t>(sItems[item3.GetType()]->TIER_TYPE);
 
 		const EItemTierType maxTier = static_cast<EItemTierType>(max(max(tier1, tier2), tier3));
 
