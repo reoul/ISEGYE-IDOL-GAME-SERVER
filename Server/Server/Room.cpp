@@ -549,7 +549,7 @@ bool Room::BattleStage(Room& room)
 				{
 					int index = i % 2 == 0 ? 1 : -1;	// 0-1   2-3   4-5  6-7 이렇게 전투하기 때문에 인덱스 번호에 따라 상대 인덱스가 다르다
 					BattleAvatar& opponent = avatars[i + index];
-					Item& choiceItem = opponent.GetRandomCopyItem();
+					Item choiceItem = opponent.GetRandomCopyItem();
 					sc_DoctorToolInfoPacket packet(avatars[i].GetClient()->GetNetworkID(), j, choiceItem.GetType(), choiceItem.GetUpgrade());
 					packet.Write(memoryStream);
 					item.SetType(choiceItem.GetType());

@@ -73,7 +73,7 @@ public:
 	bool IsIgnoreNextDamage() const;
 	Item& GetItemBySlot(int slot);
 	EHamburgerType GetRandomHamburgerType() const;
-	Item& GetRandomCopyItem();
+	Item GetRandomCopyItem();
 private:
 	Client* mClient;
 	int mNetworkID;

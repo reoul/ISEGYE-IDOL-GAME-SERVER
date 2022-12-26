@@ -93,16 +93,31 @@ void BattleAvatar::InitCycle()
 	mIsIgnoreNextDamage = false;
 }
 
-Item& BattleAvatar::GetRandomCopyItem()
+Item BattleAvatar::GetRandomCopyItem()
 {
-	Random<int> gen(0, MAX_USING_ITEM_COUNT - 1);
-
-	int index;
-	do
+	vector<Item> validItems;
+	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
 	{
-		index = gen();
+		Item& item = mUsingItem[i];
+		// ÇÜ¹ö°Å, ¹Ú»çÀÇ ¸¸´ÉÅø, ºóÄ­ Á¦¿Ü
+		if (item.GetType() != 7 && item.GetType() != 16 && item.GetType() != 0)
+		{
+			validItems.emplace_back(item);
+		}
 	}
-	while (mUsingItem[index].GetType() == 7 || mUsingItem[index].GetType() == 16 || mUsingItem[index].GetType() == 0);
-	// todo : ºóÄ­ º¹»ç ¾ÈÇÏ°Ô ¼öÁ¤
-	return mUsingItem[index];
+	Item retItem;
+	if (!validItems.empty())
+	{
+		Random<int> gen(0, validItems.size() - 1);
+		retItem = validItems[gen()];
+	}
+	else
+	{
+		Item item;
+		item.SetType(16);
+		item.SetUpgrade(0);
+		retItem = item;
+	}
+
+	return retItem;
 }

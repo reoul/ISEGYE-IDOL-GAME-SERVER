@@ -17,31 +17,6 @@ int main()
 	Logger::AddLogger("test", "/testLog.txt");
 	Logger::AddLogger("SetDefaultUsingItem", "/SetDefaultUsingItem.txt");
 	Logger::AddLogger("Check", "/Check.txt");
-	
-
-	LogPrintf("{0}", sizeof(cs_StartMatchingPacket));
-	LogPrintf("{0}", sizeof(sc_ConnectRoomPacket));
-	LogPrintf("{0}", sizeof(sc_AddNewItemPacket));
-	LogPrintf("{0}", sizeof(cs_sc_ChangeItemSlotPacket));
-	LogPrintf("{0}", sizeof(sc_UpgradeItemPacket));
-	LogPrintf("{0}", sizeof(cs_sc_ChangeCharacterPacket));
-	LogPrintf("{0}", sizeof(sc_BattleInfoPacket));
-	LogPrintf("{0}", sizeof(cs_sc_UseEmoticonPacket));
-	LogPrintf("{0}", sizeof(cs_sc_NotificationPacket));
-	LogPrintf("{0}", sizeof(sc_UpdateCharacterInfoPacket));
-	LogPrintf("{0}", sizeof(sc_SetReadyTimePacket));
-	LogPrintf("{0}", sizeof(sc_SetChoiceCharacterTimePacket));
-	LogPrintf("{0}", sizeof(cs_sc_DropItemPacket));
-	LogPrintf("{0}", sizeof(cs_RequestCombinationItemPacket));
-	LogPrintf("{0}", sizeof(sc_SetItemTicketPacket));
-	LogPrintf("{0}", sizeof(sc_ActiveItemPacket));
-	LogPrintf("{0}", sizeof(sc_FadeInPacket));
-	LogPrintf("{0}", sizeof(sc_FadeOutPacket));
-	LogPrintf("{0}", sizeof(sc_BattleOpponentsPacket));
-	LogPrintf("{0}", sizeof(sc_SetHamburgerTypePacket));
-	LogPrintf("{0}", sizeof(sc_MagicStickInfoPacket));
-	LogPrintf("{0}", sizeof(cs_RequestUpgradeItemPacket));
-	LogPrintf("{0}", sizeof(sc_DoctorToolInfoPacket));
 
 	//Client aa;
 	//Client bb;

@@ -273,11 +273,11 @@ ITEM(Item014, 15, EItemTierType::Five, EItemType::Attack,
 // 박사의 만능툴
 // 번호를 바꿀시 아이템 체크하는 부분 번호 수정해야함
 ITEM(Item015, 16, EItemTierType::Three, EItemType::Effect,
-	{ int a = 0; }
-	,
-	{ int b = 0; }
-	,
-	{ int c = 0; }
+	opponents.ToDamage(5, me);
+,
+opponents.ToDamage(5, me);
+,
+opponents.ToDamage(5, me);
 )
 
 // 여고생의 헤어롤 : 뽑기권 * X의 데미지를 줍니다
