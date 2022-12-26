@@ -102,7 +102,7 @@ Item& BattleAvatar::GetRandomCopyItem()
 	{
 		index = gen();
 	}
-	while (mUsingItem[index].GetType() == 7 || mUsingItem[index].GetType() == 16);
-
+	while (mUsingItem[index].GetType() == 7 || mUsingItem[index].GetType() == 16 || mUsingItem[index].GetType() == 0);
+	// todo : ºóÄ­ º¹»ç ¾ÈÇÏ°Ô ¼öÁ¤
 	return mUsingItem[index];
 }

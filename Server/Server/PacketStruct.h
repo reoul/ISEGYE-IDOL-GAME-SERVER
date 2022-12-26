@@ -518,7 +518,7 @@ struct sc_ActiveItemPacket : private Packet
 	 * \param active 발동 여부
 	 */
 	sc_ActiveItemPacket(int32_t networkID, uint8_t slot)
-		: Packet(sizeof(sc_ActiveItemPacket), EPacketType::sc_setItemTicket)
+		: Packet(sizeof(sc_ActiveItemPacket), EPacketType::sc_activeItem)
 		, networkID(networkID)
 		, slot(slot)
 	{
