@@ -21,6 +21,19 @@ void BattleAvatar::SetAvatar(Client& client, bool isGhost)
 	mReducedHealing = 0;
 	mIsGhost = isGhost;
 	mIsFinish = false;
+	mIsCounterAttack = false;
+	mCounterAttackDamage = 0;
+	mIsCounterHeal = false;
+	mCounterHeal = 0;
+	mHamburgerType = EHamburgerType::Fillet;
+	mIsEffectHeal = false;
+	mEffectHeal = 0;
+	mIsInstallBomb = false;
+	mInstallBombDamage = 0;
+	mEffectItemCount = 0;
+	mUseKeyCapCount = 0;
+	mIsCounterRestoreDefense = false;
+	mCanDefendNegativeEffect = false;
 
 	const vector<Item> items = client.GetUsingItems();
 	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -32,6 +45,7 @@ void BattleAvatar::SetAvatar(Client& client, bool isGhost)
 uint8_t BattleAvatar::ActiveItem(int index, BattleAvatar& enemy)
 {
 	const Item item = mUsingItem[mActiveQueue[index]];
+	++mEffectItemCount;
 	sItems[item.GetType()]->Active(*this, enemy, item.GetUpgrade());
 	return static_cast<uint8_t>(mActiveQueue[index]);
 }
@@ -65,4 +79,30 @@ void BattleAvatar::InitCycle()
 	mAdditionDefensive = 0;
 	mWeakening = 0;
 	mReducedHealing = 0;
+	mIsCounterAttack = false;
+	mCounterAttackDamage = 0;
+	mIsCounterHeal = false;
+	mCounterHeal = 0;
+	mIsEffectHeal = false;
+	mEffectHeal = 0;
+	mIsInstallBomb = false;
+	mInstallBombDamage = 0;
+	mEffectItemCount = 0;
+	mIsCounterRestoreDefense = false;
+	mCanDefendNegativeEffect = false;
+	mIsIgnoreNextDamage = false;
+}
+
+Item& BattleAvatar::GetRandomCopyItem()
+{
+	Random<int> gen(0, MAX_USING_ITEM_COUNT - 1);
+
+	int index;
+	do
+	{
+		index = gen();
+	}
+	while (mUsingItem[index].GetType() == 7 || mUsingItem[index].GetType() == 16);
+
+	return mUsingItem[index];
 }

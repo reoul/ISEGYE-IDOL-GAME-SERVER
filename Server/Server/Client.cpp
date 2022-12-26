@@ -30,6 +30,7 @@ Client::Client()
 	, mAdvancedItemTicketCount(0)
 	, mTopItemTicketCount(0)
 	, mSupremeItemTicketCount(0)
+	, mRoomOpenCount(0)
 {
 	static_assert(MAX_USING_ITEM_COUNT == 6, "MAX_USING_ITEM_COUNT is not 6");
 
@@ -53,6 +54,14 @@ Client::Client()
 	mUsingItems[3].SetActivePercent(33);
 	mUsingItems[4].SetActivePercent(40);
 	mUsingItems[5].SetActivePercent(40);
+
+	// 아이템 슬롯 캐싱
+	mUsingItems[0].SetSlot(0);
+	mUsingItems[1].SetSlot(1);
+	mUsingItems[2].SetSlot(2);
+	mUsingItems[3].SetSlot(3);
+	mUsingItems[4].SetSlot(4);
+	mUsingItems[5].SetSlot(5);
 }
 
 void Client::Init()
@@ -90,6 +99,7 @@ void Client::Init()
 	mAdvancedItemTicketCount = 0;
 	mTopItemTicketCount = 0;
 	mSupremeItemTicketCount = 0;
+	mRoomOpenCount = 0;
 }
 
 vector<Item> Client::GetUsingItems() const

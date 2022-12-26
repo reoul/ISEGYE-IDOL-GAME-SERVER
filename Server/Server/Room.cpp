@@ -321,7 +321,7 @@ unsigned Room::ProgressThread(void* pArguments)
 	Log("log", "기본 템 지급 시작");
 	// 기본 템 지급
 	{
-		constexpr size_t bufferSize = sizeof(sc_AddNewItemPacket) * 2 * 8;
+		constexpr size_t bufferSize = sizeof(sc_AddNewItemPacket) * 2 * 8 + sizeof(sc_SetItemTicketPacket) * 4 * 8;
 		OutputMemoryStream memoryStream(bufferSize);
 
 		for (Client* client : room.mClients)
@@ -336,6 +336,20 @@ unsigned Room::ProgressThread(void* pArguments)
 			uint8_t slot2 = client->AddItem(defaultItemCode2);
 			const sc_AddNewItemPacket addItemPacket2(client->GetNetworkID(), slot2, defaultItemCode2);
 			addItemPacket2.Write(memoryStream);
+
+			client->SetNormalItemTicketCount(10);
+			client->SetAdvancedItemTicketCount(10);
+			client->SetTopItemTicketCount(10);
+			client->SetSupremeItemTicketCount(10);
+
+			const sc_SetItemTicketPacket setItemTicketPacket1(client->GetNetworkID(), EItemTicketType::Normal, client->GetNormalItemTicketCount());
+			const sc_SetItemTicketPacket setItemTicketPacket2(client->GetNetworkID(), EItemTicketType::Advanced, client->GetAdvancedItemTicketCount());
+			const sc_SetItemTicketPacket setItemTicketPacket3(client->GetNetworkID(), EItemTicketType::Top, client->GetTopItemTicketCount());
+			const sc_SetItemTicketPacket setItemTicketPacket4(client->GetNetworkID(), EItemTicketType::Supreme, client->GetSupremeItemTicketCount());
+			setItemTicketPacket1.Write(memoryStream);
+			setItemTicketPacket2.Write(memoryStream);
+			setItemTicketPacket3.Write(memoryStream);
+			setItemTicketPacket4.Write(memoryStream);
 		}
 
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
@@ -345,14 +359,15 @@ unsigned Room::ProgressThread(void* pArguments)
 	Log("log", "기본 템 지급 완료");
 
 	// 처음 크립 3판
-	ReadyStage(room, false);
+	// todo : 크립 추가시 해제하기
+	/*ReadyStage(room, false);
 	CreepStage(room);
 
 	ReadyStage(room, false);
 	CreepStage(room);
 
 	ReadyStage(room, false);
-	CreepStage(room);
+	CreepStage(room);*/
 
 	while (true)
 	{
@@ -372,16 +387,17 @@ unsigned Room::ProgressThread(void* pArguments)
 		}
 
 		// 대기 시간
-		if (!ReadyStage(room, false))
-		{
-			break;
-		}
+		// todo : 이거 크립 추가되면 해제하기
+		//if (!ReadyStage(room, false))
+		//{
+		//	break;
+		//}
 
-		// 크립
-		if (!CreepStage(room))
-		{
-			break;
-		}
+		//// 크립
+		//if (!CreepStage(room))
+		//{
+		//	break;
+		//}
 
 		++room.mRound;
 	}
@@ -461,7 +477,7 @@ inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 			packet.Write(memoryStream);
 		}
 
-		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 	}
 
 	LogPrintf("캐릭터 갱신 패킷 전송");
@@ -494,16 +510,6 @@ bool Room::BattleStage(Room& room)
 		return false;
 	}
 
-	{
-		cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterBattleStage);
-		room.SendPacketToAllClients(&notificationPacket);
-	}
-
-	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
-	{
-		return false;
-	}
-
 	const vector<int32_t>& battleOpponents = room.GetBattleOpponents();
 
 	// todo : 나중에 속도 빠르게 수정
@@ -519,8 +525,47 @@ bool Room::BattleStage(Room& room)
 		avatars[i].SetAvatar(client, battleOpponents[i] < 0);
 	}
 
-	// todo : 햄버거, 박사의 만능툴 미리 알려주기
-	// todo : 장착 효과 적용
+	{
+		OutputMemoryStream memoryStream;
+
+		cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterBattleStage);
+		notificationPacket.Write(memoryStream);
+
+		for (int i = 0; i < battleOpponents.size(); ++i)
+		{
+			for (int j = 0; j < MAX_USING_ITEM_COUNT; ++j)
+			{
+				Item& item = avatars[i].GetItemBySlot(j);
+				if (item.GetType() == 7)	// 햄버거인 경우
+				{
+					const EHamburgerType hamburgerType = avatars[i].GetRandomHamburgerType();
+					avatars[i].SetHamburgerType(hamburgerType);
+
+					sc_SetHamburgerTypePacket packet(avatars[i].GetClient()->GetNetworkID(), j, hamburgerType);
+					packet.Write(memoryStream);
+					Logger::Log("log", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetClient()->GetNetworkID(), static_cast<int>(hamburgerType));
+				}
+				else if(item.GetType() == 16)	// 박사의 만능툴
+				{
+					int index = i % 2 == 0 ? 1 : -1;	// 0-1   2-3   4-5  6-7 이렇게 전투하기 때문에 인덱스 번호에 따라 상대 인덱스가 다르다
+					BattleAvatar& opponent = avatars[i + index];
+					Item& choiceItem = opponent.GetRandomCopyItem();
+					sc_DoctorToolInfoPacket packet(avatars[i].GetClient()->GetNetworkID(), j, choiceItem.GetType(), choiceItem.GetUpgrade());
+					packet.Write(memoryStream);
+					item.SetType(choiceItem.GetType());
+					item.SetUpgrade(choiceItem.GetUpgrade());
+					Logger::Log("log", "{0}번 클라이언트 만능툴 {1}번 아이템 강화 수치 {2}으로 설정됨", avatars[i].GetClient()->GetNetworkID(), choiceItem.GetType(), choiceItem.GetUpgrade());
+				}
+			}
+		}
+
+		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+	}
+
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
+	{
+		return false;
+	}
 
 	Sleep(1000);
 
@@ -636,12 +681,20 @@ bool Room::BattleStage(Room& room)
 
 			for (k = 0; k < avatarCount; ++k)
 			{
+				// todo : 사이클 초기화랑 출혈데미지 등 여러 데미지 계산 순서 생각
+				avatars[k].InitCycle();
+			}
+			// todo : Fade 효과 적용하기
+
+			for (k = 0; k < avatarCount; ++k)
+			{
 				if (avatars[k].IsFinish() == false) break;
 			}
 			if (k == avatarCount)
 			{
 				goto FinishBattle;
 			}
+
 
 			if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 			{
@@ -683,5 +736,12 @@ bool Room::CreepStage(Room& room)
 		return false;
 	}
 
+	return true;
+}
+
+bool Room::IsValidClientInThisRoom(Client* client) const
+{
+	if (client->GetRoomPtr() != this) { return false; }
+	if (client->GetRoomOpenCount() != mOpenCount) { return false; }
 	return true;
 }

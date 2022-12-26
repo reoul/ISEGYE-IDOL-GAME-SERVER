@@ -52,6 +52,7 @@ public:
 	void AddOpenCount();
 	int GetRound() const;
 	ERoomStatusType GetCurRoomStatusType() const;
+	bool IsValidClientInThisRoom(Client* client) const;
 private:
 	vector<Client*> mClients;
 	size_t mSize;

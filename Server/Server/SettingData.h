@@ -18,6 +18,6 @@ constexpr int MAX_ITEM_UPGRADE = 5;	// 아이템 최대 강화 수치
 
 
 // 전투
-constexpr int MAX_CHARACTER_MAX_HP = 100;
+constexpr int MAX_CHARACTER_MAX_HP = 100;		// 만약 변경한다면 잃은 체력 비례 계산 수정해야함 (ex : 선량한 시민의 빠루)
 constexpr int MAX_AVATAR_MAX_HP = 100;
 constexpr int START_AVATAR_DEFENSIVE = 0;

@@ -18,10 +18,13 @@ public:
 	void		SetActivePercent(uint8_t percent);
 	uint8_t		GetUpgrade() const;
 	void		SetUpgrade(uint8_t upgrade);
+	uint8_t		GetSlot() const;
+	void		SetSlot(uint8_t slot);
 private:
 	uint8_t		mType;
 	uint8_t		mActivePercent;
 	uint8_t		mUpgrade;
+	uint8_t		mSlot;
 };
 
 inline uint8_t Item::GetType() const
@@ -52,4 +55,14 @@ inline uint8_t Item::GetUpgrade() const
 inline void Item::SetUpgrade(uint8_t upgrade)
 {
 	mUpgrade = upgrade;
+}
+
+inline uint8_t Item::GetSlot() const
+{
+	return mSlot;
+}
+
+inline void Item::SetSlot(uint8_t slot)
+{
+	mSlot = slot;
 }

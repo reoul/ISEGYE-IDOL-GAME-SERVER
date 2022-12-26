@@ -4,6 +4,7 @@
 #include <vector>
 #include <chrono>
 
+#include "Room.h"
 #include "ServerStruct.h"
 #include "reoul/logger.h"
 
@@ -86,6 +87,8 @@ public:
 	vector<SlotInfo>			GetItemActiveQueue() const;
 	Item						GetBattleItem(int index) const;
 	void						SetBattleItem(int index, Item item);
+	void						SetRoomOpenCount(size_t openCount);
+	size_t						GetRoomOpenCount() const;
 private:
 	std::mutex					mLock;
 	SOCKET						mSocket;
@@ -112,6 +115,7 @@ private:
 	int							mTopItemTicketCount;					// 최고급 아이템 뽑기권 개수
 	int							mSupremeItemTicketCount;				// 지존 아이템 뽑기권 개수
 	Item						mBattleItems[MAX_USING_ITEM_COUNT];			// 전투에서 사용되는 아이템
+	size_t						mRoomOpenCount;							// Room 유효성 체크 변수
 	static constexpr int		sItemProbability[6][MAX_ITEM_UPGRADE]	// 라운드에 따른 아이템 확률
 	{
 		//1티어		2티어	3티어	4티어	5티어
@@ -202,6 +206,7 @@ inline const Room* Client::GetRoomPtr() const
 inline void Client::SetRoom(Room* room)
 {
 	mRoomPtr = room;
+	mRoomOpenCount = room->GetOpenCount();
 }
 
 inline wchar_t* Client::GetName()
@@ -356,4 +361,14 @@ inline void Client::SetBattleItem(int index, Item item)
 {
 	log_assert(index < MAX_USING_ITEM_COUNT);
 	mBattleItems[index] = item;
+}
+
+inline void Client::SetRoomOpenCount(size_t openCount)
+{
+	mRoomOpenCount = openCount;
+}
+
+inline size_t Client::GetRoomOpenCount() const
+{
+	return mRoomOpenCount;
 }

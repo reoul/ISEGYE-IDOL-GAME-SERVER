@@ -429,19 +429,6 @@ void Server::ProcessPacket(int networkID, char* buf)
 		sClients[networkID].SendPacketInAnotherRoomClients(buf);
 	}
 	break;
-	case EPacketType::cs_sc_upgradeItem:
-	{
-		LogWarning("log", "[cs_sc_upgradeItem] 아직 구현 안되어 있음");
-
-			//cs_sc_
-
-		const Room* room = sClients[networkID].GetRoomPtr();
-		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
-		{
-			return;
-		}
-	}
-	break;
 	case EPacketType::cs_sc_notification:
 	{
 		cs_sc_NotificationPacket* pPacket = reinterpret_cast<cs_sc_NotificationPacket*>(buf);
@@ -485,6 +472,10 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 				Log("log", "[ENotificationType::UseNormalItemTicket] 네트워크 {0}번 클라이언트 일반 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 			}
+			else
+			{
+				Log("log", "[ENotificationType::UseNormalItemTicket] 네트워크 {0}번 클라이언트 일반 뽑기권 개수 부족, 현재 {1}개", pPacket->networkID, client.GetNormalItemTicketCount());
+			}
 		}
 		break;
 		case ENotificationType::UseAdvancedItemTicket:
@@ -505,6 +496,10 @@ void Server::ProcessPacket(int networkID, char* buf)
 				client.SetAdvancedItemTicketCount(client.GetAdvancedItemTicketCount() - 1);
 
 				Log("log", "[ENotificationType::UseAdvancedItemTicket] 네트워크 {0}번 클라이언트 고급 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+			}
+			else
+			{
+				Log("log", "[ENotificationType::UseAdvancedItemTicket] 네트워크 {0}번 클라이언트 고급 뽑기권 개수 부족, 현재 {1}개", pPacket->networkID, client.GetAdvancedItemTicketCount());
 			}
 		}
 		break;
@@ -527,6 +522,10 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 				Log("log", "[ENotificationType::UseTopItemTicket] 네트워크 {0}번 클라이언트 최고급 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 			}
+			else
+			{
+				Log("log", "[ENotificationType::UseTopItemTicket] 네트워크 {0}번 클라이언트 최고급 뽑기권 개수 부족, 현재 {1}개", pPacket->networkID, client.GetTopItemTicketCount());
+			}
 		}
 		break;
 		case ENotificationType::UseSupremeItemTicket:
@@ -547,6 +546,10 @@ void Server::ProcessPacket(int networkID, char* buf)
 				client.SetSupremeItemTicketCount(client.GetSupremeItemTicketCount() - 1);
 
 				Log("log", "[ENotificationType::UseSupremeItemTicket] 네트워크 {0}번 클라이언트 지존 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
+			}
+			else
+			{
+				Log("log", "[ENotificationType::UseSupremeItemTicket] 네트워크 {0}번 클라이언트 지존 뽑기권 개수 부족, 현재 {1}개", pPacket->networkID, client.GetSupremeItemTicketCount());
 			}
 		}
 		break;
@@ -594,7 +597,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	break;
 	case EPacketType::cs_requestCombinationItem:
 	{
-		constexpr size_t bufferSize = sizeof(cs_sc_DropItemPacket) * 3 + sizeof(sc_AddNewItemPacket) + sizeof(cs_sc_UpgradeItemPacket);
+		constexpr size_t bufferSize = sizeof(cs_sc_DropItemPacket) * 3 + sizeof(sc_AddNewItemPacket) + sizeof(sc_UpgradeItemPacket);
 		OutputMemoryStream memoryStream(bufferSize);
 
 		cs_RequestCombinationItemPacket* pPacket = reinterpret_cast<cs_RequestCombinationItemPacket*>(buf);
@@ -637,11 +640,47 @@ void Server::ProcessPacket(int networkID, char* buf)
 		sc_AddNewItemPacket addNewItemPacket(pPacket->networkID, findEmptyItemSlot, newItemType);
 		addNewItemPacket.Write(memoryStream);
 
-		cs_sc_UpgradeItemPacket upgradeItemPacket(pPacket->networkID, findEmptyItemSlot, 1);
+		sc_UpgradeItemPacket upgradeItemPacket(pPacket->networkID, findEmptyItemSlot, 1);
 		upgradeItemPacket.Write(memoryStream);
 
 		client.SetItem(findEmptyItemSlot, newItemType);
 
+		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+	}
+	break;
+	case EPacketType::cs_requestUpgradeItem:
+	{
+		cs_RequestUpgradeItemPacket* pPacket = reinterpret_cast<cs_RequestUpgradeItemPacket*>(buf);
+
+		Client& client = sClients[pPacket->networkID];
+		Item& upgradeItem = client.GetItem(pPacket->slot1);
+		Item& materialItem = client.GetItem(pPacket->slot2);
+
+		if (upgradeItem.GetType() != materialItem.GetType())
+		{
+			return;
+		}
+
+		if (upgradeItem.GetUpgrade() != materialItem.GetUpgrade())
+		{
+			return;
+		}
+
+		if (upgradeItem.GetUpgrade() >= 2)
+		{
+			return;
+		}
+
+		uint8_t upgrade = upgradeItem.GetUpgrade() + 1;
+		constexpr int bufferSize = sizeof(cs_sc_DropItemPacket) + sizeof(sc_UpgradeItemPacket);
+		OutputMemoryStream memoryStream(bufferSize);
+		cs_sc_DropItemPacket dropItemPacket(pPacket->networkID, pPacket->slot2);
+		sc_UpgradeItemPacket upgradeItemPacket(pPacket->networkID, pPacket->slot1, upgrade);
+		upgradeItem.SetUpgrade(upgrade);
+		materialItem.SetUpgrade(0);
+		materialItem.SetType(0);
+		dropItemPacket.Write(memoryStream);
+		upgradeItemPacket.Write(memoryStream);
 		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 	}
 	break;
@@ -656,6 +695,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::sc_fadeIn:
 	case EPacketType::sc_fadeOut:
 	case EPacketType::sc_battleOpponents:
+	case EPacketType::sc_upgradeItem:
 		LogWarning("log", "{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
 		break;
 	default:

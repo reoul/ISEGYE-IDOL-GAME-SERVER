@@ -30,7 +30,7 @@ enum class EPacketType : uint8_t
 	/// <summary> 아이템을 다른 슬롯으로 이동했음을 알리는 패킷 타입 </summary>
 	cs_sc_changeItemSlot,
 	/// <summary> 아이템을 업그레이드 했음을 알리는 패킷 타입 </summary>
-	cs_sc_upgradeItem,
+	sc_upgradeItem,
 	/// <summary> 선택 캐릭터가 교체되었음을 알리는 패킷 타입 </summary>
 	cs_sc_changeCharacter,
 	/// <summary> 클라이언트에게 전투 정보를 알리는 패킷 타입 </summary>
@@ -59,6 +59,14 @@ enum class EPacketType : uint8_t
 	sc_fadeOut,
 	/// <summary> 전투 상대 정보 패킷 타입 </summary>
 	sc_battleOpponents,
+	/// <summary> 햄버거 타입 지정하는 패킷 타입 </summary>
+	sc_setHamburgerType,
+	/// <summary> 비밀스런 마법봉 정보 패킷 타입 </summary>
+	sc_magicStickInfo,
+	/// <summary> 아이템 업그레이드 요청 패킷 타입 </summary>
+	cs_requestUpgradeItem,
+	/// <summary> 박사의 만능툴 정보 패킷 타입 </summary>
+	sc_DoctorToolInfo,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -212,7 +220,7 @@ struct cs_sc_ChangeItemSlotPacket : protected Packet
 	cs_sc_ChangeItemSlotPacket() = delete;
 };
 
-struct cs_sc_UpgradeItemPacket : protected Packet
+struct sc_UpgradeItemPacket : protected Packet
 {
 	const_wrapper<int32_t> networkID;
 	const_wrapper<uint8_t> slot;
@@ -226,8 +234,8 @@ struct cs_sc_UpgradeItemPacket : protected Packet
 		memoryStream.Write(upgrade.get());
 	}
 
-	cs_sc_UpgradeItemPacket(int32_t networkID, uint8_t slot, uint8_t upgrade)
-		: Packet(sizeof(cs_sc_UpgradeItemPacket), EPacketType::cs_sc_upgradeItem)
+	sc_UpgradeItemPacket(int32_t networkID, uint8_t slot, uint8_t upgrade)
+		: Packet(sizeof(sc_UpgradeItemPacket), EPacketType::sc_upgradeItem)
 		, networkID(networkID)
 		, slot(slot)
 		, upgrade(upgrade)
@@ -460,7 +468,7 @@ struct cs_RequestCombinationItemPacket : private Packet
 	const_wrapper<uint8_t> index1;
 	const_wrapper<uint8_t> index2;
 	const_wrapper<uint8_t> index3;
-	
+
 	cs_RequestCombinationItemPacket() = delete;
 };
 
@@ -470,13 +478,21 @@ struct sc_SetItemTicketPacket : private Packet
 	const_wrapper<EItemTicketType> itemTicketType;
 	const_wrapper<uint8_t> count;
 
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(itemTicketType.get());
+		memoryStream.Write(count.get());
+	}
+
 	/**
 	 * \param networkID 네트워크 아이디
 	 * \param itemTicketType 뽑기권 타입
 	 * \param count 개수
 	 */
 	sc_SetItemTicketPacket(int32_t networkID, EItemTicketType itemTicketType, uint8_t count)
-		: Packet(sizeof(sc_SetItemTicketPacket),  EPacketType::sc_setItemTicket)
+		: Packet(sizeof(sc_SetItemTicketPacket), EPacketType::sc_setItemTicket)
 		, networkID(networkID)
 		, itemTicketType(itemTicketType)
 		, count(count)
@@ -562,4 +578,86 @@ struct sc_BattleOpponentsPacket : private Packet
 		}
 	}
 };
+
+struct sc_SetHamburgerTypePacket : private Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> slot;
+	const_wrapper<EHamburgerType> burgerType;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(slot.get());
+		memoryStream.Write(burgerType.get());
+	}
+
+	sc_SetHamburgerTypePacket(int32_t networkID, uint8_t slot, EHamburgerType type)
+		: Packet(sizeof(sc_SetHamburgerTypePacket), EPacketType::sc_setHamburgerType)
+		, networkID(networkID)
+		, slot(slot)
+		, burgerType(type)
+	{
+	}
+};
+
+/// <summary> 비밀스런 마법봉 정보 패킷 타입 </summary>
+struct sc_MagicStickInfoPacket : private Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<bool> isDamage;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(isDamage.get());
+	}
+
+	sc_MagicStickInfoPacket(int32_t networkID, bool isDamage)
+		: Packet(sizeof(sc_MagicStickInfoPacket), EPacketType::sc_magicStickInfo)
+		, networkID(networkID)
+		, isDamage(isDamage)
+	{
+	}
+};
+
+/// <summary> 업그레이드 요청 패킷 타입 </summary>
+struct cs_RequestUpgradeItemPacket : private Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> slot1;
+	const_wrapper<uint8_t> slot2;
+
+	cs_RequestUpgradeItemPacket() = delete;
+};
+
+/// <summary> 박사의 만능툴 정보 패킷 타입 </summary>
+struct sc_DoctorToolInfoPacket : private Packet
+{
+	const_wrapper<int32_t> networkID;
+	const_wrapper<uint8_t> slot;
+	const_wrapper<uint8_t> itemType;
+	const_wrapper<uint8_t> upgrade;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+		memoryStream.Write(slot.get());
+		memoryStream.Write(itemType.get());
+		memoryStream.Write(upgrade.get());
+	}
+
+	sc_DoctorToolInfoPacket(int32_t networkID, uint8_t slot, uint8_t itemType, uint8_t upgrade)
+		: Packet(sizeof(sc_DoctorToolInfoPacket), EPacketType::sc_DoctorToolInfo)
+		, networkID(networkID)
+		, slot(slot)
+		, itemType(itemType)
+		, upgrade(upgrade)
+	{
+	}
+};
+
 #pragma pack(pop)
