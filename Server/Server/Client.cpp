@@ -260,10 +260,6 @@ bool Client::TrySetDefaultUsingItem()
 	vector<SlotInfo> validUnUsingItems = GetValidUnUsingItems();
 	vector<uint8_t> usingItemTypes;
 	usingItemTypes.reserve(MAX_USING_ITEM_COUNT);
-	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
-	{
-		usingItemTypes.push_back(0);
-	}
 	if (!validUnUsingItems.empty() && GetValidUsingItems().empty())
 	{
 		uint8_t slot1 = 0;
@@ -285,9 +281,13 @@ bool Client::TrySetDefaultUsingItem()
 			{
 				isSetDefaultUsingItem = true;
 				const uint8_t slot2 = it->index;
-				usingItemTypes[slot1] = it->item.GetType();
+				usingItemTypes.push_back(it->item.GetType());
 				SwapItem(slot1++, slot2);
 				it = validUnUsingItems.erase(it);
+				if (usingItemTypes.size() == MAX_USING_ITEM_COUNT)
+				{
+					break;
+				}
 				continue;
 			}
 			++it;
