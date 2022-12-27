@@ -354,7 +354,7 @@ unsigned Room::ProgressThread(void* pArguments)
 		for (Client* client : room.mClients)
 		{
 			constexpr uint8_t defaultItemCode1 = 1;	// 기본템 1
-			constexpr uint8_t defaultItemCode2 = 6;	// 기본템 2
+			constexpr uint8_t defaultItemCode2 = 2;	// 기본템 2
 
 			uint8_t slot1 = client->AddItem(defaultItemCode1);
 			const sc_AddNewItemPacket addItemPacket(client->GetNetworkID(), slot1, defaultItemCode1);
@@ -758,16 +758,23 @@ bool Room::BattleStage(Room& room)
 
 			Sleep(waitTimes[battleLoop / 10]);
 
-			for (k = 0; k < avatarCount; ++k)
+			for (k = 0; k < avatarCount; k += 2)
 			{
+				if (avatars[k].IsFinish())
+				{
+					continue;
+				}
+
 				avatars[k].EffectBomb();
 				avatars[k].InitCycle();
-				if (avatars[k].GetHP() == 0)
+				avatars[k + 1].EffectBomb();
+				avatars[k + 1].InitCycle();
+				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
 				{
 					avatars[k].SetFinish();
+					avatars[k + 1].SetFinish();
 				}
 			}
-			// todo : Fade 효과 적용하기
 
 			for (k = 0; k < avatarCount; ++k)
 			{
@@ -778,19 +785,22 @@ bool Room::BattleStage(Room& room)
 				goto FinishBattle;
 			}
 
-
 			if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 			{
 				return false;
 			}
 		}
+	}
 
-		// 시간이 다 지났는데도 안끝난 전투가 있으면 강제 데미지 10
-		for (int k = 0; k < avatarCount; k += 2)
+	// 시간이 다 지났는데도 안끝난 전투가 있으면 강제 데미지 10
+	for (int k = 0; k < avatarCount; k += 2)
+	{
+		if (avatars[k].IsFinish())
 		{
-			avatars[k].ToDamageCharacter(10);
-			avatars[k + 1].ToDamageCharacter(10);
+			continue;
 		}
+		avatars[k].ToDamageCharacter(10);
+		avatars[k + 1].ToDamageCharacter(10);
 	}
 
 FinishBattle:
