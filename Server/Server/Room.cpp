@@ -562,7 +562,7 @@ bool Room::BattleStage(Room& room)
 	const vector<int32_t>& battleOpponents = room.GetBattleOpponents();
 
 	// todo : 나중에 속도 빠르게 수정
-	constexpr int waitTimes[2]{ 2000, 2000 };
+	constexpr int waitTimes[2]{ 500, 500 };
 
 	const int avatarCount = battleOpponents.size();
 
