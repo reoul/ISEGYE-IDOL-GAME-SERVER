@@ -539,6 +539,12 @@ struct sc_FadeInPacket : private Packet
 		, seconds(seconds)
 	{
 	}
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(seconds.get());
+	}
 };
 
 struct sc_FadeOutPacket : private Packet
@@ -552,6 +558,12 @@ struct sc_FadeOutPacket : private Packet
 		: Packet(sizeof(sc_FadeOutPacket), EPacketType::sc_fadeOut)
 		, seconds(seconds)
 	{
+	}
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(seconds.get());
 	}
 };
 

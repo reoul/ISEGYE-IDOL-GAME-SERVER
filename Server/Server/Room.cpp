@@ -232,13 +232,22 @@ unsigned Room::ProgressThread(void* pArguments)
 		}
 
 		{
-			const size_t bufferSize = sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket);
+			sc_FadeInPacket packet(1);
+			room.SendPacketToAllClients(&packet);
+			Sleep(1000);
+		}
+
+		{
+			const size_t bufferSize = sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket) + sizeof(sc_FadeOutPacket);
 			OutputMemoryStream memoryStream(bufferSize);
 			const cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCutSceneStage);
 			notificationPacket.Write(memoryStream);
 
 			const sc_SetReadyTimePacket setReadyTimePacket(BATTLE_READY_TIME);
 			setReadyTimePacket.Write(memoryStream);
+
+			const sc_FadeOutPacket fadeOutPacket(1);
+			fadeOutPacket.Write(memoryStream);
 
 			room.SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 		}
@@ -277,13 +286,19 @@ unsigned Room::ProgressThread(void* pArguments)
 				bufferSize += sizeof(cs_sc_NotificationPacket);
 			}
 
+			{
+				sc_FadeInPacket packet(1);
+				packet.Write(memoryStream);
+				bufferSize += sizeof(sc_FadeInPacket);
+			}
+
 			room.SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 		}
 
 		Sleep(3000);
 
 		{
-			constexpr size_t bufferSize = sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket);
+			constexpr size_t bufferSize = sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket) + sizeof(sc_FadeOutPacket);
 			OutputMemoryStream memoryStream(bufferSize);
 
 			const cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCutSceneStage);
@@ -292,9 +307,14 @@ unsigned Room::ProgressThread(void* pArguments)
 			const sc_SetReadyTimePacket setReadyTimePacket(BATTLE_READY_TIME);
 			setReadyTimePacket.Write(memoryStream);
 
+			const sc_FadeOutPacket fadeOutPacket(1);
+			fadeOutPacket.Write(memoryStream);
+
 			room.SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 		}
 	}
+
+	Sleep(1000);
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
@@ -304,7 +324,14 @@ unsigned Room::ProgressThread(void* pArguments)
 	}
 
 	// CutScene 연출
-	Sleep(10000);
+	Sleep(9000);
+
+	{
+		sc_FadeInPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep(1000);
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
@@ -418,6 +445,12 @@ inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 {
 	room.mCurRoomStatusType = ERoomStatusType::ReadyStage;
 
+	{
+		sc_FadeOutPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+	Sleep(1000);
+
 	const size_t roomOpenCount = room.GetOpenCount();
 
 
@@ -491,6 +524,11 @@ inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 		return false;
 	}
 
+	{
+		sc_FadeInPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
 	Sleep(1000);
 
 	return true;
@@ -504,6 +542,13 @@ inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 bool Room::BattleStage(Room& room)
 {
 	room.mCurRoomStatusType = ERoomStatusType::BattleStage;
+
+	{
+		sc_FadeOutPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep(1000);
 
 	const size_t roomOpenCount = room.GetOpenCount();
 
@@ -642,8 +687,7 @@ bool Room::BattleStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
-
-					// todo : 이겼을 때 상대 데미지 부여 추가
+					
 					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
 					packet.Write(memoryStream);
 					packetSize += sizeof(sc_ActiveItemPacket);
@@ -678,8 +722,6 @@ bool Room::BattleStage(Room& room)
 					}
 
 					const uint8_t activeSlot = avatars[k].ActiveItem(activeItemIndex, avatars[k - 1]);
-
-					// todo : 이겼을 때 상대 데미지 부여 추가
 
 					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
 					{
@@ -718,7 +760,6 @@ bool Room::BattleStage(Room& room)
 
 			for (k = 0; k < avatarCount; ++k)
 			{
-				// todo : 사이클 초기화랑 출혈데미지 등 여러 데미지 계산 순서 생각
 				avatars[k].EffectBomb();
 				avatars[k].InitCycle();
 				if (avatars[k].GetHP() == 0)
@@ -759,6 +800,13 @@ FinishBattle:
 		return false;
 	}
 
+	{
+		sc_FadeInPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep(1000);
+
 	return true;
 }
 
@@ -771,6 +819,13 @@ bool Room::CreepStage(Room& room)
 {
 	room.mCurRoomStatusType = ERoomStatusType::CreepStage;
 
+	{
+		sc_FadeOutPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep(1000);
+
 	const size_t roomOpenCount = room.GetOpenCount();
 
 	LogPrintf("크립 스테이지 시작");
@@ -780,10 +835,19 @@ bool Room::CreepStage(Room& room)
 		room.SendPacketToAllClients(&packet);
 	}
 
+	Sleep(3000);
+
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
+
+	{
+		sc_FadeInPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep(1000);
 
 	return true;
 }
