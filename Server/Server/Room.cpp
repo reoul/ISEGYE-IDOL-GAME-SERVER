@@ -354,7 +354,7 @@ unsigned Room::ProgressThread(void* pArguments)
 		for (Client* client : room.mClients)
 		{
 			constexpr uint8_t defaultItemCode1 = 1;	// 기본템 1
-			constexpr uint8_t defaultItemCode2 = 2;	// 기본템 2
+			constexpr uint8_t defaultItemCode2 = 4;	// 기본템 2
 
 			uint8_t slot1 = client->AddItem(defaultItemCode1);
 			const sc_AddNewItemPacket addItemPacket(client->GetNetworkID(), slot1, defaultItemCode1);
