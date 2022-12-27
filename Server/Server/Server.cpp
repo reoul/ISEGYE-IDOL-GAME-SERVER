@@ -147,7 +147,7 @@ void Server::WorkerThread()
 		case EOperationType::Send:			//구조체 delete
 			if (0 == io_byte)
 			{
-				Disconnect(userID);
+				Disconnect(userID, true);
 			}
 
 			LogWrite("log", "네트워크 {0}번 클라이언트 {1}Byte 패킷 전송", userID, io_byte);
