@@ -166,6 +166,11 @@ int BattleAvatar::GetDamage() const
 
 void BattleAvatar::ToDamageCharacter(int damage)
 {
+	if (mIsGhost)
+	{
+		return;
+	}
+
 	if (mIsCharacterDamage)
 	{
 		return;
@@ -175,6 +180,7 @@ void BattleAvatar::ToDamageCharacter(int damage)
 	{
 		return;
 	}
+
 
 	mClient->ToDamage(damage);
 	mIsCharacterDamage = true;

@@ -743,6 +743,13 @@ bool Room::BattleStage(Room& room)
 				return false;
 			}
 		}
+
+		// 시간이 다 지났는데도 안끝난 전투가 있으면 강제 데미지 10
+		for (int k = 0; k < avatarCount; k += 2)
+		{
+			avatars[k].ToDamageCharacter(10);
+			avatars[k + 1].ToDamageCharacter(10);
+		}
 	}
 
 FinishBattle:
