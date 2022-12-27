@@ -63,8 +63,6 @@ public:
 	int GetEffectItemCount() const;
 	void UseKeyCap();
 	int GetUseKeyCapCount() const;
-	void SetCounterRestoreDefense(bool isCounterRestoreDefense);
-	bool isCounterRestoreDefense() const;
 	void SetDefendNegativeEffect(bool canDefendNegativeEffect);
 	bool CanDefendNegativeEffect() const;
 	void SetOffensePower(int offensePower);
@@ -74,6 +72,11 @@ public:
 	Item& GetItemBySlot(int slot);
 	EHamburgerType GetRandomHamburgerType() const;
 	Item GetRandomCopyItem();
+	void EffectBleeding();
+	void EffectBomb();
+	void EffectCounter(BattleAvatar& opponent);
+	int GetDamage() const;
+	void ToDamageCharacter(int damage);
 private:
 	Client* mClient;
 	int mNetworkID;
@@ -100,9 +103,9 @@ private:
 	int mInstallBombDamage;			// 언니의 마음 폭탄 데미지
 	int mEffectItemCount;			// 아이템 발동 횟수
 	int mUseKeyCapCount;			// 벌레의 키캡 발동 횟수
-	bool mIsCounterRestoreDefense;	// 반격 잃은 방어력 복구
 	bool mCanDefendNegativeEffect;	// 부정적인 효과 방어
 	bool mIsIgnoreNextDamage;		// 다음 피해 무시
+	bool mIsCharacterDamage;		// 캐릭터가 데미지를 입었는지 (전투 끝난뒤에 데미지 입힘 체크)
 };
 
 inline void BattleAvatar::ToDefensive(int defensive)
@@ -122,16 +125,34 @@ inline void BattleAvatar::ToAdditionDefensive(int additionDefensive)
 
 inline void BattleAvatar::ToWeakening(int weakening)
 {
+	if (mCanDefendNegativeEffect)
+	{
+		mCanDefendNegativeEffect = false;
+		return;
+	}
+
 	mWeakening = max(0, mWeakening + weakening);
 }
 
 inline void BattleAvatar::ToBleeding(int bleeding)
 {
+	if (mCanDefendNegativeEffect)
+	{
+		mCanDefendNegativeEffect = false;
+		return;
+	}
+
 	mBleeding = max(0, mBleeding + bleeding);
 }
 
 inline void BattleAvatar::ToReducedHealing(int reducedHealing)
 {
+	if (mCanDefendNegativeEffect)
+	{
+		mCanDefendNegativeEffect = false;
+		return;
+	}
+
 	mReducedHealing = max(0, mReducedHealing + reducedHealing);
 }
 
@@ -276,6 +297,12 @@ inline bool BattleAvatar::IsInstallBomb() const
 
 inline void BattleAvatar::SetInstallBomb(int bombDamage)
 {
+	if (mCanDefendNegativeEffect)
+	{
+		mCanDefendNegativeEffect = false;
+		return;
+	}
+
 	mIsInstallBomb = true;
 	mInstallBombDamage += bombDamage;
 }
@@ -303,16 +330,6 @@ inline void BattleAvatar::UseKeyCap()
 inline int BattleAvatar::GetUseKeyCapCount() const
 {
 	return mUseKeyCapCount;
-}
-
-inline void BattleAvatar::SetCounterRestoreDefense(bool isCounterRestoreDefense)
-{
-	mIsCounterRestoreDefense = isCounterRestoreDefense;
-}
-
-inline bool BattleAvatar::isCounterRestoreDefense() const
-{
-	return mIsCounterRestoreDefense;
 }
 
 inline void BattleAvatar::SetDefendNegativeEffect(bool canDefendNegativeEffect)
@@ -355,4 +372,18 @@ inline EHamburgerType BattleAvatar::GetRandomHamburgerType() const
 	Random<int> gen(static_cast<int>(EHamburgerType::Fillet), static_cast<int>(EHamburgerType::Rice));
 	return static_cast<EHamburgerType>(gen());
 }
+
+inline void BattleAvatar::EffectBleeding()
+{
+	mHp = max(0, mHp - mBleeding);
+	mBleeding = 0;
+}
+
+inline void BattleAvatar::EffectBomb()
+{
+	mHp = max(0, mHp - mInstallBombDamage);
+	mInstallBombDamage = 0;
+	mIsInstallBomb = false;
+}
+
 

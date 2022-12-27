@@ -32,8 +32,9 @@ void BattleAvatar::SetAvatar(Client& client, bool isGhost)
 	mInstallBombDamage = 0;
 	mEffectItemCount = 0;
 	mUseKeyCapCount = 0;
-	mIsCounterRestoreDefense = false;
 	mCanDefendNegativeEffect = false;
+	mIsIgnoreNextDamage = false;
+	mIsCharacterDamage = false;
 
 	const vector<Item> items = client.GetUsingItems();
 	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -47,6 +48,12 @@ uint8_t BattleAvatar::ActiveItem(int index, BattleAvatar& enemy)
 	const Item item = mUsingItem[mActiveQueue[index]];
 	++mEffectItemCount;
 	sItems[item.GetType()]->Active(*this, enemy, item.GetUpgrade());
+
+	if (mIsEffectHeal)
+	{
+		ToHeal(mEffectHeal);
+	}
+
 	return static_cast<uint8_t>(mActiveQueue[index]);
 }
 
@@ -62,6 +69,12 @@ void BattleAvatar::SetActiveQueue(std::vector<SlotInfo> activeQueue)
 
 void BattleAvatar::ToDamage(int damage, const BattleAvatar& opponent)
 {
+	if (mIsIgnoreNextDamage)
+	{
+		mIsIgnoreNextDamage = false;
+		return;
+	}
+
 	damage += opponent.mOffensePower;
 
 	damage = max(0, damage - opponent.mWeakening);
@@ -88,7 +101,6 @@ void BattleAvatar::InitCycle()
 	mIsInstallBomb = false;
 	mInstallBombDamage = 0;
 	mEffectItemCount = 0;
-	mIsCounterRestoreDefense = false;
 	mCanDefendNegativeEffect = false;
 	mIsIgnoreNextDamage = false;
 }
@@ -120,4 +132,50 @@ Item BattleAvatar::GetRandomCopyItem()
 	}
 
 	return retItem;
+}
+
+void BattleAvatar::EffectCounter(BattleAvatar& opponent)
+{
+	if (mIsCounterAttack)
+	{
+		mIsCounterAttack = false;
+		opponent.ToDamage(mCounterAttackDamage, *this);
+		mCounterAttackDamage = 0;
+	}
+
+	if (mIsCounterHeal)
+	{
+		mIsCounterHeal = false;
+		ToHeal(mCounterHeal);
+		mCounterHeal = 0;
+	}
+}
+
+int BattleAvatar::GetDamage() const
+{
+	int sum = 0;
+	for (Item item : mUsingItem)
+	{
+		if (item.GetType() != EMPTY_ITEM)
+		{
+			sum += static_cast<int>(sItems[item.GetType()]->TIER_TYPE) + 1;
+		}
+	}
+	return sum;
+}
+
+void BattleAvatar::ToDamageCharacter(int damage)
+{
+	if (mIsCharacterDamage)
+	{
+		return;
+	}
+
+	if (mHp > 0)
+	{
+		return;
+	}
+
+	mClient->ToDamage(damage);
+	mIsCharacterDamage = true;
 }

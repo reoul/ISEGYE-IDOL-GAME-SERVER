@@ -618,13 +618,34 @@ me.ToDefensive(10);
 me.ToDefensive(15);
 )
 
-// 탐험가의 벨트 : 공격 당할시 1회성으로 닳은 방어도는 복구됨
+// 탐험가의 벨트 : 발동 순서에 따라서 방어도를 얻습니다.
 ITEM(Item035, 36, EItemTierType::Three, EItemType::Defense,
-	me.SetCounterRestoreDefense(true);
+	if (me.GetEffectItemCount() < 4)
+	{
+		me.ToDefensive(3);
+	}
+	else
+	{
+		me.ToDefensive(4);
+	}
 ,
-me.SetCounterRestoreDefense(true);
+if (me.GetEffectItemCount() < 4)
+{
+	me.ToDefensive(3);
+}
+else
+{
+	me.ToDefensive(5);
+}
 ,
-me.SetCounterRestoreDefense(true);
+if (me.GetEffectItemCount() < 4)
+{
+	me.ToDefensive(3);
+}
+else
+{
+	me.ToDefensive(6);
+}
 )
 
 

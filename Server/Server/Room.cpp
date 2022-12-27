@@ -545,20 +545,20 @@ bool Room::BattleStage(Room& room)
 					const EHamburgerType hamburgerType = avatars[i].GetRandomHamburgerType();
 					avatars[i].SetHamburgerType(hamburgerType);
 
-					sc_SetHamburgerTypePacket packet(avatars[i].GetClient()->GetNetworkID(), j, hamburgerType);
+					sc_SetHamburgerTypePacket packet(avatars[i].GetNetworkID(), j, hamburgerType);
 					packet.Write(memoryStream);
-					Logger::Log("log", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetClient()->GetNetworkID(), static_cast<int>(hamburgerType));
+					Logger::Log("log", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
 				}
 				else if(item.GetType() == 16)	// 박사의 만능툴
 				{
 					int index = i % 2 == 0 ? 1 : -1;	// 0-1   2-3   4-5  6-7 이렇게 전투하기 때문에 인덱스 번호에 따라 상대 인덱스가 다르다
 					BattleAvatar& opponent = avatars[i + index];
 					Item choiceItem = opponent.GetRandomCopyItem();
-					sc_DoctorToolInfoPacket packet(avatars[i].GetClient()->GetNetworkID(), j, choiceItem.GetType(), choiceItem.GetUpgrade());
+					sc_DoctorToolInfoPacket packet(avatars[i].GetNetworkID(), j, choiceItem.GetType(), choiceItem.GetUpgrade());
 					packet.Write(memoryStream);
 					item.SetType(choiceItem.GetType());
 					item.SetUpgrade(choiceItem.GetUpgrade());
-					Logger::Log("log", "{0}번 클라이언트 만능툴 {1}번 아이템 강화 수치 {2}으로 설정됨", avatars[i].GetClient()->GetNetworkID(), choiceItem.GetType(), choiceItem.GetUpgrade());
+					Logger::Log("log", "{0}번 클라이언트 만능툴 {1}번 아이템 강화 수치 {2}으로 설정됨", avatars[i].GetNetworkID(), choiceItem.GetType(), choiceItem.GetUpgrade());
 				}
 			}
 		}
@@ -619,15 +619,31 @@ bool Room::BattleStage(Room& room)
 					}
 
 					const uint8_t activeSlot = avatars[k].ActiveItem(activeItemIndex, avatars[k + 1]);
-
-					// todo : 이겼을 때 상대 데미지 부여 추가
-
+					
 					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
 					{
+						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
+						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
 
+					if (!avatars[k].IsFinish() && !avatars[k + 1].IsFinish())
+					{
+						avatars[k].EffectBleeding();
+					}
+
+					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+					{
+						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
+						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+
+						avatars[k].SetFinish();
+						avatars[k + 1].SetFinish();
+					}
+
+					// todo : 이겼을 때 상대 데미지 부여 추가
 					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
 					packet.Write(memoryStream);
 					packetSize += sizeof(sc_ActiveItemPacket);
@@ -667,6 +683,23 @@ bool Room::BattleStage(Room& room)
 
 					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
 					{
+						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
+						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
+
+						avatars[k].SetFinish();
+						avatars[k - 1].SetFinish();
+					}
+					
+					if (!avatars[k].IsFinish() && !avatars[k - 1].IsFinish())
+					{
+						avatars[k].EffectBleeding();
+					}
+
+					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
+					{
+						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
+						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
+
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
 					}
@@ -686,7 +719,12 @@ bool Room::BattleStage(Room& room)
 			for (k = 0; k < avatarCount; ++k)
 			{
 				// todo : 사이클 초기화랑 출혈데미지 등 여러 데미지 계산 순서 생각
+				avatars[k].EffectBomb();
 				avatars[k].InitCycle();
+				if (avatars[k].GetHP() == 0)
+				{
+					avatars[k].SetFinish();
+				}
 			}
 			// todo : Fade 효과 적용하기
 
