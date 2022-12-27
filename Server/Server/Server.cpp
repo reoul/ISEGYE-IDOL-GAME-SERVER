@@ -80,7 +80,7 @@ void Server::Start()
 					if (!client.IsValidConnect())
 					{
 						Log("log", "{0}번 클라이언트 연결 불안으로 접속 해제", client.GetNetworkID());
-						Disconnect(client.GetNetworkID());
+						Disconnect(client.GetNetworkID(), true);
 						continue;
 					}
 					++connCount;
@@ -129,7 +129,7 @@ void Server::WorkerThread()
 		{
 			if (0 == io_byte)
 			{
-				Disconnect(userID);
+				Disconnect(userID, true);
 
 				if (EOperationType::Send == exover->type)
 					delete exover;
@@ -229,7 +229,7 @@ void Server::NewClientEvent(int networkID, char* ipAdress)
 	SendPacket(networkID, &packet);
 }
 
-void Server::Disconnect(int networkID)
+void Server::Disconnect(int networkID, bool isSendAnotherRoomClient)
 {
 	if (sClients[networkID].GetStatus() == ESocketStatus::FREE)
 	{
@@ -243,8 +243,11 @@ void Server::Disconnect(int networkID)
 
 	Log("log", "네트워크 {0}번 클라이언트 서버 접속 해제", networkID);
 
-	cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
-	sClients[networkID].SendPacketInAnotherRoomClients(&packet);
+	if (isSendAnotherRoomClient)
+	{
+		cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+		sClients[networkID].SendPacketInAnotherRoomClients(&packet);
+	}
 
 	{
 		lock_guard<mutex> lg(sClients[networkID].GetMutex());
@@ -321,6 +324,21 @@ void Server::SendDisconnect(int networkID)
 	}
 	cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
 	sClients[networkID].SendPacketInAnotherRoomClients(&packet);
+	Log("log", "네트워크 {0}번 클라이언트 접속 해제 패킷 보냄", networkID);
+}
+
+void Server::SendDisconnectDelay(int networkID)
+{
+	if (sClients[networkID].GetStatus() != ESocketStatus::ACTIVE)
+	{
+		return;
+	}
+	cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+	sClients[networkID].SendPacketInAllRoomClients(&packet);
+
+	Sleep(1000);
+	Disconnect(networkID, false);
+
 	Log("log", "네트워크 {0}번 클라이언트 접속 해제 패킷 보냄", networkID);
 }
 

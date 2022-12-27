@@ -4,6 +4,7 @@
 
 #include "Client.h"
 #include "Items.h"
+#include "Server.h"
 #include "ServerStruct.h"
 using namespace Logger;
 
@@ -183,5 +184,11 @@ void BattleAvatar::ToDamageCharacter(int damage)
 
 
 	mClient->ToDamage(damage);
+
+	if (mClient->GetHp() == 0)
+	{
+		Server::SendDisconnectDelay(mNetworkID);
+	}
+
 	mIsCharacterDamage = true;
 }
