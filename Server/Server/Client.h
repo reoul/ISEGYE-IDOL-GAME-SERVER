@@ -51,7 +51,7 @@ public:
 	uint8_t						GetRandomItemTypeOfAdvancedItemTicket() const;
 	uint8_t						GetRandomItemTypeOfTopItemTicket() const;
 	uint8_t						GetRandomItemTypeOfSupremeItemTicket() const;
-	void						TrySetDefaultUsingItem();
+	bool						TrySetDefaultUsingItem();
 	void						SendPacketInAllRoomClients(void* pPacket) const;
 	void						SendPacketInAnotherRoomClients(void* pPacket) const;
 	std::mutex&					GetMutex();

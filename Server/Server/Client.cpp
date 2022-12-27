@@ -253,8 +253,10 @@ uint8_t Client::GetRandomItemTypeOfSupremeItemTicket() const
 /**
  * UsingItems에 아무것도 장착되어 있지 않으면 UnUsingItems에서 유효한 아이템을 가져다 장착한다
  */
-void Client::TrySetDefaultUsingItem()
+bool Client::TrySetDefaultUsingItem()
 {
+	bool isSetDefaultUsingItem = false;
+
 	vector<SlotInfo> validUnUsingItems = GetValidUnUsingItems();
 	vector<uint8_t> usingItemTypes;
 	usingItemTypes.reserve(MAX_USING_ITEM_COUNT);
@@ -277,6 +279,7 @@ void Client::TrySetDefaultUsingItem()
 			// 중복 없을 시 장착
 			if (!isUsing)
 			{
+				isSetDefaultUsingItem = true;
 				const uint8_t slot2 = it->index;
 				usingItemTypes[slot1] = it->item.GetType();
 				SwapItem(slot1++, slot2);
@@ -293,6 +296,8 @@ void Client::TrySetDefaultUsingItem()
 	Logger::LogWrite("SetDefaultUsingItem", "UnUsingItems : {0} {1} {2} {3} {4} {5} {6} {7} {8} {9}",
 		mUnUsingItems[0].GetType(), mUnUsingItems[1].GetType(), mUnUsingItems[2].GetType(), mUnUsingItems[3].GetType(), mUnUsingItems[4].GetType(),
 		mUnUsingItems[5].GetType(), mUnUsingItems[6].GetType(), mUnUsingItems[7].GetType(), mUnUsingItems[8].GetType(), mUnUsingItems[9].GetType());
+
+	return isSetDefaultUsingItem;
 }
 
 void Client::SendPacketInAllRoomClients(void* pPacket) const

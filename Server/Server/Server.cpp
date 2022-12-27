@@ -563,6 +563,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		case ENotificationType::EnterCreepStage:
 		case ENotificationType::FinishChoiceCharacterTime:
 		case ENotificationType::InitBattleSlot:
+		case ENotificationType::SetDefaultUsingItem:
 			LogWarning("log", "[ENotificationType::{0}] 받으면 안되는 패킷을 받음", static_cast<int>(pPacket->notificationType.get()));
 			break;
 		default:

@@ -458,18 +458,22 @@ inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 
 	LogPrintf("준비시간 끝");
 
-	// 기본 템 장착
-	for (Client* client : room.GetClients())
-	{
-		client->TrySetDefaultUsingItem();
-	}
-
-	LogPrintf("기본 유물 장착");
-
 	{
 		const vector<Client*> clients = room.GetClients();
-		const size_t bufferSize = sizeof(sc_UpdateCharacterInfoPacket) * clients.size();
+		const size_t bufferSize = sizeof(sc_UpdateCharacterInfoPacket) * clients.size() + sizeof(cs_sc_NotificationPacket) * clients.size();
 		OutputMemoryStream memoryStream(bufferSize);
+
+		// 기본 템 장착
+		for (Client* client : room.GetClients())
+		{
+			const bool isSetDefaultUsingItem = client->TrySetDefaultUsingItem();
+			if (isSetDefaultUsingItem)
+			{
+				cs_sc_NotificationPacket packet(client->GetNetworkID(), ENotificationType::SetDefaultUsingItem);
+				packet.Write(memoryStream);
+			}
+		}
+		LogPrintf("기본 유물 장착");
 
 		for (const Client* client : clients)
 		{
@@ -477,7 +481,7 @@ inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 			packet.Write(memoryStream);
 		}
 
-		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 	}
 
 	LogPrintf("캐릭터 갱신 패킷 전송");

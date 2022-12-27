@@ -104,6 +104,8 @@ enum class ENotificationType : uint8_t
 	UseTopItemTicket,
 	/// <summary> 지존 아이템 뽑기권 사용을 알리는 패킷 타입 </summary>
 	UseSupremeItemTicket,
+	/// <summary> 기본템 장착 됬음을 알리는 패킷 타입 </summary>
+	SetDefaultUsingItem,
 };
 
 #pragma pack(push, 1)
