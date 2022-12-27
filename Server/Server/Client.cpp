@@ -278,6 +278,7 @@ void Client::TrySetDefaultUsingItem()
 			if (!isUsing)
 			{
 				const uint8_t slot2 = it->index;
+				usingItemTypes[slot1] = it->item.GetType();
 				SwapItem(slot1++, slot2);
 				it = validUnUsingItems.erase(it);
 				continue;
