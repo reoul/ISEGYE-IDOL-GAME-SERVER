@@ -260,6 +260,10 @@ bool Client::TrySetDefaultUsingItem()
 	vector<SlotInfo> validUnUsingItems = GetValidUnUsingItems();
 	vector<uint8_t> usingItemTypes;
 	usingItemTypes.reserve(MAX_USING_ITEM_COUNT);
+	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+	{
+		usingItemTypes.push_back(0);
+	}
 	if (!validUnUsingItems.empty() && GetValidUsingItems().empty())
 	{
 		uint8_t slot1 = 0;
