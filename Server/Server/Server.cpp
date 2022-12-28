@@ -673,6 +673,12 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		Log("log", "cs_RequestUpgradeItemPacket {0}번 클라이언트 {1}/{2}", pPacket->networkID, pPacket->slot1, pPacket->slot2);
 
+		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
+		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		{
+			return;
+		}
+
 		Client& client = sClients[pPacket->networkID];
 		Item& upgradeItem = client.GetItem(pPacket->slot1);
 		Item& materialItem = client.GetItem(pPacket->slot2);
@@ -734,6 +740,10 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::sc_fadeOut:
 	case EPacketType::sc_battleOpponents:
 	case EPacketType::sc_upgradeItem:
+	case EPacketType::sc_setHamburgerType:
+	case EPacketType::sc_magicStickInfo:
+	case EPacketType::sc_DoctorToolInfo:
+	case EPacketType::sc_CreepStageInfo:
 		LogWarning("log", "{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
 		break;
 	default:
