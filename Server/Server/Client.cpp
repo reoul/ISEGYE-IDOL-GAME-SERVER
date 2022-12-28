@@ -56,12 +56,15 @@ Client::Client()
 	mUsingItems[5].SetActivePercent(27);
 
 	// 아이템 슬롯 캐싱
-	mUsingItems[0].SetSlot(0);
-	mUsingItems[1].SetSlot(1);
-	mUsingItems[2].SetSlot(2);
-	mUsingItems[3].SetSlot(3);
-	mUsingItems[4].SetSlot(4);
-	mUsingItems[5].SetSlot(5);
+	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+	{
+		mUsingItems[i].SetSlot(i);
+	}
+
+	for (int i = 0; i < MAX_UN_USING_ITEM_COUNT; ++i)
+	{
+		mUnUsingItems[i].SetSlot(i + 6);
+	}
 }
 
 void Client::Init()

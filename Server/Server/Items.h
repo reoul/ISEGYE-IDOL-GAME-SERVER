@@ -17,37 +17,38 @@ using namespace Logger;
  * \param twoStarUseEffect 2성 아이템 효과
  * \param threeStarUseEffect 3성 아이템 효과
  */
-#define ITEM(name, code, tier, type, oneStarUseEffect, twoStarUseEffect, threeStarUseEffect)	\
-class name final : public ItemBase																\
-{																								\
-public:																							\
-	name() : ItemBase(code, tier, type)															\
-	{																							\
-	}																							\
-																								\
-	void Active(BattleAvatar& me, BattleAvatar& opponents, int upgrade) override				\
-	{																							\
-		switch (upgrade)																		\
-		{																						\
-		case 0:																					\
-			oneStarUseEffect																	\
-			break;																				\
-		case 1:																					\
-			twoStarUseEffect																	\
-			break;																				\
-		case 2:																					\
-			threeStarUseEffect																	\
-			break;																				\
-		default:																				\
-			LogWarning("log", "["#name"] 아이템 강화 수치가 {0}입니다", upgrade);				\
-		}																						\
-	}																							\
-																								\
-	void FitmentEffect(BattleAvatar& me) override												\
-	{																							\
-	}																							\
-};																								\
-static name s##name;																			\
+#define ITEM(name, code, tier, type, oneStarUseEffect, twoStarUseEffect, threeStarUseEffect, Passive)	\
+class name final : public ItemBase																		\
+{																										\
+public:																									\
+	name() : ItemBase(code, tier, type)																	\
+	{																									\
+	}																									\
+																										\
+	void Active(BattleAvatar& me, BattleAvatar& opponents, int upgrade) override						\
+	{																									\
+		switch (upgrade)																				\
+		{																								\
+		case 0:																							\
+			oneStarUseEffect																			\
+			break;																						\
+		case 1:																							\
+			twoStarUseEffect																			\
+			break;																						\
+		case 2:																							\
+			threeStarUseEffect																			\
+			break;																						\
+		default:																						\
+			LogWarning("log", "["#name"] 아이템 강화 수치가 {0}입니다", upgrade);						\
+		}																								\
+	}																									\
+																										\
+	void FitmentEffect(BattleAvatar& me, int upgrade) override											\
+	{																									\
+		Passive																							\
+	}																									\
+};																										\
+static name s##name;																					\
 
  // 빈칸 : 아무 효과 없음
 ITEM(ItemEmpty, 0, EItemTierType::One, EItemType::Empty,
@@ -56,6 +57,8 @@ ITEM(ItemEmpty, 0, EItemTierType::One, EItemType::Empty,
 	{ int b = 0; }
 	,
 	{ int c = 0; }
+	,
+	{ int fitmentEffectEmpty = 0; }
 )
 
 // 낡은 채찍 : x 데미지
@@ -65,6 +68,8 @@ ITEM(Item000, 1, EItemTierType::One, EItemType::Attack,
 opponents.ToDamage(7, me);
 ,
 opponents.ToDamage(12, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 오베인 게르크 티 : 방어도를 X만큼 획득
@@ -74,6 +79,8 @@ ITEM(Item001, 2, EItemTierType::One, EItemType::Defense,
 me.ToDefensive(5);
 ,
 me.ToDefensive(7);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 귀상어두 가면 : 상대방 약화
@@ -83,6 +90,8 @@ ITEM(Item002, 3, EItemTierType::One, EItemType::Effect,
 opponents.ToWeakening(3);
 ,
 opponents.ToWeakening(4);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 왁엔터 사장 명패 : X 데미지를 두번 줍니다. (여러번 공격)
@@ -95,6 +104,8 @@ opponents.ToDamage(3, me);
 ,
 opponents.ToDamage(5, me);
 opponents.ToDamage(5, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 가지치기용 도끼 : 본인 방어력 비례 데미지 기본 데미지 + 방어력 * x
@@ -104,6 +115,8 @@ ITEM(Item004, 5, EItemTierType::Four, EItemType::Attack,
 opponents.ToDamage(5 + me.GetDefensive() * 4, me);
 ,
 opponents.ToDamage(5 + me.GetDefensive() * 6, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 홍삼스틱 : 부정 효과 제거
@@ -113,6 +126,8 @@ ITEM(Item005, 6, EItemTierType::Three, EItemType::Heal,
 me.Clear();
 ,
 me.Clear();
+,
+me.SetMaxHP(me.GetMaxHP() + 5 + 5 * upgrade);
 )
 
 // 햄버거
@@ -169,6 +184,8 @@ case EHamburgerType::Rice:
 	me.ToDefensive(10);
 	break;
 }
+,
+me.ToDefensive(3 + 3 * upgrade);
 )
 
 // 악질안경 : 공격력 상승
@@ -178,6 +195,8 @@ ITEM(Item007, 8, EItemTierType::One, EItemType::Effect,
 me.ToOffensePower(3);
 ,
 me.ToOffensePower(5);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 전투 메이드복 : 방어도 + 5, 장착 후 공격 당할시 1회성 반격 X 데미지
@@ -190,6 +209,8 @@ me.SetCounterAttack(7);
 ,
 me.ToDefensive(5);
 me.SetCounterAttack(10);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 수녀복 : 방어도 + 5, 장착 후 공격 당할시 1회성 회복 X
@@ -202,6 +223,8 @@ me.SetCounterHeal(8);
 ,
 me.ToDefensive(5);
 me.SetCounterHeal(11);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 매우 큰 리본 : 추가방어력 X 제공
@@ -211,6 +234,8 @@ ITEM(Item010, 11, EItemTierType::Two, EItemType::Effect,
 me.ToAdditionDefensive(4);
 ,
 me.ToAdditionDefensive(8);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 슈크림 붕어빵 : 자신의 유물을 사용할 때 마다 체력 회복, 사이클 끝나면 효과 끝
@@ -220,6 +245,8 @@ ITEM(Item011, 12, EItemTierType::Two, EItemType::Heal,
 me.SetEffectHeal(4);
 ,
 me.SetEffectHeal(6);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 언니의 마음 : 사이클이 종료되면 폭발하는 폭탄을 설치, 폭발시 X 데미지
@@ -229,6 +256,8 @@ ITEM(Item012, 13, EItemTierType::Three, EItemType::Attack,
 opponents.SetInstallBomb(25);
 ,
 opponents.SetInstallBomb(30);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 좋은 거 : 체력 X만큼 깎고 3X만큼 방어도
@@ -241,6 +270,8 @@ me.ToDefensive(3 * 4);
 ,
 me.ToJustDamage(5);
 me.ToDefensive(3 * 5);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 다이아 검 : 이번 라운드에 아이템을 사용한 횟수(다이아검 포함) 만큼 X 데미지 (여러번 공격)
@@ -268,6 +299,8 @@ ITEM(Item014, 15, EItemTierType::Five, EItemType::Attack,
 		opponents.ToDamage(30, me);
 	}
 }
+,
+me.SetFirstAttackState(me.GetFirstAttackState() + 2 + upgrade);
 )
 
 // 박사의 만능툴
@@ -278,6 +311,8 @@ ITEM(Item015, 16, EItemTierType::Three, EItemType::Effect,
 opponents.ToDamage(5, me);
 ,
 opponents.ToDamage(5, me);
+,
+me.SetMaxHP(me.GetMaxHP() + 5 + 5 * upgrade);
 )
 
 // 여고생의 헤어롤 : 뽑기권 * X의 데미지를 줍니다
@@ -302,6 +337,8 @@ const int sumTicket = client->GetNormalItemTicketCount() + client->GetAdvancedIt
 						+ client->GetTopItemTicketCount() + client->GetSupremeItemTicketCount();
 opponents.ToDamage(sumTicket * 2, me);
 }
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 광대의 권총 : X 데미지 (상대방에게 방어력이 있을 시 2배 데미지)
@@ -311,6 +348,8 @@ ITEM(Item017, 18, EItemTierType::Four, EItemType::Attack,
 opponents.ToDamage(10 * (opponents.GetDefensive() == 0 ? 1 : 2), me);
 ,
 opponents.ToDamage(15 * (opponents.GetDefensive() == 0 ? 1 : 2), me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 보컬로이드의 전기충격기 : 적 약화 1부여 + X 데미지
@@ -323,6 +362,8 @@ opponents.ToDamage(9, me);
 ,
 opponents.ToWeakening(1);
 opponents.ToDamage(12, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 부정적인 드롭스 : 상대방에게 X+1, 나에게 X만큼 약화
@@ -335,6 +376,8 @@ me.ToWeakening(2);
 ,
 opponents.ToWeakening(4);
 me.ToWeakening(3);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 비밀스런 마법봉 : 상대에게 데미지 주거나 나의 체력 회복 (50퍼 확률)
@@ -344,6 +387,8 @@ ITEM(Item020, 21, EItemTierType::Two, EItemType::Attack,
 	{ int a = 0; }
 	,
 	{ int a = 0; }
+	,
+	{ int fitmentEffectEmpty = 0; }
 )
 //ITEM(Item020, 21, EItemTierType::Two, EItemType::Attack,
 //	{
@@ -411,6 +456,8 @@ opponents.ToDamage(4, me);
 ,
 opponents.ToBleeding(2);
 opponents.ToDamage(5, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 대학원생의 USB : 상대방에게 걸린 공격력 상승과 내게 걸린 약화를 지움
@@ -423,6 +470,8 @@ me.SetWeakening(0);
 ,
 opponents.SetOffensePower(0);
 me.SetWeakening(0);
+,
+me.SetFirstAttackState(me.GetFirstAttackState() + upgrade + 1);
 )
 
 // 선량한 시민의 빠루
@@ -474,6 +523,8 @@ else
 {
 	me.ToOffensePower(6);
 }
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 마법사의 스테프 : 5 데미지 + 적 치유력 감소 X
@@ -486,6 +537,8 @@ opponents.ToReducedHealing(4);
 ,
 opponents.ToDamage(5, me);
 opponents.ToReducedHealing(6);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 바텐더의 나비넥타이 : 방어도 + X, 현재 방어력이 2배가 됨
@@ -498,6 +551,8 @@ me.ToDefensive(me.GetDefensive());
 ,
 me.ToDefensive(20);
 me.ToDefensive(me.GetDefensive());
+,
+me.ToDefensive(5 + 5 * upgrade);
 )
 
 // 오니의 카타나 : 매턴 적 출혈 4뎀 + X 데미지
@@ -510,6 +565,8 @@ opponents.ToDamage(6, me);
 ,
 opponents.ToBleeding(4);
 opponents.ToDamage(10, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 심리상담사의 자격증 : X 확률로 일반 뽑기권을 생성합니다
@@ -545,6 +602,8 @@ ITEM(Item028, 29, EItemTierType::Three, EItemType::Effect,
 	sc_SetItemTicketPacket packet(client->GetNetworkID(), EItemTicketType::Normal, ticketCount);
 	client->SendPacketInAllRoomClients(&packet);
 }
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 알바생의 빗자루 : 다음 피해를 1회 무시함
@@ -554,6 +613,8 @@ ITEM(Item029, 30, EItemTierType::Two, EItemType::Defense,
 me.SetIgnoreNextDamage(true);
 ,
 me.SetIgnoreNextDamage(true);
+,
+me.ToDefensive(3 + 3 * upgrade);
 )
 
 // 관심병사의 K2 : 방어력 관통 X 데미지
@@ -563,6 +624,8 @@ ITEM(Item030, 31, EItemTierType::Two, EItemType::Attack,
 opponents.ToPiercingDamage(6, me);
 ,
 opponents.ToPiercingDamage(9, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 철학도의 칫솔 : 잃은 체력의 X % 회복
@@ -584,6 +647,20 @@ ITEM(Item031, 32, EItemTierType::Five, EItemType::Heal,
 	lostHp *= 0.5f;
 	me.ToHeal(lostHp);
 }
+,
+switch (upgrade)
+{
+case 0:
+	me.SetMaxHP(me.GetMaxHP() + 7);
+	break;
+case 1:
+	me.SetMaxHP(me.GetMaxHP() + 12);
+	break;
+case 2:
+	me.SetMaxHP(me.GetMaxHP() + 20);
+	break;
+}
+
 )
 
 // 잼민이의 돈까스 : 체력 회복
@@ -593,6 +670,8 @@ ITEM(Item032, 33, EItemTierType::One, EItemType::Heal,
 me.ToHeal(5);
 ,
 me.ToHeal(7);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 벌레의 키캡 : 이 아이템을 사용한 횟수만큼 X 데미지로 공격 (하나의 전투 한정)
@@ -614,6 +693,8 @@ for (int i = 0; i < me.GetUseKeyCapCount(); ++i)
 {
 	opponents.ToDamage(9, me);
 }
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 500원짜리 고철 : 방어도를 X 얻습니다. 5 // 10 // 15
@@ -623,6 +704,8 @@ ITEM(Item034, 35, EItemTierType::Three, EItemType::Defense,
 me.ToDefensive(10);
 ,
 me.ToDefensive(15);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 탐험가의 벨트 : 발동 순서에 따라서 방어도를 얻습니다.
@@ -653,6 +736,8 @@ else
 {
 	me.ToDefensive(6);
 }
+,
+me.SetMaxHP(me.GetMaxHP() + 5 + 5 * upgrade);
 )
 
 
@@ -663,6 +748,8 @@ ITEM(Item036, 37, EItemTierType::Two, EItemType::Effect,
 me.SetDefendNegativeEffect(true);
 ,
 me.SetDefendNegativeEffect(true);
+,
+me.SetMaxHP(me.GetMaxHP() + 3 + 3 * upgrade);
 )
 
 // 대학원생의 분노 : 데미지 10
@@ -672,6 +759,8 @@ ITEM(Item037, 38, EItemTierType::One, EItemType::Attack,
 opponents.ToDamage(10, me);
 ,
 opponents.ToDamage(10, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 군인의 분노 : 데미지 10
@@ -681,6 +770,8 @@ ITEM(Item038, 39, EItemTierType::One, EItemType::Attack,
 opponents.ToDamage(10, me);
 ,
 opponents.ToDamage(10, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 거지의 분노 : 데미지 10
@@ -690,6 +781,8 @@ ITEM(Item039, 40, EItemTierType::One, EItemType::Attack,
 opponents.ToDamage(10, me);
 ,
 opponents.ToDamage(10, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 충전 : 자힐 10, 데미지 5
@@ -702,6 +795,8 @@ opponents.ToDamage(5, me);
 ,
 me.ToHeal(10);
 opponents.ToDamage(5, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 예 : 데미지 15
@@ -711,6 +806,8 @@ ITEM(Item041, 42, EItemTierType::Three, EItemType::Attack,
 opponents.ToDamage(15, me);
 ,
 opponents.ToDamage(15, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 아니요 : 방어도 10
@@ -720,6 +817,8 @@ ITEM(Item042, 43, EItemTierType::Three, EItemType::Defense,
 me.ToDefensive(10);
 ,
 me.ToDefensive(10);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 프레스기 떨구기 : 데미지 30
@@ -729,6 +828,8 @@ ITEM(Item043, 44, EItemTierType::Four, EItemType::Attack,
 opponents.ToDamage(30, me);
 ,
 opponents.ToDamage(30, me);
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 쿤미옌 소한 : 데미지 1, 아이템 사용시마다 데미지가 두배
@@ -774,6 +875,8 @@ else
 }
 opponents.ToDamage(damage, me);
 }
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 /// <summary> 모든 아이템의 주소를 가지고 있는 배열 </summary>

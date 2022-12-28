@@ -680,6 +680,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		if (upgradeItem.GetType() != materialItem.GetType())
 		{
 			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetType() != materialItem.GetType()");
+			Log("log", "{0}번 자리 : {1}번 아이템, {2}번 자리 : {3}번 아이템", upgradeItem.GetSlot(), upgradeItem.GetType(), materialItem.GetSlot(), materialItem.GetType());
 			return;
 		}
 
@@ -692,6 +693,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		if (upgradeItem.GetUpgrade() != materialItem.GetUpgrade())
 		{
 			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetUpgrade() != materialItem.GetUpgrade()");
+			Log("log", "{0}번 자리 : {1}강화, {2}번 자리 : {3}강화", upgradeItem.GetSlot(), upgradeItem.GetUpgrade(), materialItem.GetSlot(), materialItem.GetUpgrade());
 			return;
 		}
 

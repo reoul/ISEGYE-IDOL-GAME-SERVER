@@ -570,7 +570,7 @@ bool Room::BattleStage(Room& room)
 		sc_FadeOutPacket packet(1);
 		room.SendPacketToAllClients(&packet);
 	}
-	// todo : 장착효과 추가하기
+
 	Sleep(1000);
 
 	const size_t roomOpenCount = room.GetOpenCount();
@@ -605,6 +605,7 @@ bool Room::BattleStage(Room& room)
 
 		for (int i = 0; i < battleOpponents.size(); ++i)
 		{
+			avatars[i].FitmentEffect();
 			for (int j = 0; j < MAX_USING_ITEM_COUNT; ++j)
 			{
 				Item& item = avatars[i].GetItemBySlot(j);
@@ -640,6 +641,16 @@ bool Room::BattleStage(Room& room)
 	}
 
 	Sleep(1000);
+
+	for (int i = 0; i < battleOpponents.size(); i += 2)
+	{
+		if (avatars[i].GetFirstAttackState() < avatars[i + 1].GetFirstAttackState())
+		{
+			BattleAvatar avatar1 = avatars[i];
+			avatars[i] = avatars[i + 1];
+			avatars[i + 1] = avatar1;
+		}
+	}
 
 	for (size_t battleLoop = 0; battleLoop < 20; ++battleLoop)
 	{

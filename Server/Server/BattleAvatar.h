@@ -23,6 +23,7 @@ public:
 	BattleAvatar() = default;
 	void SetAvatar(Client& client, bool isGhost);
 	uint8_t ActiveItem(int index, BattleAvatar& enemy);
+	void FitmentEffect();
 	void SetActiveQueue(std::vector<SlotInfo> activeQueue);
 	void ToDamage(int damage, const BattleAvatar& opponent);
 	void ToDefensive(int defensive);
@@ -77,6 +78,9 @@ public:
 	void EffectCounter(BattleAvatar& opponent);
 	int GetDamage() const;
 	void ToDamageCharacter(int damage);
+	void SetMaxHP(int maxHp);
+	void SetFirstAttackState(int firstAttackState);
+	int	GetFirstAttackState() const;
 private:
 	Client* mClient;
 	int mNetworkID;
@@ -106,6 +110,7 @@ private:
 	bool mCanDefendNegativeEffect;	// 부정적인 효과 방어
 	bool mIsIgnoreNextDamage;		// 다음 피해 무시
 	bool mIsCharacterDamage;		// 캐릭터가 데미지를 입었는지 (전투 끝난뒤에 데미지 입힘 체크)
+	int	mFirstAttackState;			// 선공 스텟
 };
 
 inline void BattleAvatar::ToDefensive(int defensive)
@@ -386,4 +391,19 @@ inline void BattleAvatar::EffectBomb()
 	mIsInstallBomb = false;
 }
 
+inline void BattleAvatar::SetMaxHP(int maxHp)
+{
+	mMaxHp = maxHp;
+	mHp = maxHp;
+}
+
+inline void BattleAvatar::SetFirstAttackState(int firstAttackState)
+{
+	mFirstAttackState = firstAttackState;
+}
+
+inline int BattleAvatar::GetFirstAttackState() const
+{
+	return mFirstAttackState;
+}
 

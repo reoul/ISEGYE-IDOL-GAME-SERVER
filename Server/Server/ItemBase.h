@@ -16,7 +16,7 @@ public:
 	}
 	virtual ~ItemBase() = default;
 	virtual void Active(BattleAvatar& me, BattleAvatar& opponents, int upgrade) = 0;
-	virtual void FitmentEffect(BattleAvatar& me) = 0;
+	virtual void FitmentEffect(BattleAvatar& me, int upgrade) = 0;
 public:
 	/// <summary> 아이템 고유 코드 </summary>
 	const int CODE;

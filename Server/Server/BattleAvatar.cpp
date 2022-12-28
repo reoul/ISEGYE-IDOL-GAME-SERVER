@@ -36,6 +36,7 @@ void BattleAvatar::SetAvatar(Client& client, bool isGhost)
 	mCanDefendNegativeEffect = false;
 	mIsIgnoreNextDamage = false;
 	mIsCharacterDamage = false;
+	mFirstAttackState = client.GetFirstAttackState();
 
 	const vector<Item> items = client.GetUsingItems();
 	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -56,6 +57,14 @@ uint8_t BattleAvatar::ActiveItem(int index, BattleAvatar& enemy)
 	}
 
 	return static_cast<uint8_t>(mActiveQueue[index]);
+}
+
+void BattleAvatar::FitmentEffect()
+{
+	for (Item& item : mUsingItem)
+	{
+		sItems[item.GetType()]->FitmentEffect(*this, item.GetUpgrade());
+	}
 }
 
 void BattleAvatar::SetActiveQueue(std::vector<SlotInfo> activeQueue)
