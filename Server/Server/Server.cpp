@@ -444,7 +444,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		const cs_sc_UseEmoticonPacket* pPacket = reinterpret_cast<cs_sc_UseEmoticonPacket*>(buf);
 		Log("log", "[cs_sc_useEmoticon] 네트워크 {0}번 클라이언트 {1}번 이모티콘 사용", pPacket->networkID, pPacket->emoticonType);
-		sClients[networkID].SendPacketInAnotherRoomClients(buf);
+		sClients[networkID].SendPacketInAllRoomClients(buf);
 	}
 	break;
 	case EPacketType::cs_sc_notification:
