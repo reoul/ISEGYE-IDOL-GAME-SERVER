@@ -547,7 +547,7 @@ bool Room::BattleStage(Room& room)
 		sc_FadeOutPacket packet(1);
 		room.SendPacketToAllClients(&packet);
 	}
-
+	// todo : 장착효과 추가하기
 	Sleep(1000);
 
 	const size_t roomOpenCount = room.GetOpenCount();

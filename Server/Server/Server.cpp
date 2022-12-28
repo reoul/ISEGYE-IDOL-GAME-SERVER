@@ -671,22 +671,33 @@ void Server::ProcessPacket(int networkID, char* buf)
 	{
 		cs_RequestUpgradeItemPacket* pPacket = reinterpret_cast<cs_RequestUpgradeItemPacket*>(buf);
 
+		Log("log", "cs_RequestUpgradeItemPacket {0}번 클라이언트 {1}/{2}", pPacket->networkID, pPacket->slot1, pPacket->slot2);
+
 		Client& client = sClients[pPacket->networkID];
 		Item& upgradeItem = client.GetItem(pPacket->slot1);
 		Item& materialItem = client.GetItem(pPacket->slot2);
 
 		if (upgradeItem.GetType() != materialItem.GetType())
 		{
+			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetType() != materialItem.GetType()");
+			return;
+		}
+
+		if (upgradeItem.GetType() == 0)
+		{
+			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetType() == 0");
 			return;
 		}
 
 		if (upgradeItem.GetUpgrade() != materialItem.GetUpgrade())
 		{
+			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetUpgrade() != materialItem.GetUpgrade()");
 			return;
 		}
 
 		if (upgradeItem.GetUpgrade() >= 2)
 		{
+			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetUpgrade() >= 2");
 			return;
 		}
 
