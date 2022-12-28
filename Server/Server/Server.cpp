@@ -677,6 +677,12 @@ void Server::ProcessPacket(int networkID, char* buf)
 		Item& upgradeItem = client.GetItem(pPacket->slot1);
 		Item& materialItem = client.GetItem(pPacket->slot2);
 
+		if (pPacket->slot1 == pPacket->slot2)
+		{
+			Log("log", "cs_RequestUpgradeItemPacket pPacket->slot1 == pPacket->slot2");
+			return;
+		}
+
 		if (upgradeItem.GetType() != materialItem.GetType())
 		{
 			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetType() != materialItem.GetType()");
