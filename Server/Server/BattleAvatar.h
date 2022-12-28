@@ -81,6 +81,8 @@ public:
 	void SetMaxHP(int maxHp);
 	void SetFirstAttackState(int firstAttackState);
 	int	GetFirstAttackState() const;
+	void SetUsingItem(int index, Item item);
+	void SetIsGhost(bool isGhost);
 private:
 	Client* mClient;
 	int mNetworkID;
@@ -405,5 +407,15 @@ inline void BattleAvatar::SetFirstAttackState(int firstAttackState)
 inline int BattleAvatar::GetFirstAttackState() const
 {
 	return mFirstAttackState;
+}
+
+inline void BattleAvatar::SetUsingItem(int index, Item item)
+{
+	mUsingItem[index] = item;
+}
+
+inline void BattleAvatar::SetIsGhost(bool isGhost)
+{
+	mIsGhost = isGhost;
 }
 

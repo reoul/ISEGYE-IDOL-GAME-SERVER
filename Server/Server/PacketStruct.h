@@ -67,6 +67,8 @@ enum class EPacketType : uint8_t
 	cs_requestUpgradeItem,
 	/// <summary> 박사의 만능툴 정보 패킷 타입 </summary>
 	sc_DoctorToolInfo,
+	/// <summary> 크립 라운드 정보 패킷 타입 </summary>
+	sc_CreepStageInfo,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -670,6 +672,24 @@ struct sc_DoctorToolInfoPacket : private Packet
 		, slot(slot)
 		, itemType(itemType)
 		, upgrade(upgrade)
+	{
+	}
+};
+
+/// <summary> 크립 라운드 정보 패킷 타입 </summary>
+struct sc_CreepStageInfoPacket : private Packet
+{
+	const_wrapper<ECreepType> creepType;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(creepType.get());
+	}
+
+	sc_CreepStageInfoPacket(ECreepType creepType)
+		: Packet(sizeof(sc_CreepStageInfoPacket), EPacketType::sc_CreepStageInfo)
+		, creepType(creepType)
 	{
 	}
 };

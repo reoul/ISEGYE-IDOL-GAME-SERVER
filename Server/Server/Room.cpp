@@ -18,6 +18,7 @@ Room::Room()
 	, mOpenCount(0)
 	, mRound(0)
 	, mCurRoomStatusType(ERoomStatusType::ChoiceCharacter)
+	, mCreepRound(0)
 {
 }
 
@@ -136,6 +137,7 @@ void Room::Init()
 
 	mRound = 0;
 	mCurRoomStatusType = ERoomStatusType::ChoiceCharacter;
+	mCreepRound = 0;
 }
 
 void Room::TrySendEnterInGame()
@@ -388,27 +390,27 @@ unsigned Room::ProgressThread(void* pArguments)
 	// 처음 크립 3판
 	// todo : 크립 추가시 해제하기
 	/*ReadyStage(room, false);
-	
+
 	Sleep(1000);
-	
+
 	CreepStage(room);
-	
+
 	Sleep(1000);
 
 	ReadyStage(room, false);
-	
+
 	Sleep(1000);
-	
+
 	CreepStage(room);
-	
+
 	Sleep(1000);
 
 	ReadyStage(room, false);
-	
+
 	Sleep(1000);
-	
+
 	CreepStage(room);*/
-	
+
 	Sleep(1000);
 
 	while (true)
@@ -430,6 +432,25 @@ unsigned Room::ProgressThread(void* pArguments)
 			}
 
 			Sleep(1000);
+
+			// 대기 시간
+			if (!ReadyStage(room, false))
+			{
+				goto loopOut;
+			}
+
+			Sleep(1000);
+
+			// 크립
+			if (!CreepStage(room))
+			{
+				break;
+			}
+
+			Sleep(1000);
+
+			// todo : 없애야함
+			++room.mRound;
 		}
 
 		// 대기 시간
@@ -449,7 +470,7 @@ unsigned Room::ProgressThread(void* pArguments)
 
 		Sleep(1000);
 
-		++room.mRound;
+		//++room.mRound;
 	}
 
 loopOut:
@@ -618,7 +639,7 @@ bool Room::BattleStage(Room& room)
 					packet.Write(memoryStream);
 					Logger::Log("log", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
 				}
-				else if(item.GetType() == 16)	// 박사의 만능툴
+				else if (item.GetType() == 16)	// 박사의 만능툴
 				{
 					int index = i % 2 == 0 ? 1 : -1;	// 0-1   2-3   4-5  6-7 이렇게 전투하기 때문에 인덱스 번호에 따라 상대 인덱스가 다르다
 					BattleAvatar& opponent = avatars[i + index];
@@ -698,7 +719,7 @@ bool Room::BattleStage(Room& room)
 					}
 
 					const uint8_t activeSlot = avatars[k].ActiveItem(activeItemIndex, avatars[k + 1]);
-					
+
 					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
 					{
 						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
@@ -721,7 +742,7 @@ bool Room::BattleStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
-					
+
 					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
 					packet.Write(memoryStream);
 					packetSize += sizeof(sc_ActiveItemPacket);
@@ -765,7 +786,7 @@ bool Room::BattleStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
 					}
-					
+
 					if (!avatars[k].IsFinish() && !avatars[k - 1].IsFinish())
 					{
 						avatars[k].EffectBleeding();
@@ -874,12 +895,234 @@ bool Room::CreepStage(Room& room)
 
 	LogPrintf("크립 스테이지 시작");
 
+	ECreepType curCreeType = room.GetCurCreepType();
+
+	const int avatarCount = room.GetClients().size() * 2;
+	
+	const BattleAvatar creepMonster = room.GetCreepMonster();
+
+	unique_ptr<BattleAvatar[]> avatars = make_unique<BattleAvatar[]>(avatarCount);
+	int clientIndex = 0;
+	for (int i = 0; i < avatarCount; i += 2)
 	{
-		cs_sc_NotificationPacket packet(0, ENotificationType::EnterCreepStage);
-		room.SendPacketToAllClients(&packet);
+		avatars[i].SetAvatar(*room.GetClients()[clientIndex++], false);
+		avatars[i + 1] = creepMonster;
 	}
 
-	Sleep(3000);
+	{
+		OutputMemoryStream memoryStream(512);
+		cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCreepStage);
+		notificationPacket.Write(memoryStream);
+		sc_CreepStageInfoPacket creepStageInfoPacket(curCreeType);
+		creepStageInfoPacket.Write(memoryStream);
+
+		for (int i = 0; i < avatarCount; ++i)
+		{
+			avatars[i].FitmentEffect();
+			for (int j = 0; j < MAX_USING_ITEM_COUNT; ++j)
+			{
+				Item& item = avatars[i].GetItemBySlot(j);
+				if (item.GetType() == 7)	// 햄버거인 경우
+				{
+					const EHamburgerType hamburgerType = avatars[i].GetRandomHamburgerType();
+					avatars[i].SetHamburgerType(hamburgerType);
+
+					sc_SetHamburgerTypePacket packet(avatars[i].GetNetworkID(), j, hamburgerType);
+					packet.Write(memoryStream);
+					Logger::Log("log", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
+				}
+			}
+		}
+
+		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+	}
+
+	// todo : 나중에 속도 빠르게 수정
+	constexpr int waitTimes[2]{ 500, 500 };
+
+	Sleep(1000);
+
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
+	{
+		return false;
+	}
+
+
+	for (size_t battleLoop = 0; battleLoop < 20; ++battleLoop)
+	{
+		for (int j = 0; j < avatarCount; ++j)
+		{
+			const vector<SlotInfo> itemQueue = Server::GetClients(avatars[j].GetNetworkID()).GetItemActiveQueue();
+			avatars[j].SetActiveQueue(itemQueue);
+		}
+
+		{
+			OutputMemoryStream memoryStream;
+
+			int packetSize = 0;
+			for (int k = 0; k < avatarCount; ++k)
+			{
+				if (avatars[k].IsFinish())
+				{
+					continue;
+				}
+
+				cs_sc_NotificationPacket packet(avatars[k].GetNetworkID(), ENotificationType::InitBattleSlot);
+				packet.Write(memoryStream);
+				packetSize += sizeof(cs_sc_NotificationPacket);
+			}
+
+			if (packetSize > 0)
+			{
+				room.SendPacketToAllClients(memoryStream.GetBufferPtr(), packetSize);
+			}
+		}
+
+		Sleep(1000);
+
+		for (int activeItemIndex = 0; activeItemIndex < MAX_USING_ITEM_COUNT; ++activeItemIndex)
+		{
+			{
+				OutputMemoryStream memoryStream;
+
+				int packetSize = 0;
+				for (int k = 0; k < avatarCount; k += 2)
+				{
+					if (avatars[k].IsFinish())
+					{
+						continue;
+					}
+
+					const uint8_t activeSlot = avatars[k].ActiveItem(activeItemIndex, avatars[k + 1]);
+
+					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+					{
+						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
+						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+
+						avatars[k].SetFinish();
+						avatars[k + 1].SetFinish();
+					}
+
+					if (!avatars[k].IsFinish() && !avatars[k + 1].IsFinish())
+					{
+						avatars[k].EffectBleeding();
+					}
+
+					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+					{
+						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
+						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+
+						avatars[k].SetFinish();
+						avatars[k + 1].SetFinish();
+					}
+
+					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
+					packet.Write(memoryStream);
+					packetSize += sizeof(sc_ActiveItemPacket);
+				}
+				if (packetSize > 0)
+				{
+					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), packetSize);
+				}
+			}
+
+			Sleep(waitTimes[battleLoop / 10]);
+
+			int k;
+			for (k = 0; k < avatarCount; ++k)
+			{
+				if (avatars[k].IsFinish() == false) break;
+			}
+			if (k == avatarCount)
+			{
+				goto FinishBattle;
+			}
+
+			{
+				OutputMemoryStream memoryStream;
+
+				int packetSize = 0;
+				for (int k = 1; k < avatarCount; k += 2)
+				{
+					if (avatars[k].IsFinish())
+					{
+						continue;
+					}
+
+					const uint8_t activeSlot = avatars[k].ActiveItem(activeItemIndex, avatars[k - 1]);
+
+					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
+					{
+						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
+						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
+
+						avatars[k].SetFinish();
+						avatars[k - 1].SetFinish();
+					}
+
+					if (!avatars[k].IsFinish() && !avatars[k - 1].IsFinish())
+					{
+						avatars[k].EffectBleeding();
+					}
+
+					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
+					{
+						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
+						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
+
+						avatars[k].SetFinish();
+						avatars[k - 1].SetFinish();
+					}
+
+					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
+					packet.Write(memoryStream);
+					packetSize += sizeof(sc_ActiveItemPacket);
+				}
+				if (packetSize > 0)
+				{
+					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), packetSize);
+				}
+			}
+
+			Sleep(waitTimes[battleLoop / 10]);
+
+			for (k = 0; k < avatarCount; k += 2)
+			{
+				if (avatars[k].IsFinish())
+				{
+					continue;
+				}
+
+				avatars[k].EffectBomb();
+				avatars[k].InitCycle();
+				avatars[k + 1].EffectBomb();
+				avatars[k + 1].InitCycle();
+				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+				{
+					avatars[k].SetFinish();
+					avatars[k + 1].SetFinish();
+				}
+			}
+
+			for (k = 0; k < avatarCount; ++k)
+			{
+				if (avatars[k].IsFinish() == false) break;
+			}
+			if (k == avatarCount)
+			{
+				goto FinishBattle;
+			}
+
+			if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
+			{
+				return false;
+			}
+		}
+	}
+
+FinishBattle:
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
@@ -901,4 +1144,93 @@ bool Room::IsValidClientInThisRoom(Client* client) const
 	if (client->GetRoomPtr() != this) { return false; }
 	if (client->GetRoomOpenCount() != mOpenCount) { return false; }
 	return true;
+}
+
+BattleAvatar Room::GetCreepMonster()
+{
+	BattleAvatar monster;
+	monster.SetIsGhost(true);
+	monster.SetMaxHP(100);
+	const ECreepType curCreepType = GetCurCreepType();
+	switch (curCreepType)
+	{
+	case ECreepType::Shrimp:
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+		{
+			Item item;
+			item.SetType(38);
+			item.SetUpgrade(0);
+			monster.SetUsingItem(i, item);
+		}
+		break;
+	case ECreepType::NegativeMan:
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+		{
+			Item item;
+			item.SetType(39);
+			item.SetUpgrade(0);
+			monster.SetUsingItem(i, item);
+		}
+		break;
+	case ECreepType::Hodd:
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+		{
+			Item item;
+			item.SetType(40);
+			item.SetUpgrade(0);
+			monster.SetUsingItem(i, item);
+		}
+		break;
+	case ECreepType::Wakpago:
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+		{
+			Item item;
+			item.SetType(41);
+			item.SetUpgrade(0);
+			monster.SetUsingItem(i, item);
+		}
+		break;
+	case ECreepType::ShortAnswer:
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; i += 2)
+		{
+			Item item;
+			item.SetType(42);
+			item.SetUpgrade(0);
+			monster.SetUsingItem(i, item);
+			item.SetType(43);
+			item.SetUpgrade(0);
+			monster.SetUsingItem(i + 1, item);
+		}
+		break;
+	case ECreepType::Chunsik:
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+		{
+			Item item;
+			item.SetType(44);
+			item.SetUpgrade(0);
+			monster.SetUsingItem(i, item);
+		}
+		break;
+	case ECreepType::KwonMin:
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+		{
+			Item item;
+			item.SetType(45);
+			item.SetUpgrade(0);
+			monster.SetUsingItem(i, item);
+		}
+		break;
+	}
+	++mCreepRound;
+	return monster;
+}
+
+ECreepType Room::GetCurCreepType() const
+{
+	if (mCreepRound >= static_cast<int>(ECreepType::KwonMin))
+	{
+		return ECreepType::KwonMin;
+	}
+
+	return static_cast<ECreepType>(mCreepRound);
 }

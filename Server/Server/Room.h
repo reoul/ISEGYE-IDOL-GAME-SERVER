@@ -17,6 +17,8 @@ enum class ERoomStatusType
 	CreepStage,
 };
 
+class BattleAvatar;
+
 class Room
 {
 public:
@@ -53,6 +55,8 @@ public:
 	int GetRound() const;
 	ERoomStatusType GetCurRoomStatusType() const;
 	bool IsValidClientInThisRoom(Client* client) const;
+	BattleAvatar GetCreepMonster();
+	ECreepType GetCurCreepType() const;
 private:
 	vector<Client*> mClients;
 	size_t mSize;
@@ -66,6 +70,7 @@ private:
 	size_t mOpenCount;	// 룸 열린 횟수, Room 진행이 스레드로 돌아서 해제되면서 바로 열리면 스레드가 계속 진행되므로 구별 변수
 	int mRound;	// 진행 라운드
 	ERoomStatusType mCurRoomStatusType;	// Room 진행 상황
+	size_t mCreepRound;	// 현재 크립라운드 고멤 누구 나올지 결정해주는 변수
 };
 
 inline const vector<Client*>& Room::GetClients() const

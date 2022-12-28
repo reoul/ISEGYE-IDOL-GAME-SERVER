@@ -18,6 +18,7 @@ enum class ESocketStatus : uint8_t { FREE, ALLOCATED, ACTIVE };
 enum class ECharacterType : uint8_t { Woowakgood, Ine, Jingberger, Lilpa, Jururu, Gosegu, Viichan, Empty };
 enum class EItemTicketType : uint8_t { Normal, Advanced, Top, Supreme };
 enum class EHamburgerType : uint8_t { Fillet, Guinness, WhiteGarlic, Rice };
+enum class ECreepType : uint8_t { Shrimp, NegativeMan, Hodd, Wakpago, ShortAnswer, Chunsik, KwonMin };
 
 //확장 overlapped 구조체
 struct Exover
