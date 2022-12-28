@@ -48,12 +48,12 @@ Client::Client()
 		sItemProbability[5][3] + sItemProbability[5][4] == 100, "Sum is Not 100");
 
 	// UsingItems 자리에 선공 확률 지정
-	mUsingItems[0].SetActivePercent(27);
-	mUsingItems[1].SetActivePercent(27);
+	mUsingItems[0].SetActivePercent(40);
+	mUsingItems[1].SetActivePercent(40);
 	mUsingItems[2].SetActivePercent(33);
 	mUsingItems[3].SetActivePercent(33);
-	mUsingItems[4].SetActivePercent(40);
-	mUsingItems[5].SetActivePercent(40);
+	mUsingItems[4].SetActivePercent(27);
+	mUsingItems[5].SetActivePercent(27);
 
 	// 아이템 슬롯 캐싱
 	mUsingItems[0].SetSlot(0);
