@@ -787,11 +787,18 @@ static ItemBase* sItems[]
 };
 
 // 각 티어마다의 아이템 벡터
-static const vector<const ItemBase*> _sOneTierItems{ &sItem000, &sItem001, &sItem002, &sItem003, &sItem007, &sItem032 };
-static const vector<const ItemBase*> _sTwoTierItems{ &sItem006, &sItem008, &sItem009, &sItem010, &sItem011, &sItem013, &sItem018, &sItem019, &sItem020, &sItem021, &sItem025, &sItem029, &sItem030, &sItem036 };
-static const vector<const ItemBase*> _sThreeTierItems{ &sItem005, &sItem012, &sItem015, &sItem016, &sItem023, &sItem027, &sItem028, &sItem033, &sItem034, &sItem035 };
+static const vector<const ItemBase*> _sOneTierItems{ &sItem000, &sItem003, &sItem007, &sItem032 };
+static const vector<const ItemBase*> _sTwoTierItems{ &sItem006, &sItem010, &sItem018, &sItem019, &sItem020, &sItem021, &sItem025, &sItem030, &sItem036 };
+static const vector<const ItemBase*> _sThreeTierItems{ &sItem012, &sItem015, &sItem016, &sItem023, &sItem027, &sItem028 };
 static const vector<const ItemBase*> _sFourTierItems{ &sItem004, &sItem017, &sItem022, &sItem024 };
-static const vector<const ItemBase*> _sFiveTierItems{ &sItem014, &sItem026, &sItem031 };
+static const vector<const ItemBase*> _sFiveTierItems{ &sItem014, &sItem031 };
+
+// 각 티어마다의 아이템 벡터
+//static const vector<const ItemBase*> _sOneTierItems{ &sItem000, &sItem001, &sItem002, &sItem003, &sItem007, &sItem032 };
+//static const vector<const ItemBase*> _sTwoTierItems{ &sItem006, &sItem008, &sItem009, &sItem010, &sItem011, &sItem013, &sItem018, &sItem019, &sItem020, &sItem021, &sItem025, &sItem029, &sItem030, &sItem036 };
+//static const vector<const ItemBase*> _sThreeTierItems{ &sItem005, &sItem012, &sItem015, &sItem016, &sItem023, &sItem027, &sItem028, &sItem033, &sItem034, &sItem035 };
+//static const vector<const ItemBase*> _sFourTierItems{ &sItem004, &sItem017, &sItem022, &sItem024 };
+//static const vector<const ItemBase*> _sFiveTierItems{ &sItem014, &sItem026, &sItem031 };
 
 // 각 티어 아이템 벡터를 가진 배열
 static const vector<const ItemBase*>* sTierItems[MAX_ITEM_UPGRADE]{ &_sOneTierItems, &_sTwoTierItems, &_sThreeTierItems, &_sFourTierItems, &_sFiveTierItems };

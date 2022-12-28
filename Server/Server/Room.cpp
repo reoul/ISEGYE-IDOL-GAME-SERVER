@@ -388,13 +388,28 @@ unsigned Room::ProgressThread(void* pArguments)
 	// 처음 크립 3판
 	// todo : 크립 추가시 해제하기
 	/*ReadyStage(room, false);
+	
+	Sleep(1000);
+	
 	CreepStage(room);
+	
+	Sleep(1000);
 
 	ReadyStage(room, false);
+	
+	Sleep(1000);
+	
 	CreepStage(room);
+	
+	Sleep(1000);
 
 	ReadyStage(room, false);
+	
+	Sleep(1000);
+	
 	CreepStage(room);*/
+	
+	Sleep(1000);
 
 	while (true)
 	{
@@ -406,11 +421,15 @@ unsigned Room::ProgressThread(void* pArguments)
 				goto loopOut;
 			}
 
+			Sleep(1000);
+
 			// 전투
 			if (!BattleStage(room))
 			{
 				goto loopOut;
 			}
+
+			Sleep(1000);
 		}
 
 		// 대기 시간
@@ -420,11 +439,15 @@ unsigned Room::ProgressThread(void* pArguments)
 		//	break;
 		//}
 
+		Sleep(1000);
+
 		//// 크립
 		//if (!CreepStage(room))
 		//{
 		//	break;
 		//}
+
+		Sleep(1000);
 
 		++room.mRound;
 	}
