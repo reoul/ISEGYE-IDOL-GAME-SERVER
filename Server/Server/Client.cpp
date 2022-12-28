@@ -154,8 +154,11 @@ void Client::SwapItem(const uint8_t index1, const uint8_t index2)
 	Item& item2 = index2 < MAX_USING_ITEM_COUNT ? mUsingItems[index2] : mUnUsingItems[index2 - MAX_USING_ITEM_COUNT];
 
 	const uint8_t type2 = item2.GetType();
+	const uint8_t upgrade2 = item2.GetUpgrade();
 	item2.SetType(item1.GetType());
+	item2.SetUpgrade(item1.GetUpgrade());
 	item1.SetType(type2);
+	item1.SetUpgrade(upgrade2);
 }
 
 uint8_t Client::AddItem(uint8_t type)
@@ -263,7 +266,7 @@ bool Client::TrySetDefaultUsingItem()
 	if (!validUnUsingItems.empty() && GetValidUsingItems().empty())
 	{
 		uint8_t slot1 = 0;
-		for (auto it = validUnUsingItems.begin(); it != validUnUsingItems.end();)
+		for (auto it = validUnUsingItems.begin(); it != validUnUsingItems.end(); ++it)
 		{
 			// 중복 검사
 			bool isUsing = false;
@@ -283,14 +286,11 @@ bool Client::TrySetDefaultUsingItem()
 				const uint8_t slot2 = it->index;
 				usingItemTypes.push_back(it->item.GetType());
 				SwapItem(slot1++, slot2);
-				it = validUnUsingItems.erase(it);
 				if (usingItemTypes.size() == MAX_USING_ITEM_COUNT)
 				{
 					break;
 				}
-				continue;
 			}
-			++it;
 		}
 	}
 
