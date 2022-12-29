@@ -17,6 +17,7 @@ int main()
 	Logger::AddLogger("test", "/testLog.txt");
 	Logger::AddLogger("SetDefaultUsingItem", "/SetDefaultUsingItem.txt");
 	Logger::AddLogger("Check", "/Check.txt");
+	Logger::AddLogger("BattleOpponents", "/BattleOpponents.txt");
 	Logger::AddLogger("BattleInfo", "/BattleInfo.txt");
 	Logger::AddLogger("FinishBattleResultInfo", "/FinishBattleResultInfo.txt");
 
