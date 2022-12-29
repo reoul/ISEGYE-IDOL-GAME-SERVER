@@ -668,18 +668,19 @@ bool Room::BattleStage(Room& room)
 
 	for (int i = 0; i < battleOpponents.size(); i += 2)
 	{
+		if (!room.IsValidClientInThisRoom(&Server::GetClients(avatars[i].GetNetworkID()))
+			|| !room.IsValidClientInThisRoom(&Server::GetClients(avatars[i + 1].GetNetworkID())))
+		{
+			Log("log", "{0}, {1} 전투 끝남", i, i + 1);
+			avatars[i].SetFinish();
+			avatars[i + 1].SetFinish();
+		}
+
 		if (avatars[i].GetFirstAttackState() < avatars[i + 1].GetFirstAttackState())
 		{
 			BattleAvatar avatar1 = avatars[i];
 			avatars[i] = avatars[i + 1];
 			avatars[i + 1] = avatar1;
-			if (!room.IsValidClientInThisRoom(&Server::GetClients(avatars[i].GetNetworkID()))
-					|| !room.IsValidClientInThisRoom(&Server::GetClients(avatars[i + 1].GetNetworkID())))
-			{
-				Log("test", "{0}, {1} 전투 끝남", i, i + 1);
-				avatars[i].SetFinish();
-				avatars[i + 1].SetFinish();
-			}
 		}
 	}
 
