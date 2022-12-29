@@ -631,20 +631,23 @@ bool Room::BattleStage(Room& room)
 					const EHamburgerType hamburgerType = avatars[i].GetRandomHamburgerType();
 					avatars[i].SetHamburgerType(hamburgerType);
 
-					sc_SetHamburgerTypePacket packet(avatars[i].GetNetworkID(), j, hamburgerType);
+					const int networkID = avatars[i].IsGhost() ? ~avatars[i].GetNetworkID() : avatars[i].GetNetworkID();
+					sc_SetHamburgerTypePacket packet(networkID, j, hamburgerType);
 					packet.Write(memoryStream);
-					Logger::Log("BattleInfo", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
+					Logger::Log("BattleInfo", "[전투] {0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", networkID, static_cast<int>(hamburgerType));
 				}
 				else if (item.GetType() == 16)	// 박사의 만능툴
 				{
 					int index = i % 2 == 0 ? 1 : -1;	// 0-1   2-3   4-5  6-7 이렇게 전투하기 때문에 인덱스 번호에 따라 상대 인덱스가 다르다
 					BattleAvatar& opponent = avatars[i + index];
 					Item choiceItem = opponent.GetRandomCopyItem();
-					sc_DoctorToolInfoPacket packet(avatars[i].GetNetworkID(), j, choiceItem.GetType(), choiceItem.GetUpgrade());
+
+					const int networkID = avatars[i].IsGhost() ? ~avatars[i].GetNetworkID() : avatars[i].GetNetworkID();
+					sc_DoctorToolInfoPacket packet(networkID, j, choiceItem.GetType(), choiceItem.GetUpgrade());
 					packet.Write(memoryStream);
 					item.SetType(choiceItem.GetType());
 					item.SetUpgrade(choiceItem.GetUpgrade());
-					Logger::Log("BattleInfo", "{0}번 클라이언트 만능툴 {1}번 아이템 강화 수치 {2}으로 설정됨", avatars[i].GetNetworkID(), choiceItem.GetType(), choiceItem.GetUpgrade());
+					Logger::Log("BattleInfo", "[전투] {0}번 클라이언트 만능툴 {1}번 아이템 강화 수치 {2}으로 설정됨", networkID, choiceItem.GetType(), choiceItem.GetUpgrade());
 				}
 			}
 		}
@@ -673,7 +676,7 @@ bool Room::BattleStage(Room& room)
 		if (!room.IsValidClientInThisRoom(&Server::GetClients(networkID1))
 			|| !room.IsValidClientInThisRoom(&Server::GetClients(networkID2)))
 		{
-			Log("BattleInfo", "{0}, {1} 전투 끝남", networkID1, networkID2);
+			Log("BattleInfo", "[전투] {0}, {1} 전투 끝남", networkID1, networkID2);
 			avatars[i].SetFinish();
 			avatars[i + 1].SetFinish();
 		}
@@ -708,7 +711,8 @@ bool Room::BattleStage(Room& room)
 					continue;
 				}
 
-				cs_sc_NotificationPacket packet(avatars[k].GetNetworkID(), ENotificationType::InitBattleSlot);
+				const int networkID = avatars[k].IsGhost() ? ~avatars[k].GetNetworkID() : avatars[k].GetNetworkID();
+				cs_sc_NotificationPacket packet(networkID, ENotificationType::InitBattleSlot);
 				packet.Write(memoryStream);
 				packetSize += sizeof(cs_sc_NotificationPacket);
 			}
@@ -759,7 +763,8 @@ bool Room::BattleStage(Room& room)
 						avatars[k + 1].SetFinish();
 					}
 
-					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
+					const int networkID = avatars[k].IsGhost() ? ~avatars[k].GetNetworkID() : avatars[k].GetNetworkID();
+					sc_ActiveItemPacket packet(networkID, activeSlot);
 					packet.Write(memoryStream);
 					packetSize += sizeof(sc_ActiveItemPacket);
 				}
@@ -817,7 +822,8 @@ bool Room::BattleStage(Room& room)
 						avatars[k - 1].SetFinish();
 					}
 
-					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
+					const int networkID = avatars[k].IsGhost() ? ~avatars[k].GetNetworkID() : avatars[k].GetNetworkID();
+					sc_ActiveItemPacket packet(networkID, activeSlot);
 					packet.Write(memoryStream);
 					packetSize += sizeof(sc_ActiveItemPacket);
 				}
@@ -851,7 +857,8 @@ bool Room::BattleStage(Room& room)
 			for (k = 0; k < avatarCount; ++k)
 			{
 				BattleAvatar& avatar = avatars[k];
-				Log("BattleInfo", "{0}번 클라이언트 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", avatar.GetNetworkID(), avatar.GetMaxHP(), avatar.GetHP(), avatar.IsFinish(), avatar.IsGhost());
+				const int networkID = avatars[k].IsGhost() ? ~avatars[k].GetNetworkID() : avatars[k].GetNetworkID();
+				Log("BattleInfo", "[전투] {0}번 클라이언트 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", networkID, avatar.GetMaxHP(), avatar.GetHP(), avatar.IsFinish(), avatar.IsGhost());
 			}
 			Log("BattleInfo", "----------");
 
@@ -888,7 +895,7 @@ FinishBattle:
 
 	for (Client* pClient : room.GetClients())
 	{
-		Log("FinishBattleResultInfo", "{0}번 클라이언트 체력 : {1}", pClient->GetNetworkID(), pClient->GetHp());
+		Log("FinishBattleResultInfo", "[전투] {0}번 클라이언트 체력 : {1}", pClient->GetNetworkID(), pClient->GetHp());
 	}
 
 	Log("FinishBattleResultInfo", "----------");
@@ -944,7 +951,9 @@ bool Room::CreepStage(Room& room)
 		sc_CreepStageInfoPacket creepStageInfoPacket(curCreeType);
 		creepStageInfoPacket.Write(memoryStream);
 
-		for (int i = 0; i < avatarCount; ++i)
+		// 홀수는 크립몬스터라
+		// 만약 장착 효과가 있으면 ++i 로 변경해야함
+		for (int i = 0; i < avatarCount; i += 2)
 		{
 			avatars[i].FitmentEffect();
 			for (int j = 0; j < MAX_USING_ITEM_COUNT; ++j)
@@ -957,7 +966,7 @@ bool Room::CreepStage(Room& room)
 
 					sc_SetHamburgerTypePacket packet(avatars[i].GetNetworkID(), j, hamburgerType);
 					packet.Write(memoryStream);
-					Logger::Log("log", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
+					Logger::Log("log", "[크립] {0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
 				}
 			}
 		}
@@ -987,7 +996,7 @@ bool Room::CreepStage(Room& room)
 
 	for (size_t battleLoop = 0; battleLoop < 20; ++battleLoop)
 	{
-		for (int j = 0; j < avatarCount; ++j)
+		for (int j = 0; j < avatarCount; j += 2)
 		{
 			const vector<SlotInfo> itemQueue = Server::GetClients(avatars[j].GetNetworkID()).GetItemActiveQueue();
 			avatars[j].SetActiveQueue(itemQueue);
@@ -997,7 +1006,7 @@ bool Room::CreepStage(Room& room)
 			OutputMemoryStream memoryStream;
 
 			int packetSize = 0;
-			for (int k = 0; k < avatarCount; ++k)
+			for (int k = 0; k < avatarCount; k += 2)
 			{
 				if (avatars[k].IsFinish())
 				{
@@ -1141,6 +1150,14 @@ bool Room::CreepStage(Room& room)
 				}
 			}
 
+			Log("BattleInfo", "----------");
+			for (k = 0; k < avatarCount; k += 2)
+			{
+				BattleAvatar& avatar = avatars[k];
+				Log("BattleInfo", "[크립] {0}번 클라이언트 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", avatar.GetNetworkID(), avatar.GetMaxHP(), avatar.GetHP(), avatar.IsFinish(), avatar.IsGhost());
+			}
+			Log("BattleInfo", "----------");
+
 			for (k = 0; k < avatarCount; ++k)
 			{
 				if (avatars[k].IsFinish() == false) break;
@@ -1158,6 +1175,15 @@ bool Room::CreepStage(Room& room)
 	}
 
 FinishBattle:
+
+	Log("FinishBattleResultInfo", "----------");
+
+	for (Client* pClient : room.GetClients())
+	{
+		Log("FinishBattleResultInfo", "[크립] {0}번 클라이언트 체력 : {1}", pClient->GetNetworkID(), pClient->GetHp());
+	}
+
+	Log("FinishBattleResultInfo", "----------");
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{

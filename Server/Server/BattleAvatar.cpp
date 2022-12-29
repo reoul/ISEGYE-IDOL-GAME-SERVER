@@ -42,6 +42,7 @@ void BattleAvatar::SetAvatar(Client& client, int networkID, bool isGhost)
 	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
 	{
 		mUsingItem[i] = items[i];
+		mActiveQueue[i] = i;
 	}
 }
 
