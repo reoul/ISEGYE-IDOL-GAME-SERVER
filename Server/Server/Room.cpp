@@ -668,10 +668,12 @@ bool Room::BattleStage(Room& room)
 
 	for (int i = 0; i < battleOpponents.size(); i += 2)
 	{
-		if (!room.IsValidClientInThisRoom(&Server::GetClients(avatars[i].GetNetworkID()))
-			|| !room.IsValidClientInThisRoom(&Server::GetClients(avatars[i + 1].GetNetworkID())))
+		int networkID1 = avatars[i].GetNetworkID();
+		int networkID2 = avatars[i + 1].GetNetworkID();
+		if (!room.IsValidClientInThisRoom(&Server::GetClients(networkID1))
+			|| !room.IsValidClientInThisRoom(&Server::GetClients(networkID2)))
 		{
-			Log("log", "{0}, {1} 전투 끝남", i, i + 1);
+			Log("log", "{0}, {1} 전투 끝남", networkID1, networkID2);
 			avatars[i].SetFinish();
 			avatars[i + 1].SetFinish();
 		}
