@@ -633,7 +633,7 @@ bool Room::BattleStage(Room& room)
 
 					sc_SetHamburgerTypePacket packet(avatars[i].GetNetworkID(), j, hamburgerType);
 					packet.Write(memoryStream);
-					Logger::Log("log", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
+					Logger::Log("BattleInfo", "{0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
 				}
 				else if (item.GetType() == 16)	// 박사의 만능툴
 				{
@@ -644,7 +644,7 @@ bool Room::BattleStage(Room& room)
 					packet.Write(memoryStream);
 					item.SetType(choiceItem.GetType());
 					item.SetUpgrade(choiceItem.GetUpgrade());
-					Logger::Log("log", "{0}번 클라이언트 만능툴 {1}번 아이템 강화 수치 {2}으로 설정됨", avatars[i].GetNetworkID(), choiceItem.GetType(), choiceItem.GetUpgrade());
+					Logger::Log("BattleInfo", "{0}번 클라이언트 만능툴 {1}번 아이템 강화 수치 {2}으로 설정됨", avatars[i].GetNetworkID(), choiceItem.GetType(), choiceItem.GetUpgrade());
 				}
 			}
 		}
@@ -673,7 +673,7 @@ bool Room::BattleStage(Room& room)
 		if (!room.IsValidClientInThisRoom(&Server::GetClients(networkID1))
 			|| !room.IsValidClientInThisRoom(&Server::GetClients(networkID2)))
 		{
-			Log("log", "{0}, {1} 전투 끝남", networkID1, networkID2);
+			Log("BattleInfo", "{0}, {1} 전투 끝남", networkID1, networkID2);
 			avatars[i].SetFinish();
 			avatars[i + 1].SetFinish();
 		}
@@ -847,11 +847,13 @@ bool Room::BattleStage(Room& room)
 				}
 			}
 
+			Log("BattleInfo", "----------");
 			for (k = 0; k < avatarCount; ++k)
 			{
 				BattleAvatar& avatar = avatars[k];
-				Log("log", "{0}번 클라이언트 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", avatar.GetNetworkID(), avatar.GetMaxHP(), avatar.GetHP(), avatar.IsFinish(), avatar.IsGhost());
+				Log("BattleInfo", "{0}번 클라이언트 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", avatar.GetNetworkID(), avatar.GetMaxHP(), avatar.GetHP(), avatar.IsFinish(), avatar.IsGhost());
 			}
+			Log("BattleInfo", "----------");
 
 			for (k = 0; k < avatarCount; ++k)
 			{
@@ -881,6 +883,15 @@ bool Room::BattleStage(Room& room)
 	}
 
 FinishBattle:
+
+	Log("FinishBattleResultInfo", "----------");
+
+	for (Client* pClient : room.GetClients())
+	{
+		Log("FinishBattleResultInfo", "{0}번 클라이언트 체력 : {1}", pClient->GetNetworkID(), pClient->GetHp());
+	}
+
+	Log("FinishBattleResultInfo", "----------");
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
