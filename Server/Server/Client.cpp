@@ -85,10 +85,12 @@ void Client::Init()
 	for (Item& item : mUsingItems)
 	{
 		item.SetType(EMPTY_ITEM);
+		item.SetUpgrade(0);
 	}
 	for (Item& item : mUnUsingItems)
 	{
 		item.SetType(EMPTY_ITEM);
+		item.SetUpgrade(0);
 	}
 
 	mStatus = ESocketStatus::FREE;
