@@ -423,7 +423,7 @@ unsigned Room::ProgressThread(void* pArguments)
 				goto loopOut;
 			}
 
-			Sleep(1000);
+			//Sleep(1000);
 
 			// 전투
 			if (!BattleStage(room))
@@ -431,7 +431,7 @@ unsigned Room::ProgressThread(void* pArguments)
 				goto loopOut;
 			}
 
-			Sleep(1000);
+			//Sleep(1000);
 
 			// 대기 시간
 			if (!ReadyStage(room, false))
@@ -439,7 +439,7 @@ unsigned Room::ProgressThread(void* pArguments)
 				goto loopOut;
 			}
 
-			Sleep(1000);
+			//Sleep(1000);
 
 			// 크립
 			if (!CreepStage(room))
@@ -447,7 +447,7 @@ unsigned Room::ProgressThread(void* pArguments)
 				break;
 			}
 
-			Sleep(1000);
+			//Sleep(1000);
 
 			// todo : 없애야함
 			++room.mRound;
@@ -489,12 +489,6 @@ inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 {
 	room.mCurRoomStatusType = ERoomStatusType::ReadyStage;
 
-	{
-		sc_FadeOutPacket packet(1);
-		room.SendPacketToAllClients(&packet);
-	}
-	Sleep(1000);
-
 	const size_t roomOpenCount = room.GetOpenCount();
 
 
@@ -521,6 +515,15 @@ inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 			room.SendPacketToAllClients(&packet);
 		}
 	}
+
+	Sleep(1000);
+
+	{
+		sc_FadeOutPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep(1000);
 
 
 	for (size_t i = 0; i < BATTLE_READY_TIME + 1; ++i)
@@ -587,13 +590,6 @@ bool Room::BattleStage(Room& room)
 {
 	room.mCurRoomStatusType = ERoomStatusType::BattleStage;
 
-	{
-		sc_FadeOutPacket packet(1);
-		room.SendPacketToAllClients(&packet);
-	}
-
-	Sleep(1000);
-
 	const size_t roomOpenCount = room.GetOpenCount();
 
 	LogPrintf("전투 스테이지 시작");
@@ -656,12 +652,19 @@ bool Room::BattleStage(Room& room)
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 	}
 
+	Sleep(1000);
+
+	{
+		sc_FadeOutPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep(1000);
+
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
-
-	Sleep(1000);
 
 	for (int i = 0; i < battleOpponents.size(); i += 2)
 	{
@@ -885,13 +888,6 @@ bool Room::CreepStage(Room& room)
 {
 	room.mCurRoomStatusType = ERoomStatusType::CreepStage;
 
-	{
-		sc_FadeOutPacket packet(1);
-		room.SendPacketToAllClients(&packet);
-	}
-
-	Sleep(1000);
-
 	const size_t roomOpenCount = room.GetOpenCount();
 
 	LogPrintf("크립 스테이지 시작");
@@ -937,6 +933,15 @@ bool Room::CreepStage(Room& room)
 
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 	}
+
+	Sleep(1000);
+
+	{
+		sc_FadeOutPacket packet(1);
+		room.SendPacketToAllClients(&packet);
+	}
+
+	Sleep(1000);
 
 	// todo : 나중에 속도 빠르게 수정
 	constexpr int waitTimes[2]{ 500, 500 };
