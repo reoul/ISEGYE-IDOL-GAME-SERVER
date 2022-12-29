@@ -8,10 +8,10 @@
 #include "ServerStruct.h"
 using namespace Logger;
 
-void BattleAvatar::SetAvatar(Client& client, bool isGhost)
+void BattleAvatar::SetAvatar(Client& client, int networkID, bool isGhost)
 {
 	mClient = &client;
-	mNetworkID = client.GetNetworkID();
+	mNetworkID = networkID;
 	mMaxHp = 100;
 	mHp = mMaxHp;
 	mDefensive = 0;
@@ -187,6 +187,11 @@ void BattleAvatar::ToDamageCharacter(int damage)
 	}
 
 	if (mHp > 0)
+	{
+		return;
+	}
+
+	if (mClient->GetNetworkID() != mNetworkID)
 	{
 		return;
 	}

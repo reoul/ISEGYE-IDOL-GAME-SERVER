@@ -611,7 +611,7 @@ bool Room::BattleStage(Room& room)
 	{
 		const int networkID = battleOpponents[i] >= 0 ? battleOpponents[i] : ~battleOpponents[i];
 		Client& client = Server::GetClients(networkID);
-		avatars[i].SetAvatar(client, battleOpponents[i] < 0);
+		avatars[i].SetAvatar(client, networkID, battleOpponents[i] < 0);
 	}
 
 	{
@@ -910,7 +910,8 @@ bool Room::CreepStage(Room& room)
 
 	ECreepType curCreeType = room.GetCurCreepType();
 
-	const int avatarCount = room.GetClients().size() * 2;
+	vector<Client*>& clients = room.GetClients();
+	const int avatarCount = clients.size() * 2;
 	
 	const BattleAvatar creepMonster = room.GetCreepMonster();
 
@@ -918,8 +919,9 @@ bool Room::CreepStage(Room& room)
 	int clientIndex = 0;
 	for (int i = 0; i < avatarCount; i += 2)
 	{
-		avatars[i].SetAvatar(*room.GetClients()[clientIndex++], false);
+		avatars[i].SetAvatar(*clients[clientIndex], clients[clientIndex]->GetNetworkID(), false);
 		avatars[i + 1] = creepMonster;
+		++clientIndex;
 	}
 
 	{

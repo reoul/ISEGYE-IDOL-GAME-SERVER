@@ -21,7 +21,7 @@ class BattleAvatar
 {
 public:
 	BattleAvatar() = default;
-	void SetAvatar(Client& client, bool isGhost);
+	void SetAvatar(Client& client, int networkID, bool isGhost);
 	uint8_t ActiveItem(int index, BattleAvatar& enemy);
 	void FitmentEffect();
 	void SetActiveQueue(std::vector<SlotInfo> activeQueue);
