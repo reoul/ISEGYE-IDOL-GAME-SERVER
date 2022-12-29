@@ -670,6 +670,7 @@ bool Room::BattleStage(Room& room)
 			BattleAvatar avatar1 = avatars[i];
 			avatars[i] = avatars[i + 1];
 			avatars[i + 1] = avatar1;
+			// todo : 둘중에 한명이라도 나갔으면 처리하기
 		}
 	}
 
@@ -1041,8 +1042,6 @@ bool Room::CreepStage(Room& room)
 			}
 
 			{
-				OutputMemoryStream memoryStream;
-
 				int packetSize = 0;
 				for (int k = 1; k < avatarCount; k += 2)
 				{
@@ -1075,14 +1074,14 @@ bool Room::CreepStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
 					}
-
-					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
-					packet.Write(memoryStream);
-					packetSize += sizeof(sc_ActiveItemPacket);
+					
+					packetSize += sizeof(cs_sc_NotificationPacket);
 				}
+
 				if (packetSize > 0)
 				{
-					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), packetSize);
+					cs_sc_NotificationPacket packet(0, ENotificationType::EffectCreepItem);
+					room.SendPacketToAllClients(&packet);
 				}
 			}
 

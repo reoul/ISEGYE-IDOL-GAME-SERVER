@@ -108,6 +108,8 @@ enum class ENotificationType : uint8_t
 	UseSupremeItemTicket,
 	/// <summary> 기본템 장착 됬음을 알리는 패킷 타입 </summary>
 	SetDefaultUsingItem,
+	/// <summary> 크립 아이템이 발동됬음을 알리는 패킷 타입 </summary>
+	EffectCreepItem,
 };
 
 #pragma pack(push, 1)
