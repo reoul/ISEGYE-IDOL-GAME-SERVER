@@ -673,7 +673,12 @@ bool Room::BattleStage(Room& room)
 			BattleAvatar avatar1 = avatars[i];
 			avatars[i] = avatars[i + 1];
 			avatars[i + 1] = avatar1;
-			// todo : 둘중에 한명이라도 나갔으면 처리하기
+			if (!room.IsValidClientInThisRoom(&Server::GetClients(avatars[i].GetNetworkID()))
+					|| !room.IsValidClientInThisRoom(&Server::GetClients(avatars[i + 1].GetNetworkID())))
+			{
+				avatars[i].SetFinish();
+				avatars[i + 1].SetFinish();
+			}
 		}
 	}
 
