@@ -676,6 +676,7 @@ bool Room::BattleStage(Room& room)
 			if (!room.IsValidClientInThisRoom(&Server::GetClients(avatars[i].GetNetworkID()))
 					|| !room.IsValidClientInThisRoom(&Server::GetClients(avatars[i + 1].GetNetworkID())))
 			{
+				Log("test", "{0}, {1} 전투 끝남", i, i + 1);
 				avatars[i].SetFinish();
 				avatars[i + 1].SetFinish();
 			}
@@ -686,8 +687,11 @@ bool Room::BattleStage(Room& room)
 	{
 		for (int j = 0; j < battleOpponents.size(); ++j)
 		{
-			const vector<SlotInfo> itemQueue = Server::GetClients(avatars[j].GetNetworkID()).GetItemActiveQueue();
-			avatars[j].SetActiveQueue(itemQueue);
+			if (avatars[j].IsFinish() == false)
+			{
+				const vector<SlotInfo> itemQueue = Server::GetClients(avatars[j].GetNetworkID()).GetItemActiveQueue();
+				avatars[j].SetActiveQueue(itemQueue);
+			}
 		}
 
 		{
@@ -838,6 +842,12 @@ bool Room::BattleStage(Room& room)
 					avatars[k].SetFinish();
 					avatars[k + 1].SetFinish();
 				}
+			}
+
+			for (k = 0; k < avatarCount; ++k)
+			{
+				BattleAvatar& avatar = avatars[k];
+				Log("log", "{0}번 클라이언트 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", avatar.GetNetworkID(), avatar.GetMaxHP(), avatar.GetHP(), avatar.IsFinish(), avatar.IsGhost());
 			}
 
 			for (k = 0; k < avatarCount; ++k)
@@ -1150,6 +1160,7 @@ FinishBattle:
 
 bool Room::IsValidClientInThisRoom(Client* client) const
 {
+	if (client->GetNetworkID() == INVALID_SOCKET) { return false; }
 	if (client->GetRoomPtr() != this) { return false; }
 	if (client->GetRoomOpenCount() != mOpenCount) { return false; }
 	return true;

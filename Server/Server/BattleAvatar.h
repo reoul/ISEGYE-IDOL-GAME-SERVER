@@ -83,6 +83,7 @@ public:
 	int	GetFirstAttackState() const;
 	void SetUsingItem(int index, Item item);
 	void SetIsGhost(bool isGhost);
+	bool IsGhost() const;
 private:
 	Client* mClient;
 	int mNetworkID;
@@ -417,5 +418,10 @@ inline void BattleAvatar::SetUsingItem(int index, Item item)
 inline void BattleAvatar::SetIsGhost(bool isGhost)
 {
 	mIsGhost = isGhost;
+}
+
+inline bool BattleAvatar::IsGhost() const
+{
+	return mIsGhost;
 }
 
