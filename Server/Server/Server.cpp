@@ -611,7 +611,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		sClients[pPacket->networkID].SendPacketInAllRoomClients(pPacket);
 
-		LogWrite("log", "[EPacketType::cs_sc_dropItem] 네트워크 {0}번 클라이언트 {1}번 아이템 버림}", pPacket->index.get());
+		LogWrite("log", "[EPacketType::cs_sc_dropItem] 네트워크 {0}번 클라이언트 {1}번 아이템 버림}", pPacket->networkID, pPacket->index.get());
 	}
 	break;
 	case EPacketType::cs_requestCombinationItem:
