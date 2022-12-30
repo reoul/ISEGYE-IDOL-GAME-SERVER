@@ -469,7 +469,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		break;
 		case ENotificationType::ConnectCheck:
 			sClients[pPacket->networkID].SetLastConnectCheckPacketTime(system_clock::now());
-			LogWrite("log", "[ENotificationType::ConnectCheck] 네트워크 {0}번 클라이언트 연결 확인", pPacket->networkID);
+			LogWrite("PacketSendRecive", "[ENotificationType::ConnectCheck] 네트워크 {0}번 클라이언트 연결 확인", pPacket->networkID);
 			break;
 		case ENotificationType::UseNormalItemTicket:
 		{
@@ -662,10 +662,12 @@ void Server::ProcessPacket(int networkID, char* buf)
 		sc_UpgradeItemPacket upgradeItemPacket(pPacket->networkID, findEmptyItemSlot, 1);
 		upgradeItemPacket.Write(memoryStream);
 
-		client.SetItem(findEmptyItemSlot, newItemType);
-		client.GetItem(findEmptyItemSlot).SetUpgrade(1);
+		Item& newItem = client.GetItem(findEmptyItemSlot);
+		newItem.SetType(newItemType);
+		newItem.SetUpgrade(1);
 
 		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+		Log("log", "cs_requestCombinationItem 재조합 완료 {0}번 클라이언트 {1}슬롯 {2} 아이템 {3} 강화", pPacket->networkID, newItem.GetSlot(), newItem.GetType(), newItem.GetUpgrade());
 	}
 	break;
 	case EPacketType::cs_requestUpgradeItem:
@@ -726,6 +728,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		dropItemPacket.Write(memoryStream);
 		upgradeItemPacket.Write(memoryStream);
 		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+		Log("log", "cs_RequestUpgradeItemPacket 업그레이드 완료 {0}번 클라이언트 {1}슬롯 {0}수치", pPacket->networkID, pPacket->slot1, upgrade);
 	}
 	break;
 	case EPacketType::sc_addNewItem:
