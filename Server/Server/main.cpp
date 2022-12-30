@@ -20,6 +20,7 @@ int main()
 	Logger::AddLogger("BattleOpponents", "/BattleOpponents.txt");
 	Logger::AddLogger("BattleInfo", "/BattleInfo.txt");
 	Logger::AddLogger("FinishBattleResultInfo", "/FinishBattleResultInfo.txt");
+	Logger::AddLogger("PacketSendRecive", "/PacketSendRecive.txt");
 
 	//Client aa;
 	//Client bb;

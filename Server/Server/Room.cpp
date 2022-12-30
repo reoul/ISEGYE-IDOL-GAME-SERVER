@@ -366,10 +366,10 @@ unsigned Room::ProgressThread(void* pArguments)
 			const sc_AddNewItemPacket addItemPacket2(client->GetNetworkID(), slot2, defaultItemCode2);
 			addItemPacket2.Write(memoryStream);
 
-			client->SetNormalItemTicketCount(10);
-			client->SetAdvancedItemTicketCount(10);
-			client->SetTopItemTicketCount(10);
-			client->SetSupremeItemTicketCount(10);
+			client->SetNormalItemTicketCount(100);
+			client->SetAdvancedItemTicketCount(100);
+			client->SetTopItemTicketCount(100);
+			client->SetSupremeItemTicketCount(100);
 
 			const sc_SetItemTicketPacket setItemTicketPacket1(client->GetNetworkID(), EItemTicketType::Normal, client->GetNormalItemTicketCount());
 			const sc_SetItemTicketPacket setItemTicketPacket2(client->GetNetworkID(), EItemTicketType::Advanced, client->GetAdvancedItemTicketCount());

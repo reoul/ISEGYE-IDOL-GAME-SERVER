@@ -150,7 +150,7 @@ void Server::WorkerThread()
 				Disconnect(userID, true);
 			}
 
-			LogWrite("log", "네트워크 {0}번 클라이언트 {1}Byte 패킷 전송", userID, io_byte);
+			LogWrite("PacketSendRecive", "네트워크 {0}번 클라이언트 {1}Byte 패킷 전송", userID, io_byte);
 			delete exover;
 			break;
 		case EOperationType::Accept:			//CreateIoCompletionPort으로 클라소켓 iocp에 등록 -> 초기화 -> recv -> accept 다시(다중접속)
@@ -280,7 +280,7 @@ void Server::PacketConstruct(int networkID, int ioByteLength)
 		packetSize = reinterpret_cast<uint16_t*>(curUser.GetPacketBuf())[0]; //재조립을 기다기는 패킷 사이즈
 	}
 
-	LogWrite("log", "네트워크 {0}번 클라이언트 {1}Byte 패킷 받음", networkID, ioByteLength);
+	LogWrite("PacketSendRecive", "네트워크 {0}번 클라이언트 {1}Byte 패킷 받음", networkID, ioByteLength);
 
 	while (restByte > 0)	//처리해야할 데이터가 남아있으면 처리해야한다.
 	{
