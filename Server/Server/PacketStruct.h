@@ -2,6 +2,7 @@
 #pragma warning(disable:4996)
 #include <memory>
 
+#include "BattleAvatar.h"
 #include "Client.h"
 #include "SettingData.h"
 #include "Room.h"
@@ -69,6 +70,8 @@ enum class EPacketType : uint8_t
 	sc_DoctorToolInfo,
 	/// <summary> 크립 라운드 정보 패킷 타입 </summary>
 	sc_CreepStageInfo,
+	/// <summary> 전투 아바타 정보 패킷 타입 </summary>
+	sc_BattleAvatarInfo,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -693,6 +696,63 @@ struct sc_CreepStageInfoPacket : private Packet
 		: Packet(sizeof(sc_CreepStageInfoPacket), EPacketType::sc_CreepStageInfo)
 		, creepType(creepType)
 	{
+	}
+};
+
+/// <summary> 전투 아바타 정보 패킷 타입 </summary>
+struct sc_BattleAvatarInfoPacket : private Packet
+{
+	int32_t networkID;
+	uint16_t maxHp;
+	uint16_t hp;
+	uint8_t firstAttackState;
+	uint8_t offensePower;
+	uint16_t defensive;
+	uint8_t additionDefensive;
+	uint8_t weakening;
+	uint16_t bleeding;
+	uint8_t reducedHealing;
+	bool isEffectHeal;
+	uint8_t effectHeal;
+	bool isInstallBomb;
+	uint8_t installBombDamage;
+	bool isIgnoreNextDamage;
+	bool canDefendNegativeEffect;
+	bool isCounterAttack;
+	uint8_t counterAttackDamage;
+	bool isCounterHeal;
+	uint8_t counterHeal;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID);
+		memoryStream.Write(maxHp);
+		memoryStream.Write(hp);
+		memoryStream.Write(firstAttackState);
+		memoryStream.Write(offensePower);
+		memoryStream.Write(defensive);
+		memoryStream.Write(additionDefensive);
+		memoryStream.Write(weakening);
+		memoryStream.Write(bleeding);
+		memoryStream.Write(reducedHealing);
+		memoryStream.Write(isEffectHeal);
+		memoryStream.Write(effectHeal);
+		memoryStream.Write(isInstallBomb);
+		memoryStream.Write(installBombDamage);
+		memoryStream.Write(isIgnoreNextDamage);
+		memoryStream.Write(canDefendNegativeEffect);
+		memoryStream.Write(isCounterAttack);
+		memoryStream.Write(counterAttackDamage);
+		memoryStream.Write(isCounterHeal);
+		memoryStream.Write(counterHeal);
+
+	}
+
+	sc_BattleAvatarInfoPacket(const BattleAvatar& avatar)
+		: Packet(sizeof(sc_BattleAvatarInfoPacket), EPacketType::sc_BattleAvatarInfo)
+	{
+		avatar.ApplyBattleAvatarInfoPacket(*this);
 	}
 };
 

@@ -8,6 +8,8 @@
 
 
 struct SlotInfo;
+struct sc_BattleAvatarInfoPacket;
+
 
 #ifndef max
 #define max(a,b)            (((a) > (b)) ? (a) : (b))
@@ -84,6 +86,8 @@ public:
 	void SetUsingItem(int index, Item item);
 	void SetIsGhost(bool isGhost);
 	bool IsGhost() const;
+	void ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet) const;
+	void SetNetworkID(int networkID);
 private:
 	Client* mClient;
 	int mNetworkID;
@@ -423,5 +427,10 @@ inline void BattleAvatar::SetIsGhost(bool isGhost)
 inline bool BattleAvatar::IsGhost() const
 {
 	return mIsGhost;
+}
+
+inline void BattleAvatar::SetNetworkID(int networkID)
+{
+	mNetworkID = networkID;
 }
 

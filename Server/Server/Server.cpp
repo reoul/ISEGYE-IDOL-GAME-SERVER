@@ -333,6 +333,7 @@ void Server::SendDisconnectDelay(int networkID)
 	{
 		return;
 	}
+
 	cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
 	sClients[networkID].SendPacketInAllRoomClients(&packet);
 

@@ -652,6 +652,12 @@ bool Room::BattleStage(Room& room)
 			}
 		}
 
+		for (int i = 0; i < battleOpponents.size(); ++i)
+		{
+			sc_BattleAvatarInfoPacket packet(avatars[i]);
+			packet.Write(memoryStream);
+		}
+
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 	}
 
@@ -701,7 +707,7 @@ bool Room::BattleStage(Room& room)
 		}
 
 		{
-			OutputMemoryStream memoryStream;
+			OutputMemoryStream memoryStream(1024);
 
 			int packetSize = 0;
 			for (int k = 0; k < avatarCount; ++k)
@@ -749,9 +755,29 @@ bool Room::BattleStage(Room& room)
 						avatars[k + 1].SetFinish();
 					}
 
+					if (sItems[avatars[k].GetItemBySlot(activeSlot).GetType()]->TYPE == EItemType::Attack)
+					{
+						avatars[k + 1].EffectCounter(avatars[k]);
+					}
+					
 					if (!avatars[k].IsFinish() && !avatars[k + 1].IsFinish())
 					{
 						avatars[k].EffectBleeding();
+					}
+
+					{
+						const int networkID = avatars[k].IsGhost() ? ~avatars[k].GetNetworkID() : avatars[k].GetNetworkID();
+						sc_ActiveItemPacket packet(networkID, activeSlot);
+						packet.Write(memoryStream);
+						packetSize += sizeof(sc_ActiveItemPacket);
+
+						sc_BattleAvatarInfoPacket packet1(avatars[k]);
+						packet1.Write(memoryStream);
+						packetSize += sizeof(sc_BattleAvatarInfoPacket);
+
+						sc_BattleAvatarInfoPacket packet2(avatars[k + 1]);
+						packet2.Write(memoryStream);
+						packetSize += sizeof(sc_BattleAvatarInfoPacket);
 					}
 
 					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
@@ -762,11 +788,8 @@ bool Room::BattleStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
-
-					const int networkID = avatars[k].IsGhost() ? ~avatars[k].GetNetworkID() : avatars[k].GetNetworkID();
-					sc_ActiveItemPacket packet(networkID, activeSlot);
-					packet.Write(memoryStream);
-					packetSize += sizeof(sc_ActiveItemPacket);
+					// todo : 클라이언트에게 보내주기
+					// todo : 본체 체력 보내주기
 				}
 				if (packetSize > 0)
 				{
@@ -787,7 +810,7 @@ bool Room::BattleStage(Room& room)
 			}
 
 			{
-				OutputMemoryStream memoryStream;
+				OutputMemoryStream memoryStream(1024);
 
 				int packetSize = 0;
 				for (int k = 1; k < avatarCount; k += 2)
@@ -808,9 +831,29 @@ bool Room::BattleStage(Room& room)
 						avatars[k - 1].SetFinish();
 					}
 
+					if (sItems[avatars[k].GetItemBySlot(activeSlot).GetType()]->TYPE == EItemType::Attack)
+					{
+						avatars[k - 1].EffectCounter(avatars[k]);
+					}
+
 					if (!avatars[k].IsFinish() && !avatars[k - 1].IsFinish())
 					{
 						avatars[k].EffectBleeding();
+					}
+
+					{
+						const int networkID = avatars[k].IsGhost() ? ~avatars[k].GetNetworkID() : avatars[k].GetNetworkID();
+						sc_ActiveItemPacket packet(networkID, activeSlot);
+						packet.Write(memoryStream);
+						packetSize += sizeof(sc_ActiveItemPacket);
+
+						sc_BattleAvatarInfoPacket packet1(avatars[k]);
+						packet1.Write(memoryStream);
+						packetSize += sizeof(sc_BattleAvatarInfoPacket);
+
+						sc_BattleAvatarInfoPacket packet2(avatars[k - 1]);
+						packet2.Write(memoryStream);
+						packetSize += sizeof(sc_BattleAvatarInfoPacket);
 					}
 
 					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
@@ -821,11 +864,6 @@ bool Room::BattleStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
 					}
-
-					const int networkID = avatars[k].IsGhost() ? ~avatars[k].GetNetworkID() : avatars[k].GetNetworkID();
-					sc_ActiveItemPacket packet(networkID, activeSlot);
-					packet.Write(memoryStream);
-					packetSize += sizeof(sc_ActiveItemPacket);
 				}
 				if (packetSize > 0)
 				{
@@ -834,24 +872,6 @@ bool Room::BattleStage(Room& room)
 			}
 
 			Sleep(waitTimes[battleLoop / 10]);
-
-			for (k = 0; k < avatarCount; k += 2)
-			{
-				if (avatars[k].IsFinish())
-				{
-					continue;
-				}
-
-				avatars[k].EffectBomb();
-				avatars[k].InitCycle();
-				avatars[k + 1].EffectBomb();
-				avatars[k + 1].InitCycle();
-				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
-				{
-					avatars[k].SetFinish();
-					avatars[k + 1].SetFinish();
-				}
-			}
 
 			Log("BattleInfo", "----------");
 			for (k = 0; k < avatarCount; ++k)
@@ -876,6 +896,40 @@ bool Room::BattleStage(Room& room)
 				return false;
 			}
 		}
+
+		{
+			OutputMemoryStream memoryStream(512);
+			for (int k = 0; k < avatarCount; k += 2)
+			{
+				if (avatars[k].IsFinish())
+				{
+					continue;
+				}
+
+				avatars[k].EffectBomb();
+				avatars[k].InitCycle();
+				avatars[k + 1].EffectBomb();
+				avatars[k + 1].InitCycle();
+
+				sc_BattleAvatarInfoPacket packet1(avatars[k]);
+				packet1.Write(memoryStream);
+
+				sc_BattleAvatarInfoPacket packet2(avatars[k + 1]);
+				packet2.Write(memoryStream);
+
+				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+				{
+					avatars[k].SetFinish();
+					avatars[k + 1].SetFinish();
+				}
+			}
+
+			if (memoryStream.GetLength() > 0)
+			{
+				room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+			}
+		}
+		
 	}
 
 	// 시간이 다 지났는데도 안끝난 전투가 있으면 강제 데미지 10
@@ -899,6 +953,8 @@ FinishBattle:
 	}
 
 	Log("FinishBattleResultInfo", "----------");
+
+	Sleep(200);
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
@@ -934,18 +990,26 @@ bool Room::CreepStage(Room& room)
 	const int avatarCount = clients.size() * 2;
 
 	const BattleAvatar creepMonster = room.GetCreepMonster();
-
+	// 0 12345434348
+	// 네트워크 아이디 : max hp  hp  defence
+	// 1 12345434349
+	// 2 12345434350
+	// 3 12345434351
+	// 4 12345434352
+	// 5 12345434353
+	// todo : 상대 정보 보내주기
 	unique_ptr<BattleAvatar[]> avatars = make_unique<BattleAvatar[]>(avatarCount);
 	int clientIndex = 0;
 	for (int i = 0; i < avatarCount; i += 2)
 	{
 		avatars[i].SetAvatar(*clients[clientIndex], clients[clientIndex]->GetNetworkID(), false);
 		avatars[i + 1] = creepMonster;
+		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 10000);
 		++clientIndex;
 	}
 
 	{
-		OutputMemoryStream memoryStream(512);
+		OutputMemoryStream memoryStream(1024);
 		cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCreepStage);
 		notificationPacket.Write(memoryStream);
 		sc_CreepStageInfoPacket creepStageInfoPacket(curCreeType);
@@ -969,6 +1033,12 @@ bool Room::CreepStage(Room& room)
 					Logger::Log("log", "[크립] {0}번 클라이언트 햄버거 {1}번 햄버거로 설정됨", avatars[i].GetNetworkID(), static_cast<int>(hamburgerType));
 				}
 			}
+		}
+
+		for (int i = 0; i < avatarCount; ++i)
+		{
+			sc_BattleAvatarInfoPacket packet(avatars[i]);
+			packet.Write(memoryStream);
 		}
 
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
@@ -1029,7 +1099,7 @@ bool Room::CreepStage(Room& room)
 		for (int activeItemIndex = 0; activeItemIndex < MAX_USING_ITEM_COUNT; ++activeItemIndex)
 		{
 			{
-				OutputMemoryStream memoryStream;
+				OutputMemoryStream memoryStream(1024);
 
 				int packetSize = 0;
 				for (int k = 0; k < avatarCount; k += 2)
@@ -1049,10 +1119,24 @@ bool Room::CreepStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
-
+					
 					if (!avatars[k].IsFinish() && !avatars[k + 1].IsFinish())
 					{
 						avatars[k].EffectBleeding();
+					}
+
+					{
+						sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
+						packet.Write(memoryStream);
+						packetSize += sizeof(sc_ActiveItemPacket);
+
+						sc_BattleAvatarInfoPacket packet1(avatars[k]);
+						packet1.Write(memoryStream);
+						packetSize += sizeof(sc_BattleAvatarInfoPacket);
+
+						sc_BattleAvatarInfoPacket packet2(avatars[k + 1]);
+						packet2.Write(memoryStream);
+						packetSize += sizeof(sc_BattleAvatarInfoPacket);
 					}
 
 					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
@@ -1063,10 +1147,6 @@ bool Room::CreepStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
-
-					sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
-					packet.Write(memoryStream);
-					packetSize += sizeof(sc_ActiveItemPacket);
 				}
 				if (packetSize > 0)
 				{
@@ -1088,6 +1168,8 @@ bool Room::CreepStage(Room& room)
 
 			{
 				int packetSize = 0;
+				OutputMemoryStream memoryStream(1024);
+
 				for (int k = 1; k < avatarCount; k += 2)
 				{
 					if (avatars[k].IsFinish())
@@ -1106,9 +1188,25 @@ bool Room::CreepStage(Room& room)
 						avatars[k - 1].SetFinish();
 					}
 
+					if (sItems[avatars[k].GetItemBySlot(activeSlot).GetType()]->TYPE == EItemType::Attack)
+					{
+						avatars[k - 1].EffectCounter(avatars[k]);
+					}
+
 					if (!avatars[k].IsFinish() && !avatars[k - 1].IsFinish())
 					{
 						avatars[k].EffectBleeding();
+
+					}
+
+					{
+						sc_BattleAvatarInfoPacket packet1(avatars[k]);
+						packet1.Write(memoryStream);
+						packetSize += sizeof(sc_BattleAvatarInfoPacket);
+
+						sc_BattleAvatarInfoPacket packet2(avatars[k - 1]);
+						packet2.Write(memoryStream);
+						packetSize += sizeof(sc_BattleAvatarInfoPacket);
 					}
 
 					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
@@ -1119,36 +1217,18 @@ bool Room::CreepStage(Room& room)
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
 					}
-
-					packetSize += sizeof(cs_sc_NotificationPacket);
 				}
 
 				if (packetSize > 0)
 				{
 					cs_sc_NotificationPacket packet(0, ENotificationType::EffectCreepItem);
-					room.SendPacketToAllClients(&packet);
+					packet.Write(memoryStream);
+
+					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 				}
 			}
 
 			Sleep(waitTimes[battleLoop / 10]);
-
-			for (k = 0; k < avatarCount; k += 2)
-			{
-				if (avatars[k].IsFinish())
-				{
-					continue;
-				}
-
-				avatars[k].EffectBomb();
-				avatars[k].InitCycle();
-				avatars[k + 1].EffectBomb();
-				avatars[k + 1].InitCycle();
-				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
-				{
-					avatars[k].SetFinish();
-					avatars[k + 1].SetFinish();
-				}
-			}
 
 			Log("BattleInfo", "----------");
 			for (k = 0; k < avatarCount; k += 2)
@@ -1174,6 +1254,39 @@ bool Room::CreepStage(Room& room)
 				return false;
 			}
 		}
+
+		{
+			OutputMemoryStream memoryStream(512);
+			for (int k = 0; k < avatarCount; k += 2)
+			{
+				if (avatars[k].IsFinish())
+				{
+					continue;
+				}
+
+				avatars[k].EffectBomb();
+				avatars[k].InitCycle();
+				avatars[k + 1].EffectBomb();
+				avatars[k + 1].InitCycle();
+
+				sc_BattleAvatarInfoPacket packet1(avatars[k]);
+				packet1.Write(memoryStream);
+
+				sc_BattleAvatarInfoPacket packet2(avatars[k + 1]);
+				packet2.Write(memoryStream);
+
+				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+				{
+					avatars[k].SetFinish();
+					avatars[k + 1].SetFinish();
+				}
+			}
+
+			if (memoryStream.GetLength() > 0)
+			{
+				room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+			}
+		}
 	}
 
 FinishBattle:
@@ -1186,6 +1299,8 @@ FinishBattle:
 	}
 
 	Log("FinishBattleResultInfo", "----------");
+
+	Sleep(200);
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{

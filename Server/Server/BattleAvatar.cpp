@@ -52,7 +52,7 @@ uint8_t BattleAvatar::ActiveItem(int index, BattleAvatar& enemy)
 	++mEffectItemCount;
 	sItems[item.GetType()]->Active(*this, enemy, item.GetUpgrade());
 
-	if (mIsEffectHeal)
+	if (mIsEffectHeal && mHp > 0)
 	{
 		ToHeal(mEffectHeal);
 	}
@@ -202,8 +202,34 @@ void BattleAvatar::ToDamageCharacter(int damage)
 
 	if (mClient->GetHp() == 0)
 	{
+		// todo : 죽을 때 Sleep 사용 안하기
 		Server::SendDisconnectDelay(mNetworkID);
 	}
 
 	mIsCharacterDamage = true;
+}
+
+void BattleAvatar::ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet) const
+{
+	packet.networkID = mNetworkID;
+	packet.maxHp = mMaxHp;
+	packet.hp = mHp;
+	packet.firstAttackState = mFirstAttackState;
+	packet.offensePower = mOffensePower;
+	packet.defensive = mDefensive;
+	packet.additionDefensive = mAdditionDefensive;
+	packet.weakening = mWeakening;
+	packet.bleeding = mBleeding;
+	packet.reducedHealing = mReducedHealing;
+	packet.isEffectHeal = mIsEffectHeal;
+	packet.effectHeal = mEffectHeal;
+	packet.isInstallBomb = mIsInstallBomb;
+	packet.installBombDamage = mInstallBombDamage;
+	packet.isIgnoreNextDamage = mIsIgnoreNextDamage;
+	packet.canDefendNegativeEffect = mCanDefendNegativeEffect;
+	packet.isCounterAttack = mIsCounterAttack;
+	packet.counterAttackDamage = mCounterAttackDamage;
+	packet.isCounterHeal = mIsCounterHeal;
+	packet.counterHeal = mCounterHeal;
+
 }
