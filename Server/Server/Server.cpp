@@ -663,6 +663,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		upgradeItemPacket.Write(memoryStream);
 
 		client.SetItem(findEmptyItemSlot, newItemType);
+		client.GetItem(findEmptyItemSlot).SetUpgrade(1);
 
 		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
 	}
