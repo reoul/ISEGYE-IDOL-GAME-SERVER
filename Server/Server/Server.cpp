@@ -607,7 +607,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 			return;
 		}
 
-		item.SetType(EMPTY_ITEM);
+		item.SetEmptyItem();
 
 		sClients[pPacket->networkID].SendPacketInAllRoomClients(pPacket);
 
@@ -650,9 +650,9 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		const EItemTierType maxTier = static_cast<EItemTierType>(max(max(tier1, tier2), tier3));
 
-		item1.SetType(EMPTY_ITEM);
-		item2.SetType(EMPTY_ITEM);
-		item3.SetType(EMPTY_ITEM);
+		item1.SetEmptyItem();
+		item2.SetEmptyItem();
+		item3.SetEmptyItem();
 
 		uint8_t newItemType = client.GetRandomItemTypeByCombination(maxTier);
 		uint8_t findEmptyItemSlot = client.FindEmptyItemSlotIndex();
@@ -722,8 +722,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		cs_sc_DropItemPacket dropItemPacket(pPacket->networkID, pPacket->slot2);
 		sc_UpgradeItemPacket upgradeItemPacket(pPacket->networkID, pPacket->slot1, upgrade);
 		upgradeItem.SetUpgrade(upgrade);
-		materialItem.SetUpgrade(0);
-		materialItem.SetType(0);
+		materialItem.SetEmptyItem();
 		dropItemPacket.Write(memoryStream);
 		upgradeItemPacket.Write(memoryStream);
 		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);

@@ -20,6 +20,7 @@ public:
 	void		SetUpgrade(uint8_t upgrade);
 	uint8_t		GetSlot() const;
 	void		SetSlot(uint8_t slot);
+	void		SetEmptyItem();
 private:
 	uint8_t		mType;
 	uint8_t		mActivePercent;
@@ -66,3 +67,10 @@ inline void Item::SetSlot(uint8_t slot)
 {
 	mSlot = slot;
 }
+
+inline void Item::SetEmptyItem()
+{
+	mType = EMPTY_ITEM;
+	mUpgrade = 0;
+}
+
