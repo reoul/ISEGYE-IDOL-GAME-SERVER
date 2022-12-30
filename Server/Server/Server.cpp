@@ -728,7 +728,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		dropItemPacket.Write(memoryStream);
 		upgradeItemPacket.Write(memoryStream);
 		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
-		Log("log", "cs_RequestUpgradeItemPacket 업그레이드 완료 {0}번 클라이언트 {1}슬롯 {0}수치", pPacket->networkID, pPacket->slot1, upgrade);
+		Log("log", "cs_RequestUpgradeItemPacket 업그레이드 완료 {0}번 클라이언트 {1}슬롯 {2}수치", pPacket->networkID, pPacket->slot1, upgrade);
 	}
 	break;
 	case EPacketType::sc_addNewItem:
