@@ -171,7 +171,7 @@ inline void BattleAvatar::ToReducedHealing(int reducedHealing)
 inline void BattleAvatar::ToHeal(int heal)
 {
 	heal = max(0, heal - mReducedHealing);
-	mHp += min(mMaxHp, mHp + heal);
+	mHp = min(mMaxHp, mHp + heal);
 }
 
 inline int BattleAvatar::GetNetworkID() const
@@ -283,7 +283,7 @@ inline EHamburgerType BattleAvatar::GetHamburgerType() const
 
 inline void BattleAvatar::ToJustHeal(int heal)
 {
-	mHp += min(mMaxHp, mHp + heal);
+	mHp = min(mMaxHp, mHp + heal);
 }
 
 inline bool BattleAvatar::IsEffectHeal() const

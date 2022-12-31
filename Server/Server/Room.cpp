@@ -489,6 +489,22 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 		}
 	}
 
+	{
+		const vector<Client*> clients = room.GetClients();
+		const size_t bufferSize = sizeof(sc_UpdateCharacterInfoPacket) * clients.size();
+		OutputMemoryStream memoryStream(bufferSize);
+
+		for (const Client* client : clients)
+		{
+			sc_UpdateCharacterInfoPacket packet(*client);
+			packet.Write(memoryStream);
+		}
+
+		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+	}
+
+	LogPrintf("캐릭터 갱신 패킷 전송");
+
 	Sleep(1000);
 
 	{
