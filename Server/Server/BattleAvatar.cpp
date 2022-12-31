@@ -234,14 +234,7 @@ void BattleAvatar::ToDamageCharacter(int damage)
 		return;
 	}
 
-
 	mClient->ToDamage(damage);
-
-	if (mClient->GetHp() == 0)
-	{
-		// todo : 죽을 때 Sleep 사용 안하기
-		Server::SendDisconnectDelay(mNetworkID);
-	}
 
 	mIsCharacterDamage = true;
 }
@@ -249,6 +242,14 @@ void BattleAvatar::ToDamageCharacter(int damage)
 void BattleAvatar::ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet) const
 {
 	packet.networkID = mNetworkID;
+	if (mClient != nullptr)
+	{
+		packet.playerHp = mClient->GetHp();
+	}
+	else
+	{
+		packet.playerHp = 50;
+	}
 	packet.maxHp = mMaxHp;
 	packet.hp = mHp;
 	packet.firstAttackState = mFirstAttackState;

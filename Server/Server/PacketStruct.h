@@ -703,6 +703,7 @@ struct sc_CreepStageInfoPacket : private Packet
 struct sc_BattleAvatarInfoPacket : private Packet
 {
 	int32_t networkID;
+	uint8_t playerHp;
 	uint16_t maxHp;
 	uint16_t hp;
 	uint8_t firstAttackState;
@@ -727,6 +728,7 @@ struct sc_BattleAvatarInfoPacket : private Packet
 	{
 		Packet::Write(memoryStream);
 		memoryStream.Write(networkID);
+		memoryStream.Write(playerHp);
 		memoryStream.Write(maxHp);
 		memoryStream.Write(hp);
 		memoryStream.Write(firstAttackState);

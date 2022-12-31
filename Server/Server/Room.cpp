@@ -9,6 +9,8 @@
 #include "Server.h"
 #include "Items.h"
 
+using namespace Logger;
+
 Room::Room()
 	: mSize(0)
 	, mNumber(0)
@@ -432,7 +434,6 @@ unsigned Room::ProgressThread(void* pArguments)
 		}
 
 		// 대기 시간
-		// todo : 이거 크립 추가되면 해제하기
 		if (!ReadyStage(room, false))
 		{
 			break;
@@ -590,7 +591,6 @@ bool Room::BattleStage(Room& room)
 
 	const vector<int32_t>& battleOpponents = room.GetBattleOpponents();
 
-	// todo : 나중에 속도 빠르게 수정
 	constexpr int waitTimes[2]{ 500, 500 };
 
 	const int avatarCount = battleOpponents.size();
@@ -671,7 +671,7 @@ bool Room::BattleStage(Room& room)
 		if (!room.IsValidClientInThisRoom(&Server::GetClients(networkID1))
 			|| !room.IsValidClientInThisRoom(&Server::GetClients(networkID2)))
 		{
-			Log("BattleInfo", "[전투] {0}, {1} 전투 끝남", networkID1, networkID2);
+			Logger::Log("BattleInfo", "[전투] {0}, {1} 전투 끝남", networkID1, networkID2);
 			avatars[i].SetFinish();
 			avatars[i + 1].SetFinish();
 		}
@@ -725,6 +725,8 @@ bool Room::BattleStage(Room& room)
 			{
 				OutputMemoryStream memoryStream;
 
+				vector<int> disconnectNetworkIdList;
+
 				int packetSize = 0;
 				for (int k = 0; k < avatarCount; k += 2)
 				{
@@ -740,6 +742,11 @@ bool Room::BattleStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
 						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
 
+						if (avatars[k].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+						if (avatars[k + 1].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k + 1].GetNetworkID());
+
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
@@ -748,7 +755,7 @@ bool Room::BattleStage(Room& room)
 					{
 						avatars[k + 1].EffectCounter(avatars[k]);
 					}
-					
+
 					if (!avatars[k].IsFinish() && !avatars[k + 1].IsFinish())
 					{
 						avatars[k].EffectBleeding();
@@ -774,15 +781,39 @@ bool Room::BattleStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
 						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
 
+						if (avatars[k].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+						if (avatars[k + 1].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k + 1].GetNetworkID());
+
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
-					// todo : 클라이언트에게 보내주기
-					// todo : 본체 체력 보내주기
 				}
-				if (packetSize > 0)
+
+				// 중복 제거
+				if (disconnectNetworkIdList.size() > 0)
 				{
-					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), packetSize);
+					sort(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end());
+					disconnectNetworkIdList.erase(unique(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end()), disconnectNetworkIdList.end());
+				}
+
+				for (int networkID : disconnectNetworkIdList)
+				{
+					cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+					packet.Write(memoryStream);
+				}
+
+				if (memoryStream.GetLength() > 0)
+				{
+					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+					Sleep(100);
+				}
+
+				for (int networkID : disconnectNetworkIdList)
+				{
+					Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
+					Server::Disconnect(networkID, true);
 				}
 			}
 
@@ -801,6 +832,8 @@ bool Room::BattleStage(Room& room)
 			{
 				OutputMemoryStream memoryStream(1024);
 
+				vector<int> disconnectNetworkIdList;
+
 				int packetSize = 0;
 				for (int k = 1; k < avatarCount; k += 2)
 				{
@@ -815,6 +848,11 @@ bool Room::BattleStage(Room& room)
 					{
 						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
 						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
+
+						if (avatars[k].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+						if (avatars[k - 1].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k - 1].GetNetworkID());
 
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
@@ -850,13 +888,39 @@ bool Room::BattleStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
 						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
 
+						if (avatars[k].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+						if (avatars[k - 1].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k - 1].GetNetworkID());
+
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
 					}
 				}
-				if (packetSize > 0)
+
+				// 중복 제거
+				if (disconnectNetworkIdList.size() > 0)
 				{
-					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), packetSize);
+					sort(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end());
+					disconnectNetworkIdList.erase(unique(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end()), disconnectNetworkIdList.end());
+				}
+
+				for (int networkID : disconnectNetworkIdList)
+				{
+					cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+					packet.Write(memoryStream);
+				}
+
+				if (memoryStream.GetLength() > 0)
+				{
+					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+					Sleep(100);
+				}
+
+				for (int networkID : disconnectNetworkIdList)
+				{
+					Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
+					Server::Disconnect(networkID, true);
 				}
 			}
 
@@ -888,6 +952,9 @@ bool Room::BattleStage(Room& room)
 
 		{
 			OutputMemoryStream memoryStream(512);
+
+			vector<int> disconnectNetworkIdList;
+
 			for (int k = 0; k < avatarCount; k += 2)
 			{
 				if (avatars[k].IsFinish())
@@ -908,29 +975,96 @@ bool Room::BattleStage(Room& room)
 
 				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
 				{
+					avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
+					avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+
+					if (avatars[k].GetHP() == 0)
+						disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+					if (avatars[k + 1].GetHP() == 0)
+						disconnectNetworkIdList.emplace_back(avatars[k + 1].GetNetworkID());
+
 					avatars[k].SetFinish();
 					avatars[k + 1].SetFinish();
 				}
 			}
 
+			// 중복 제거
+			if (disconnectNetworkIdList.size() > 0)
+			{
+				sort(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end());
+				disconnectNetworkIdList.erase(unique(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end()), disconnectNetworkIdList.end());
+			}
+
+			for (int networkID : disconnectNetworkIdList)
+			{
+				cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+				packet.Write(memoryStream);
+			}
+
 			if (memoryStream.GetLength() > 0)
 			{
 				room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+				Sleep(100);
+			}
+
+			for (int networkID : disconnectNetworkIdList)
+			{
+				Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
+				Server::Disconnect(networkID, true);
 			}
 		}
-		
+
 	}
 
+	Sleep(200);
+
+	// todo : 크립 몬스터, 플레이어 전투 아바타 체력 변경, 마법봉 능력
+
 	// 시간이 다 지났는데도 안끝난 전투가 있으면 강제 데미지 10
-	for (int k = 0; k < avatarCount; k += 2)
 	{
-		if (avatars[k].IsFinish())
+		OutputMemoryStream memoryStream(128);
+		vector<int> disconnectNetworkIdList;
+		for (int k = 0; k < avatarCount; k += 2)
 		{
-			continue;
+			if (avatars[k].IsFinish())
+			{
+				continue;
+			}
+			avatars[k].ToDamageCharacter(10);
+			avatars[k + 1].ToDamageCharacter(10);
+
+			if (avatars[k].GetHP() == 0)
+				disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+			if (avatars[k + 1].GetHP() == 0)
+				disconnectNetworkIdList.emplace_back(avatars[k + 1].GetNetworkID());
 		}
-		avatars[k].ToDamageCharacter(10);
-		avatars[k + 1].ToDamageCharacter(10);
+
+		// 중복 제거
+		if (disconnectNetworkIdList.size() > 0)
+		{
+			sort(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end());
+			disconnectNetworkIdList.erase(unique(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end()), disconnectNetworkIdList.end());
+		}
+
+		for (int networkID : disconnectNetworkIdList)
+		{
+			cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+			packet.Write(memoryStream);
+		}
+
+		if (memoryStream.GetLength() > 0)
+		{
+			room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+			Sleep(100);
+		}
+
+		for (int networkID : disconnectNetworkIdList)
+		{
+			Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
+			Server::Disconnect(networkID, true);
+		}
 	}
+
 
 FinishBattle:
 
@@ -949,6 +1083,8 @@ FinishBattle:
 	{
 		return false;
 	}
+
+	Sleep(1000);
 
 	{
 		sc_FadeInPacket packet(1);
@@ -979,21 +1115,13 @@ bool Room::CreepStage(Room& room)
 	const int avatarCount = clients.size() * 2;
 
 	const BattleAvatar creepMonster = room.GetCreepMonster();
-	// 0 12345434348
-	// 네트워크 아이디 : max hp  hp  defence
-	// 1 12345434349
-	// 2 12345434350
-	// 3 12345434351
-	// 4 12345434352
-	// 5 12345434353
-	// todo : 상대 정보 보내주기
 	unique_ptr<BattleAvatar[]> avatars = make_unique<BattleAvatar[]>(avatarCount);
 	int clientIndex = 0;
 	for (int i = 0; i < avatarCount; i += 2)
 	{
 		avatars[i].SetAvatar(*clients[clientIndex], clients[clientIndex]->GetNetworkID(), false);
 		avatars[i + 1] = creepMonster;
-		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 1000000);
+		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 1000000);	// 크립 몬스터는 따로 인덱스 할 수 있는 번호가 없기 때문에 일정 숫자를 더해준다.
 		++clientIndex;
 	}
 
@@ -1042,7 +1170,6 @@ bool Room::CreepStage(Room& room)
 
 	Sleep(1000);
 
-	// todo : 나중에 속도 빠르게 수정
 	constexpr int waitTimes[2]{ 500, 500 };
 
 	Sleep(1000);
@@ -1090,6 +1217,8 @@ bool Room::CreepStage(Room& room)
 			{
 				OutputMemoryStream memoryStream(1024);
 
+				vector<int> disconnectNetworkIdList;
+
 				int packetSize = 0;
 				for (int k = 0; k < avatarCount; k += 2)
 				{
@@ -1105,10 +1234,13 @@ bool Room::CreepStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
 						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
 
+						if (avatars[k].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
-					
+
 					if (!avatars[k].IsFinish() && !avatars[k + 1].IsFinish())
 					{
 						avatars[k].EffectBleeding();
@@ -1133,13 +1265,37 @@ bool Room::CreepStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
 						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
 
+						if (avatars[k].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+
 						avatars[k].SetFinish();
 						avatars[k + 1].SetFinish();
 					}
 				}
-				if (packetSize > 0)
+
+				// 중복 제거
+				if (disconnectNetworkIdList.size() > 0)
 				{
-					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), packetSize);
+					sort(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end());
+					disconnectNetworkIdList.erase(unique(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end()), disconnectNetworkIdList.end());
+				}
+
+				for (int networkID : disconnectNetworkIdList)
+				{
+					cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+					packet.Write(memoryStream);
+				}
+
+				if (memoryStream.GetLength() > 0)
+				{
+					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+					Sleep(100);
+				}
+
+				for (int networkID : disconnectNetworkIdList)
+				{
+					Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
+					Server::Disconnect(networkID, true);
 				}
 			}
 
@@ -1159,6 +1315,8 @@ bool Room::CreepStage(Room& room)
 				int packetSize = 0;
 				OutputMemoryStream memoryStream(1024);
 
+				vector<int> disconnectNetworkIdList;
+
 				for (int k = 1; k < avatarCount; k += 2)
 				{
 					if (avatars[k].IsFinish())
@@ -1172,6 +1330,9 @@ bool Room::CreepStage(Room& room)
 					{
 						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
 						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
+
+						if (avatars[k].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
 
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
@@ -1203,6 +1364,9 @@ bool Room::CreepStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
 						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
 
+						if (avatars[k].GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+
 						avatars[k].SetFinish();
 						avatars[k - 1].SetFinish();
 					}
@@ -1212,8 +1376,31 @@ bool Room::CreepStage(Room& room)
 				{
 					cs_sc_NotificationPacket packet(0, ENotificationType::EffectCreepItem);
 					packet.Write(memoryStream);
+				}
 
+				// 중복 제거
+				if (disconnectNetworkIdList.size() > 0)
+				{
+					sort(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end());
+					disconnectNetworkIdList.erase(unique(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end()), disconnectNetworkIdList.end());
+				}
+
+				for (int networkID : disconnectNetworkIdList)
+				{
+					cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+					packet.Write(memoryStream);
+				}
+
+				if (memoryStream.GetLength() > 0)
+				{
 					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+					Sleep(100);
+				}
+
+				for (int networkID : disconnectNetworkIdList)
+				{
+					Log("BattleInfo", "[크립] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
+					Server::Disconnect(networkID, true);
 				}
 			}
 
@@ -1246,6 +1433,9 @@ bool Room::CreepStage(Room& room)
 
 		{
 			OutputMemoryStream memoryStream(512);
+
+			vector<int> disconnectNetworkIdList;
+
 			for (int k = 0; k < avatarCount; k += 2)
 			{
 				if (avatars[k].IsFinish())
@@ -1266,15 +1456,86 @@ bool Room::CreepStage(Room& room)
 
 				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
 				{
+					avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
+					avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+
+					if (avatars[k].GetHP() == 0)
+						disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+
 					avatars[k].SetFinish();
 					avatars[k + 1].SetFinish();
 				}
 			}
 
+			// 중복 제거
+			if (disconnectNetworkIdList.size() > 0)
+			{
+				sort(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end());
+				disconnectNetworkIdList.erase(unique(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end()), disconnectNetworkIdList.end());
+			}
+
+			for (int networkID : disconnectNetworkIdList)
+			{
+				cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+				packet.Write(memoryStream);
+			}
+
 			if (memoryStream.GetLength() > 0)
 			{
 				room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+				Sleep(100);
 			}
+
+			for (int networkID : disconnectNetworkIdList)
+			{
+				Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
+				Server::Disconnect(networkID, true);
+			}
+		}
+	}
+
+	Sleep(200);
+
+	// 시간이 다 지났는데도 안끝난 전투가 있으면 강제 데미지 10
+	{
+		OutputMemoryStream memoryStream(128);
+		vector<int> disconnectNetworkIdList;
+		for (int k = 0; k < avatarCount; k += 2)
+		{
+			if (avatars[k].IsFinish())
+			{
+				continue;
+			}
+
+			avatars[k].ToDamageCharacter(10);
+
+			if (avatars[k].GetHP() == 0)
+				disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+		}
+
+		// 중복 제거
+		if (disconnectNetworkIdList.size() > 0)
+		{
+			sort(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end());
+			disconnectNetworkIdList.erase(unique(disconnectNetworkIdList.begin(), disconnectNetworkIdList.end()), disconnectNetworkIdList.end());
+		}
+
+		for (int networkID : disconnectNetworkIdList)
+		{
+			cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
+			packet.Write(memoryStream);
+		}
+
+		if (memoryStream.GetLength() > 0)
+		{
+			room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
+			Sleep(100);
+		}
+
+		for (int networkID : disconnectNetworkIdList)
+		{
+			Log("BattleInfo", "[크립] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
+			Server::Disconnect(networkID, true);
 		}
 	}
 
@@ -1295,6 +1556,8 @@ FinishBattle:
 	{
 		return false;
 	}
+
+	Sleep(1000);
 
 	{
 		sc_FadeInPacket packet(1);

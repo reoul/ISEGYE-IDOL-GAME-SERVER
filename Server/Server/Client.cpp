@@ -91,7 +91,6 @@ void Client::Init()
 		item.SetEmptyItem();
 	}
 
-	mStatus = ESocketStatus::FREE;
 	mFirstAttackState = 0;
 	mIsChoiceCharacter = false;
 	mHp = MAX_CHARACTER_MAX_HP;
@@ -103,6 +102,10 @@ void Client::Init()
 	mTopItemTicketCount = 0;
 	mSupremeItemTicketCount = 0;
 	mRoomOpenCount = 0;
+
+
+
+	mStatus = ESocketStatus::FREE;
 }
 
 vector<Item> Client::GetUsingItems() const
