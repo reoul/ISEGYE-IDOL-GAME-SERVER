@@ -1004,7 +1004,7 @@ bool Room::CreepStage(Room& room)
 	{
 		avatars[i].SetAvatar(*clients[clientIndex], clients[clientIndex]->GetNetworkID(), false);
 		avatars[i + 1] = creepMonster;
-		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 10000);
+		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 1000000);
 		++clientIndex;
 	}
 
