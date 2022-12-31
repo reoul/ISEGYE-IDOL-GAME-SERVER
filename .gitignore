@@ -261,3 +261,5 @@ FakesAssemblies/
 .vs/
 
 Server/Server/Logger/
+
+Server/JSON/
