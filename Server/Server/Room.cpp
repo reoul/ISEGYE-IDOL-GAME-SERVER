@@ -388,8 +388,15 @@ unsigned Room::ProgressThread(void* pArguments)
 	Log("log", "기본 템 지급 완료");
 
 	// 처음 크립 3판
-	// todo : 크립 추가시 해제하기
-	/*ReadyStage(room, false);
+	ReadyStage(room, false);
+
+	Sleep(1000);
+
+	CreepStage(room);
+
+	Sleep(1000);
+
+	ReadyStage(room, false);
 
 	Sleep(1000);
 
@@ -405,13 +412,7 @@ unsigned Room::ProgressThread(void* pArguments)
 
 	Sleep(1000);
 
-	ReadyStage(room, false);
-
-	Sleep(1000);
-
-	CreepStage(room);*/
-
-	Sleep(1000);
+	++room.mRound;
 
 	while (true)
 	{
@@ -423,54 +424,27 @@ unsigned Room::ProgressThread(void* pArguments)
 				goto loopOut;
 			}
 
-			//Sleep(1000);
-
 			// 전투
 			if (!BattleStage(room))
 			{
 				goto loopOut;
 			}
-
-			//Sleep(1000);
-
-			// 대기 시간
-			if (!ReadyStage(room, false))
-			{
-				goto loopOut;
-			}
-
-			//Sleep(1000);
-
-			// 크립
-			if (!CreepStage(room))
-			{
-				break;
-			}
-
-			//Sleep(1000);
-
-			// todo : 없애야함
-			++room.mRound;
 		}
 
 		// 대기 시간
 		// todo : 이거 크립 추가되면 해제하기
-		//if (!ReadyStage(room, false))
-		//{
-		//	break;
-		//}
+		if (!ReadyStage(room, false))
+		{
+			break;
+		}
 
-		Sleep(1000);
+		// 크립
+		if (!CreepStage(room))
+		{
+			break;
+		}
 
-		//// 크립
-		//if (!CreepStage(room))
-		//{
-		//	break;
-		//}
-
-		Sleep(1000);
-
-		//++room.mRound;
+		++room.mRound;
 	}
 
 loopOut:
