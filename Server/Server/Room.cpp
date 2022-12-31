@@ -485,12 +485,11 @@ loopOut:
  * \param isNextStageBattle 다음 스테이지가 전투 스테이지인지
  * \return Room 유지 여부
  */
-inline bool Room::ReadyStage(Room& room, bool isNextStageBattle)
+bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 {
 	room.mCurRoomStatusType = ERoomStatusType::ReadyStage;
 
 	const size_t roomOpenCount = room.GetOpenCount();
-
 
 	LogPrintf("준비시간 시작");
 
