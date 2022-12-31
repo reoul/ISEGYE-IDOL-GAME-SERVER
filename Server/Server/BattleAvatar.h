@@ -22,7 +22,7 @@ struct sc_BattleAvatarInfoPacket;
 class BattleAvatar
 {
 public:
-	BattleAvatar() = default;
+	BattleAvatar();
 	void SetAvatar(Client& client, int networkID, bool isGhost);
 	uint8_t ActiveItem(int index, BattleAvatar& enemy);
 	void FitmentEffect();

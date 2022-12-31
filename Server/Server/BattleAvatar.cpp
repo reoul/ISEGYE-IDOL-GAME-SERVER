@@ -8,6 +8,38 @@
 #include "ServerStruct.h"
 using namespace Logger;
 
+BattleAvatar::BattleAvatar()
+	: mClient(nullptr)
+	, mNetworkID(0)
+	, mMaxHp(0)
+	, mHp(0)
+	, mDefensive(0)
+	, mOffensePower(0)
+	, mAdditionDefensive(0)
+	, mWeakening(0)
+	, mBleeding(0)
+	, mReducedHealing(0)
+	, mActiveQueue{}
+	, mIsGhost(false)
+	, mIsFinish(false)
+	, mIsCounterAttack(false)
+	, mCounterAttackDamage(0)
+	, mIsCounterHeal(false)
+	, mCounterHeal(0)
+	, mHamburgerType(EHamburgerType::Fillet)
+	, mIsEffectHeal(false)
+	, mEffectHeal(0)
+	, mIsInstallBomb(false)
+	, mInstallBombDamage(0)
+	, mEffectItemCount(0)
+	, mUseKeyCapCount(0)
+	, mCanDefendNegativeEffect(false)
+	, mIsIgnoreNextDamage(false)
+	, mIsCharacterDamage(false)
+	, mFirstAttackState(0)
+{
+}
+
 void BattleAvatar::SetAvatar(Client& client, int networkID, bool isGhost)
 {
 	mClient = &client;
