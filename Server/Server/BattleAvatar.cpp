@@ -179,6 +179,11 @@ Item BattleAvatar::GetRandomCopyItem()
 
 void BattleAvatar::EffectCounter(BattleAvatar& opponent)
 {
+	if (mIsFinish)
+	{
+		return;
+	}
+
 	if (mIsCounterAttack)
 	{
 		mIsCounterAttack = false;
