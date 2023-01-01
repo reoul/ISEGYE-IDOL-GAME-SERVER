@@ -154,7 +154,7 @@ Item BattleAvatar::GetRandomCopyItem()
 	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
 	{
 		Item& item = mUsingItem[i];
-		// ÇÜ¹ö°Å, ¹Ú»çÀÇ ¸¸´ÉÅø, ºóÄ­ Á¦¿Ü
+		// ï¿½Ü¹ï¿½ï¿½ï¿½, ï¿½Ú»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½Ä­ ï¿½ï¿½ï¿½ï¿½
 		if (item.GetType() != 7 && item.GetType() != 16 && item.GetType() != 0)
 		{
 			validItems.emplace_back(item);

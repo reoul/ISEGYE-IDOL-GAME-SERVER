@@ -468,20 +468,17 @@ me.SetFirstAttackState(me.GetFirstAttackState() + upgrade + 1);
 // 선량한 시민의 빠루
 ITEM(Item023, 24, EItemTierType::Three, EItemType::Attack,
 	{
-		const Client * enemy = opponents.GetClient();
-		const int damage = (100 - enemy->GetHp()) / 10;
+		const int damage = (opponents.GetMaxHP() - opponents.GetHp()) / 10;
 		opponents.ToDamage(5 + damage, me);
 	}
 	,
 {
-	const Client * enemy = opponents.GetClient();
-	const int damage = (100 - enemy->GetHp()) / 10;
+	const int damage = (opponents.GetMaxHP() - opponents.GetHp()) / 10;
 	opponents.ToDamage(6 + damage, me);
 }
 ,
 {
-	const Client * enemy = opponents.GetClient();
-	const int damage = (100 - enemy->GetHp()) / 10;
+const int damage = (opponents.GetMaxHP() - opponents.GetHp()) / 10;
 	opponents.ToDamage(8 + damage, me);
 }
 )
