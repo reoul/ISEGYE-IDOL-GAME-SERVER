@@ -808,13 +808,13 @@ bool Room::BattleStage(Room& room)
 				if (memoryStream.GetLength() > 0)
 				{
 					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-					Sleep(100);
+					Sleep(200);
 				}
 
 				for (int networkID : disconnectNetworkIdList)
 				{
 					Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
-					Server::Disconnect(networkID, true);
+					Server::Disconnect(networkID, false);
 				}
 			}
 
@@ -915,13 +915,13 @@ bool Room::BattleStage(Room& room)
 				if (memoryStream.GetLength() > 0)
 				{
 					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-					Sleep(100);
+					Sleep(200);
 				}
 
 				for (int networkID : disconnectNetworkIdList)
 				{
 					Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
-					Server::Disconnect(networkID, true);
+					Server::Disconnect(networkID, false);
 				}
 			}
 
@@ -1005,13 +1005,13 @@ bool Room::BattleStage(Room& room)
 			if (memoryStream.GetLength() > 0)
 			{
 				room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-				Sleep(100);
+				Sleep(200);
 			}
 
 			for (int networkID : disconnectNetworkIdList)
 			{
 				Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
-				Server::Disconnect(networkID, true);
+				Server::Disconnect(networkID, false);
 			}
 		}
 
@@ -1054,13 +1054,13 @@ bool Room::BattleStage(Room& room)
 		if (memoryStream.GetLength() > 0)
 		{
 			room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-			Sleep(100);
+			Sleep(200);
 		}
 
 		for (int networkID : disconnectNetworkIdList)
 		{
 			Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
-			Server::Disconnect(networkID, true);
+			Server::Disconnect(networkID, false);
 		}
 	}
 
@@ -1081,7 +1081,7 @@ FinishBattle:
 		int lastClientNetworkID = room.GetClients()[0]->GetNetworkID();
 		cs_sc_NotificationPacket packet(lastClientNetworkID, ENotificationType::DisconnectServer);
 		room.SendPacketToAllClients(&packet);
-		Sleep(100);
+		Sleep(200);
 		Server::Disconnect(lastClientNetworkID, false);
 	}
 
@@ -1313,13 +1313,13 @@ bool Room::CreepStage(Room& room)
 				if (memoryStream.GetLength() > 0)
 				{
 					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-					Sleep(100);
+					Sleep(200);
 				}
 
 				for (int networkID : disconnectNetworkIdList)
 				{
 					Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
-					Server::Disconnect(networkID, true);
+					Server::Disconnect(networkID, false);
 				}
 			}
 
@@ -1433,13 +1433,13 @@ bool Room::CreepStage(Room& room)
 				if (memoryStream.GetLength() > 0)
 				{
 					room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-					Sleep(100);
+					Sleep(200);
 				}
 
 				for (int networkID : disconnectNetworkIdList)
 				{
 					Log("BattleInfo", "[크립] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
-					Server::Disconnect(networkID, true);
+					Server::Disconnect(networkID, false);
 				}
 			}
 
@@ -1532,13 +1532,13 @@ bool Room::CreepStage(Room& room)
 			if (memoryStream.GetLength() > 0)
 			{
 				room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-				Sleep(100);
+				Sleep(200);
 			}
 
 			for (int networkID : disconnectNetworkIdList)
 			{
 				Log("BattleInfo", "[전투] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
-				Server::Disconnect(networkID, true);
+				Server::Disconnect(networkID, false);
 			}
 		}
 	}
@@ -1578,13 +1578,13 @@ bool Room::CreepStage(Room& room)
 		if (memoryStream.GetLength() > 0)
 		{
 			room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
-			Sleep(100);
+			Sleep(200);
 		}
 
 		for (int networkID : disconnectNetworkIdList)
 		{
 			Log("BattleInfo", "[크립] {0}번 클라이언트 체력 0으로 접속 종료", networkID);
-			Server::Disconnect(networkID, true);
+			Server::Disconnect(networkID, false);
 		}
 	}
 
