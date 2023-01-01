@@ -244,7 +244,7 @@ void Server::Disconnect(int networkID, bool isSendAnotherRoomClient)
 	if (isSendAnotherRoomClient)
 	{
 		cs_sc_NotificationPacket packet(networkID, ENotificationType::DisconnectServer);
-		sClients[networkID].SendPacketInAnotherRoomClients(&packet);
+		sClients[networkID].SendPacketInAllRoomClients(&packet);
 	}
 
 	{

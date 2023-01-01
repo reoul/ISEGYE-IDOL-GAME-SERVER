@@ -1082,7 +1082,7 @@ FinishBattle:
 		cs_sc_NotificationPacket packet(lastClientNetworkID, ENotificationType::DisconnectServer);
 		room.SendPacketToAllClients(&packet);
 		Sleep(100);
-		Server::Disconnect(lastClientNetworkID, false);
+		Server::Disconnect(lastClientNetworkID, true);
 	}
 
 	Sleep(200);
@@ -1605,7 +1605,7 @@ FinishBattle:
 		cs_sc_NotificationPacket packet(lastClientNetworkID, ENotificationType::DisconnectServer);
 		room.SendPacketToAllClients(&packet);
 		Sleep(100);
-		Server::Disconnect(lastClientNetworkID, false);
+		Server::Disconnect(lastClientNetworkID, true);
 	}
 
 	Sleep(200);
