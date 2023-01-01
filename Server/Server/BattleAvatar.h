@@ -88,6 +88,7 @@ public:
 	bool IsGhost() const;
 	void ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet) const;
 	void SetNetworkID(int networkID);
+	int IncreaseItemTicket(EItemTicketType ticketType, int count);
 private:
 	Client* mClient;
 	int mNetworkID;
@@ -433,4 +434,3 @@ inline void BattleAvatar::SetNetworkID(int networkID)
 {
 	mNetworkID = networkID;
 }
-

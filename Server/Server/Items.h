@@ -382,69 +382,60 @@ me.ToWeakening(3);
 
 // 비밀스런 마법봉 : 상대에게 데미지 주거나 나의 체력 회복 (50퍼 확률)
 ITEM(Item020, 21, EItemTierType::Two, EItemType::Attack,
-	{ int a = 0; }
+	{
+		Random<int> gen(0,1);
+const bool isDamage = gen() == 1 ? true : false;
+
+const Client* cl = me.GetClient();
+sc_MagicStickInfoPacket packet(cl->GetNetworkID(), isDamage);
+cl->SendPacketInAllRoomClients(&packet);
+
+if (isDamage)
+{
+	opponents.ToDamage(4, me);
+}
+else
+{
+	me.ToHeal(7);
+}
+	}
 	,
-	{ int a = 0; }
-	,
-	{ int a = 0; }
-	,
-	{ int fitmentEffectEmpty = 0; }
+{
+	Random<int> gen(0,1);
+const bool isDamage = gen() == 1 ? true : false;
+
+const Client* cl = me.GetClient();
+sc_MagicStickInfoPacket packet(cl->GetNetworkID(), isDamage);
+cl->SendPacketInAllRoomClients(&packet);
+
+	if (gen() == 0)
+	{
+		opponents.ToDamage(6, me);
+	}
+	else
+	{
+		me.ToHeal(10);
+	}
+}
+,
+{
+	Random<int> gen(0,1);
+const bool isDamage = gen() == 1 ? true : false;
+
+const Client* cl = me.GetClient();
+sc_MagicStickInfoPacket packet(cl->GetNetworkID(), isDamage);
+cl->SendPacketInAllRoomClients(&packet);
+
+if (gen() == 0)
+{
+	opponents.ToDamage(9, me);
+}
+else
+{
+	me.ToHeal(14);
+}
+}
 )
-//ITEM(Item020, 21, EItemTierType::Two, EItemType::Attack,
-//	{
-//		Random<int> gen(0,1);
-//const bool isDamage = gen() == 1 ? true : false;
-//
-//const Client* cl = me.GetClient();
-//sc_MagicStickInfoPacket packet(cl->GetNetworkID(), isDamage);
-//cl->SendPacketInAllRoomClients(&packet);
-//
-//if (isDamage)
-//{
-//	opponents.ToDamage(4, me);
-//}
-//else
-//{
-//	me.ToHeal(7);
-//}
-//	}
-//	,
-//{
-//	Random<int> gen(0,1);
-//const bool isDamage = gen() == 1 ? true : false;
-//
-//const Client* cl = me.GetClient();
-//sc_MagicStickInfoPacket packet(cl->GetNetworkID(), isDamage);
-//cl->SendPacketInAllRoomClients(&packet);
-//
-//	if (gen() == 0)
-//	{
-//		opponents.ToDamage(6, me);
-//	}
-//	else
-//	{
-//		me.ToHeal(10);
-//	}
-//}
-//,
-//{
-//	Random<int> gen(0,1);
-//const bool isDamage = gen() == 1 ? true : false;
-//
-//const Client* cl = me.GetClient();
-//sc_MagicStickInfoPacket packet(cl->GetNetworkID(), isDamage);
-//cl->SendPacketInAllRoomClients(&packet);
-//
-//if (gen() == 0)
-//{
-//	opponents.ToDamage(9, me);
-//}
-//else
-//{
-//	me.ToHeal(14);
-//}
-//}
-//)
 
 // 귀족의 상현딸 : 매턴 적 출혈 2뎀 + X 데미지
 ITEM(Item021, 22, EItemTierType::Two, EItemType::Attack,

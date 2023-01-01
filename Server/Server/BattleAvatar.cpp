@@ -271,3 +271,22 @@ void BattleAvatar::ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet
 	packet.counterHeal = mCounterHeal;
 
 }
+
+int BattleAvatar::IncreaseItemTicket(EItemTicketType ticketType, int count)
+{
+	switch (ticketType)
+	{
+	case EItemTicketType::Normal:
+		mClient->SetNormalItemTicketCount(mClient->GetNormalItemTicketCount() + count);
+		return mClient->GetNormalItemTicketCount() + count;
+	case EItemTicketType::Advanced:
+		mClient->SetAdvancedItemTicketCount(mClient->GetAdvancedItemTicketCount() + count);
+		return mClient->GetAdvancedItemTicketCount() + count;
+	case EItemTicketType::Top:
+		mClient->SetTopItemTicketCount(mClient->GetTopItemTicketCount() + count);
+		return mClient->GetTopItemTicketCount() + count;
+	case EItemTicketType::Supreme:
+		mClient->SetSupremeItemTicketCount(mClient->GetSupremeItemTicketCount() + count);
+		return mClient->GetSupremeItemTicketCount() + count;
+	}
+}

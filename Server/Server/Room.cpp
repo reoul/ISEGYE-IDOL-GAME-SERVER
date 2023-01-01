@@ -474,31 +474,32 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 	}
 
 	{
-		const size_t bufferSize = (isNextStageBattle ? sizeof(sc_BattleOpponentsPacket) : 0) + sizeof(cs_sc_NotificationPacket);
-		OutputMemoryStream memoryStream(bufferSize);
+		OutputMemoryStream memoryStream(1024);
 
 		if (isNextStageBattle)
 		{
 			room.ApplyRandomBattleOpponent();
 			sc_BattleOpponentsPacket packet(room.GetBattleOpponents());
-			room.SendPacketToAllClients(&packet);
+			packet.Write(memoryStream);
 		}
 
 		{
 			cs_sc_NotificationPacket packet(0, ENotificationType::EnterReadyStage);
-			room.SendPacketToAllClients(&packet);
+			packet.Write(memoryStream);
 		}
-	}
 
-	{
 		const vector<Client*> clients = room.GetClients();
-		const size_t bufferSize = sizeof(sc_UpdateCharacterInfoPacket) * clients.size();
-		OutputMemoryStream memoryStream(bufferSize);
 
-		for (const Client* client : clients)
+		for (Client* client : clients)
 		{
 			sc_UpdateCharacterInfoPacket packet(*client);
 			packet.Write(memoryStream);
+
+			// 매번 3개씩 지급
+			const int currNormalItemTicketCount = client->GetNormalItemTicketCount();
+			client->SetNormalItemTicketCount(currNormalItemTicketCount + 3);
+			sc_SetItemTicketPacket setItemTicketPacket(client->GetNetworkID(), EItemTicketType::Normal, client->GetNormalItemTicketCount());
+			setItemTicketPacket.Write(memoryStream);
 		}
 
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
@@ -1018,7 +1019,8 @@ bool Room::BattleStage(Room& room)
 
 	Sleep(200);
 
-	// todo : 크립 몬스터, 플레이어 전투 아바타 체력 변경, 마법봉 능력
+	// todo : 마법봉 능력
+	// todo : 크립 몬스터 쓰러 트렸을 때 보상
 
 	// 시간이 다 지났는데도 안끝난 전투가 있으면 강제 데미지 10
 	{
@@ -1222,54 +1224,70 @@ bool Room::CreepStage(Room& room)
 				int packetSize = 0;
 				for (int k = 0; k < avatarCount; k += 2)
 				{
-					if (avatars[k].IsFinish())
+					BattleAvatar& playerAvatar = avatars[k];
+					BattleAvatar& creepAvatar = avatars[k + 1];
+					if (playerAvatar.IsFinish())
 					{
 						continue;
 					}
 
-					const uint8_t activeSlot = avatars[k].ActiveItem(activeItemIndex, avatars[k + 1]);
+					const uint8_t activeSlot = playerAvatar.ActiveItem(activeItemIndex, creepAvatar);
 
-					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+					if (playerAvatar.GetHP() == 0 || creepAvatar.GetHP() == 0)
 					{
-						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
-						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+						playerAvatar.ToDamageCharacter(creepAvatar.GetDamage());
+						creepAvatar.ToDamageCharacter(playerAvatar.GetDamage());
 
-						if (avatars[k].GetHP() == 0)
-							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+						if (playerAvatar.GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
+						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
+						{
+							EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
+							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
+							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+							packet.Write(memoryStream);
+						}
 
-						avatars[k].SetFinish();
-						avatars[k + 1].SetFinish();
+						playerAvatar.SetFinish();
+						creepAvatar.SetFinish();
 					}
 
-					if (!avatars[k].IsFinish() && !avatars[k + 1].IsFinish())
+					if (!playerAvatar.IsFinish() && !creepAvatar.IsFinish())
 					{
-						avatars[k].EffectBleeding();
+						playerAvatar.EffectBleeding();
 					}
 
 					{
-						sc_ActiveItemPacket packet(avatars[k].GetNetworkID(), activeSlot);
+						sc_ActiveItemPacket packet(playerAvatar.GetNetworkID(), activeSlot);
 						packet.Write(memoryStream);
 						packetSize += sizeof(sc_ActiveItemPacket);
 
-						sc_BattleAvatarInfoPacket packet1(avatars[k]);
+						sc_BattleAvatarInfoPacket packet1(playerAvatar);
 						packet1.Write(memoryStream);
 						packetSize += sizeof(sc_BattleAvatarInfoPacket);
 
-						sc_BattleAvatarInfoPacket packet2(avatars[k + 1]);
+						sc_BattleAvatarInfoPacket packet2(creepAvatar);
 						packet2.Write(memoryStream);
 						packetSize += sizeof(sc_BattleAvatarInfoPacket);
 					}
 
-					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+					if (playerAvatar.GetHP() == 0 || creepAvatar.GetHP() == 0)
 					{
-						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
-						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+						playerAvatar.ToDamageCharacter(creepAvatar.GetDamage());
+						creepAvatar.ToDamageCharacter(playerAvatar.GetDamage());
 
-						if (avatars[k].GetHP() == 0)
-							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+						if (playerAvatar.GetHP() == 0)
+							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
+						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
+						{
+							EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
+							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
+							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+							packet.Write(memoryStream);
+						}
 
-						avatars[k].SetFinish();
-						avatars[k + 1].SetFinish();
+						playerAvatar.SetFinish();
+						creepAvatar.SetFinish();
 					}
 				}
 
@@ -1319,56 +1337,71 @@ bool Room::CreepStage(Room& room)
 
 				for (int k = 1; k < avatarCount; k += 2)
 				{
-					if (avatars[k].IsFinish())
+					BattleAvatar& playerAvatar = avatars[k - 1];
+					BattleAvatar& creepAvatar = avatars[k];
+					if (creepAvatar.IsFinish())
 					{
 						continue;
 					}
 
-					const uint8_t activeSlot = avatars[k].ActiveItem(activeItemIndex, avatars[k - 1]);
+					const uint8_t activeSlot = creepAvatar.ActiveItem(activeItemIndex, playerAvatar);
 
-					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
+					if (creepAvatar.GetHP() == 0 || playerAvatar.GetHP() == 0)
 					{
-						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
-						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
+						creepAvatar.ToDamageCharacter(playerAvatar.GetDamage());
+						playerAvatar.ToDamageCharacter(creepAvatar.GetDamage());
 
-						if (avatars[k].GetHP() == 0)
-							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+						if (playerAvatar.GetClient()->GetHp() == 0)
+							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
+						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
+						{
+							EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
+							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
+							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+							packet.Write(memoryStream);
+						}
 
-						avatars[k].SetFinish();
-						avatars[k - 1].SetFinish();
+						creepAvatar.SetFinish();
+						playerAvatar.SetFinish();
 					}
 
-					if (sItems[avatars[k].GetItemBySlot(activeSlot).GetType()]->TYPE == EItemType::Attack)
+					if (sItems[creepAvatar.GetItemBySlot(activeSlot).GetType()]->TYPE == EItemType::Attack)
 					{
-						avatars[k - 1].EffectCounter(avatars[k]);
+						playerAvatar.EffectCounter(creepAvatar);
 					}
 
-					if (!avatars[k].IsFinish() && !avatars[k - 1].IsFinish())
+					if (!creepAvatar.IsFinish() && !playerAvatar.IsFinish())
 					{
-						avatars[k].EffectBleeding();
-
+						creepAvatar.EffectBleeding();
 					}
 
 					{
-						sc_BattleAvatarInfoPacket packet1(avatars[k]);
+						sc_BattleAvatarInfoPacket packet1(creepAvatar);
 						packet1.Write(memoryStream);
 						packetSize += sizeof(sc_BattleAvatarInfoPacket);
 
-						sc_BattleAvatarInfoPacket packet2(avatars[k - 1]);
+						sc_BattleAvatarInfoPacket packet2(playerAvatar);
 						packet2.Write(memoryStream);
 						packetSize += sizeof(sc_BattleAvatarInfoPacket);
 					}
 
-					if (avatars[k].GetHP() == 0 || avatars[k - 1].GetHP() == 0)
+					if (creepAvatar.GetHP() == 0 || playerAvatar.GetHP() == 0)
 					{
-						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
-						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
+						creepAvatar.ToDamageCharacter(playerAvatar.GetDamage());
+						playerAvatar.ToDamageCharacter(creepAvatar.GetDamage());
 
-						if (avatars[k].GetHP() == 0)
-							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+						if (playerAvatar.GetClient()->GetHp() == 0)
+							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
+						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
+						{
+							EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
+							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
+							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+							packet.Write(memoryStream);
+						}
 
-						avatars[k].SetFinish();
-						avatars[k - 1].SetFinish();
+						creepAvatar.SetFinish();
+						playerAvatar.SetFinish();
 					}
 				}
 
@@ -1438,32 +1471,42 @@ bool Room::CreepStage(Room& room)
 
 			for (int k = 0; k < avatarCount; k += 2)
 			{
-				if (avatars[k].IsFinish())
+				BattleAvatar& playerAvatar = avatars[k];
+				BattleAvatar& creepAvatar = avatars[k + 1];
+
+				if (playerAvatar.IsFinish())
 				{
 					continue;
 				}
 
-				avatars[k].EffectBomb();
-				avatars[k].InitCycle();
-				avatars[k + 1].EffectBomb();
-				avatars[k + 1].InitCycle();
+				playerAvatar.EffectBomb();
+				playerAvatar.InitCycle();
+				creepAvatar.EffectBomb();
+				creepAvatar.InitCycle();
 
-				sc_BattleAvatarInfoPacket packet1(avatars[k]);
+				sc_BattleAvatarInfoPacket packet1(playerAvatar);
 				packet1.Write(memoryStream);
 
-				sc_BattleAvatarInfoPacket packet2(avatars[k + 1]);
+				sc_BattleAvatarInfoPacket packet2(creepAvatar);
 				packet2.Write(memoryStream);
 
-				if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
+				if (playerAvatar.GetHP() == 0 || creepAvatar.GetHP() == 0)
 				{
-					avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
-					avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
+					playerAvatar.ToDamageCharacter(creepAvatar.GetDamage());
+					creepAvatar.ToDamageCharacter(playerAvatar.GetDamage());
 
-					if (avatars[k].GetHP() == 0)
-						disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
+					if (playerAvatar.GetHP() == 0)
+						disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
+					if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
+					{
+						EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
+						int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
+						sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+						packet.Write(memoryStream);
+					}
 
-					avatars[k].SetFinish();
-					avatars[k + 1].SetFinish();
+					playerAvatar.SetFinish();
+					creepAvatar.SetFinish();
 				}
 			}
 
@@ -1667,4 +1710,39 @@ ECreepType Room::GetCurCreepType() const
 	}
 
 	return static_cast<ECreepType>(mCreepRound);
+}
+
+EItemTicketType Room::GetCreepRewardTicketType() const
+{
+	EItemTicketType retTicketType;
+	const ECreepType curCreepType = GetCurCreepType();
+	switch (curCreepType)
+	{
+	case ECreepType::Shrimp:
+	case ECreepType::NegativeMan:
+	case ECreepType::Hodd:
+		retTicketType = EItemTicketType::Normal;
+		break;
+	case ECreepType::Wakpago:
+		retTicketType = EItemTicketType::Advanced;
+		break;
+	case ECreepType::ShortAnswer:
+		retTicketType = EItemTicketType::Advanced;
+		break;
+	case ECreepType::Chunsik:
+		retTicketType = EItemTicketType::Top;
+		break;
+	case ECreepType::KwonMin:
+		Random<int> gen(0, 99);
+		if (gen() < 20)
+		{
+			retTicketType = EItemTicketType::Supreme;
+		}
+		else
+		{
+			retTicketType = EItemTicketType::Top;
+		}
+		break;
+	}
+	return retTicketType;
 }

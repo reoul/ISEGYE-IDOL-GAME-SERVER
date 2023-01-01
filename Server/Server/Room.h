@@ -57,6 +57,7 @@ public:
 	bool IsValidClientInThisRoom(Client* client) const;
 	BattleAvatar GetCreepMonster();
 	ECreepType GetCurCreepType() const;
+	EItemTicketType GetCreepRewardTicketType() const;
 private:
 	vector<Client*> mClients;
 	size_t mSize;
