@@ -743,9 +743,9 @@ bool Room::BattleStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
 						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
 
-						if (avatars[k].GetHP() == 0)
+						if (avatars[k].GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
-						if (avatars[k + 1].GetHP() == 0)
+						if (avatars[k + 1].GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(avatars[k + 1].GetNetworkID());
 
 						avatars[k].SetFinish();
@@ -782,9 +782,9 @@ bool Room::BattleStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
 						avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
 
-						if (avatars[k].GetHP() == 0)
+						if (avatars[k].GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
-						if (avatars[k + 1].GetHP() == 0)
+						if (avatars[k + 1].GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(avatars[k + 1].GetNetworkID());
 
 						avatars[k].SetFinish();
@@ -850,9 +850,9 @@ bool Room::BattleStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
 						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
 
-						if (avatars[k].GetHP() == 0)
+						if (avatars[k].GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
-						if (avatars[k - 1].GetHP() == 0)
+						if (avatars[k - 1].GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(avatars[k - 1].GetNetworkID());
 
 						avatars[k].SetFinish();
@@ -889,9 +889,9 @@ bool Room::BattleStage(Room& room)
 						avatars[k].ToDamageCharacter(avatars[k - 1].GetDamage());
 						avatars[k - 1].ToDamageCharacter(avatars[k].GetDamage());
 
-						if (avatars[k].GetHP() == 0)
+						if (avatars[k].GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
-						if (avatars[k - 1].GetHP() == 0)
+						if (avatars[k - 1].GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(avatars[k - 1].GetNetworkID());
 
 						avatars[k].SetFinish();
@@ -979,9 +979,9 @@ bool Room::BattleStage(Room& room)
 					avatars[k].ToDamageCharacter(avatars[k + 1].GetDamage());
 					avatars[k + 1].ToDamageCharacter(avatars[k].GetDamage());
 
-					if (avatars[k].GetHP() == 0)
+					if (avatars[k].GetClient()->GetHp() == 0)
 						disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
-					if (avatars[k + 1].GetHP() == 0)
+					if (avatars[k + 1].GetClient()->GetHp() == 0)
 						disconnectNetworkIdList.emplace_back(avatars[k + 1].GetNetworkID());
 
 					avatars[k].SetFinish();
@@ -1035,9 +1035,9 @@ bool Room::BattleStage(Room& room)
 			avatars[k].ToDamageCharacter(10);
 			avatars[k + 1].ToDamageCharacter(10);
 
-			if (avatars[k].GetHP() == 0)
+			if (avatars[k].GetClient()->GetHp() == 0)
 				disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
-			if (avatars[k + 1].GetHP() == 0)
+			if (avatars[k + 1].GetClient()->GetHp() == 0)
 				disconnectNetworkIdList.emplace_back(avatars[k + 1].GetNetworkID());
 		}
 
@@ -1078,6 +1078,15 @@ FinishBattle:
 	}
 
 	Log("FinishBattleResultInfo", "----------");
+
+	if (room.GetClients().size() == 1)
+	{
+		int lastClientNetworkID = room.GetClients()[0]->GetNetworkID();
+		cs_sc_NotificationPacket packet(lastClientNetworkID, ENotificationType::DisconnectServer);
+		room.SendPacketToAllClients(&packet);
+		Sleep(100);
+		Server::Disconnect(lastClientNetworkID, false);
+	}
 
 	Sleep(200);
 
@@ -1238,7 +1247,7 @@ bool Room::CreepStage(Room& room)
 						playerAvatar.ToDamageCharacter(creepAvatar.GetDamage());
 						creepAvatar.ToDamageCharacter(playerAvatar.GetDamage());
 
-						if (playerAvatar.GetHP() == 0)
+						if (playerAvatar.GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
 						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
 						{
@@ -1276,7 +1285,7 @@ bool Room::CreepStage(Room& room)
 						playerAvatar.ToDamageCharacter(creepAvatar.GetDamage());
 						creepAvatar.ToDamageCharacter(playerAvatar.GetDamage());
 
-						if (playerAvatar.GetHP() == 0)
+						if (playerAvatar.GetClient()->GetHp() == 0)
 							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
 						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
 						{
@@ -1495,7 +1504,7 @@ bool Room::CreepStage(Room& room)
 					playerAvatar.ToDamageCharacter(creepAvatar.GetDamage());
 					creepAvatar.ToDamageCharacter(playerAvatar.GetDamage());
 
-					if (playerAvatar.GetHP() == 0)
+					if (playerAvatar.GetClient()->GetHp() == 0)
 						disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
 					if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
 					{
@@ -1552,7 +1561,7 @@ bool Room::CreepStage(Room& room)
 
 			avatars[k].ToDamageCharacter(10);
 
-			if (avatars[k].GetHP() == 0)
+			if (avatars[k].GetClient()->GetHp() == 0)
 				disconnectNetworkIdList.emplace_back(avatars[k].GetNetworkID());
 		}
 
@@ -1592,6 +1601,15 @@ FinishBattle:
 	}
 
 	Log("FinishBattleResultInfo", "----------");
+
+	if (room.GetClients().size() == 1)
+	{
+		int lastClientNetworkID = room.GetClients()[0]->GetNetworkID();
+		cs_sc_NotificationPacket packet(lastClientNetworkID, ENotificationType::DisconnectServer);
+		room.SendPacketToAllClients(&packet);
+		Sleep(100);
+		Server::Disconnect(lastClientNetworkID, false);
+	}
 
 	Sleep(200);
 
