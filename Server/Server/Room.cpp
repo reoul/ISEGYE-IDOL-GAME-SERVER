@@ -1593,6 +1593,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
+		monster.SetMaxHP(30);
 		break;
 	case ECreepType::NegativeMan:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -1602,6 +1603,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
+		monster.SetMaxHP(30);
 		break;
 	case ECreepType::Hodd:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -1611,6 +1613,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
+		monster.SetMaxHP(30);
 		break;
 	case ECreepType::Wakpago:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
