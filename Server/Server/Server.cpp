@@ -483,11 +483,16 @@ void Server::ProcessPacket(int networkID, char* buf)
 			const uint8_t newItemType = client.GetRandomItemTypeOfNormalItemTicket();
 			if (newItemType != EMPTY_ITEM)
 			{
+				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
 				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
-				client.SendPacketInAllRoomClients(&addItemPacket);
+				addItemPacket.Write(memoryStream);
 
 				client.SetNormalItemTicketCount(client.GetNormalItemTicketCount() - 1);
+				sc_SetItemTicketPacket setItemTicketPacket(client.GetNetworkID(), EItemTicketType::Normal, client.GetNormalItemTicketCount());
+				setItemTicketPacket.Write(memoryStream);
+
+				room->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 
 				Log("log", "[ENotificationType::UseNormalItemTicket] 네트워크 {0}번 클라이언트 일반 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 			}
@@ -508,11 +513,16 @@ void Server::ProcessPacket(int networkID, char* buf)
 			const uint8_t newItemType = client.GetRandomItemTypeOfAdvancedItemTicket();
 			if (newItemType != EMPTY_ITEM)
 			{
+				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
 				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
 				client.SendPacketInAllRoomClients(&addItemPacket);
 
 				client.SetAdvancedItemTicketCount(client.GetAdvancedItemTicketCount() - 1);
+				sc_SetItemTicketPacket setItemTicketPacket(client.GetNetworkID(), EItemTicketType::Advanced, client.GetAdvancedItemTicketCount());
+				setItemTicketPacket.Write(memoryStream);
+
+				room->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 
 				Log("log", "[ENotificationType::UseAdvancedItemTicket] 네트워크 {0}번 클라이언트 고급 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 			}
@@ -533,11 +543,16 @@ void Server::ProcessPacket(int networkID, char* buf)
 			const uint8_t newItemType = client.GetRandomItemTypeOfTopItemTicket();
 			if (newItemType != EMPTY_ITEM)
 			{
+				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
 				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
 				client.SendPacketInAllRoomClients(&addItemPacket);
 
 				client.SetTopItemTicketCount(client.GetTopItemTicketCount() - 1);
+				sc_SetItemTicketPacket setItemTicketPacket(client.GetNetworkID(), EItemTicketType::Top, client.GetTopItemTicketCount());
+				setItemTicketPacket.Write(memoryStream);
+
+				room->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 
 				Log("log", "[ENotificationType::UseTopItemTicket] 네트워크 {0}번 클라이언트 최고급 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 			}
@@ -558,11 +573,16 @@ void Server::ProcessPacket(int networkID, char* buf)
 			const uint8_t newItemType = client.GetRandomItemTypeOfSupremeItemTicket();
 			if (newItemType != EMPTY_ITEM)
 			{
+				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
 				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
 				client.SendPacketInAllRoomClients(&addItemPacket);
 
 				client.SetSupremeItemTicketCount(client.GetSupremeItemTicketCount() - 1);
+				sc_SetItemTicketPacket setItemTicketPacket(client.GetNetworkID(), EItemTicketType::Supreme, client.GetSupremeItemTicketCount());
+				setItemTicketPacket.Write(memoryStream);
+
+				room->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 
 				Log("log", "[ENotificationType::UseSupremeItemTicket] 네트워크 {0}번 클라이언트 지존 뽑기권 요청 / {1} 아이템 지급", pPacket->networkID, newItemType);
 			}

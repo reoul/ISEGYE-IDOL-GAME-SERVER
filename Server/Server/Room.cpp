@@ -1019,9 +1019,6 @@ bool Room::BattleStage(Room& room)
 
 	Sleep(200);
 
-	// todo : 마법봉 능력
-	// todo : 크립 몬스터 쓰러 트렸을 때 보상
-
 	// 시간이 다 지났는데도 안끝난 전투가 있으면 강제 데미지 10
 	{
 		OutputMemoryStream memoryStream(128);
