@@ -69,25 +69,23 @@ void Server::Start()
 
 	while (sIsRunningServer)
 	{
-		if (system_clock::now() > lastConnectCheckTime + checkIntervalTime)
+		Sleep(CONNECT_CHECK_INTERVAL * 1000);
+		int connCount = 0;
+		lastConnectCheckTime = system_clock::now();
+		for (Client& client : sClients)
 		{
-			int connCount = 0;
-			lastConnectCheckTime = system_clock::now();
-			for (Client& client : sClients)
+			if (client.GetStatus() == ESocketStatus::ACTIVE)
 			{
-				if (client.GetStatus() == ESocketStatus::ACTIVE)
+				if (!client.IsValidConnect())
 				{
-					if (!client.IsValidConnect())
-					{
-						Log("log", "{0}번 클라이언트 연결 불안으로 접속 해제", client.GetNetworkID());
-						Disconnect(client.GetNetworkID(), true);
-						continue;
-					}
-					++connCount;
+					Log("log", "{0}번 클라이언트 연결 불안으로 접속 해제", client.GetNetworkID());
+					Disconnect(client.GetNetworkID(), true);
+					continue;
 				}
+				++connCount;
 			}
-			LogWrite("log", "현재 유저 : {0}명", connCount);
 		}
+		LogByRelease("Connection", "현재 유저 : {0}명", connCount);
 	}
 
 	for (auto& th : workerThreads)
