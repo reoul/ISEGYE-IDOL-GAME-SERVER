@@ -274,6 +274,11 @@ void BattleAvatar::ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet
 
 int BattleAvatar::IncreaseItemTicket(EItemTicketType ticketType, int count)
 {
+	if (mIsGhost)
+	{
+		return;
+	}
+
 	switch (ticketType)
 	{
 	case EItemTicketType::Normal:
