@@ -352,8 +352,7 @@ unsigned Room::ProgressThread(void* pArguments)
 	Log("log", "기본 템 지급 시작");
 	// 기본 템 지급
 	{
-		constexpr size_t bufferSize = sizeof(sc_AddNewItemPacket) * 2 * 8 + sizeof(sc_SetItemTicketPacket) * 4 * 8;
-		OutputMemoryStream memoryStream(bufferSize);
+		OutputMemoryStream memoryStream(512);
 
 		for (Client* client : room.mClients)
 		{
@@ -361,12 +360,11 @@ unsigned Room::ProgressThread(void* pArguments)
 			constexpr uint8_t defaultItemCode2 = 4;	// 기본템 2
 
 			uint8_t slot1 = client->AddItem(defaultItemCode1);
-			const sc_AddNewItemPacket addItemPacket(client->GetNetworkID(), slot1, defaultItemCode1);
-			addItemPacket.Write(memoryStream);
 
 			uint8_t slot2 = client->AddItem(defaultItemCode2);
-			const sc_AddNewItemPacket addItemPacket2(client->GetNetworkID(), slot2, defaultItemCode2);
-			addItemPacket2.Write(memoryStream);
+
+			sc_InventoryInfoPacket inventoryInfoPacket(*client);
+			inventoryInfoPacket.Write(memoryStream);
 
 			client->SetNormalItemTicketCount(100);
 			client->SetAdvancedItemTicketCount(100);
@@ -1132,7 +1130,7 @@ bool Room::CreepStage(Room& room)
 		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 1000000);	// 크립 몬스터는 따로 인덱스 할 수 있는 번호가 없기 때문에 일정 숫자를 더해준다.
 		++clientIndex;
 	}
-	// todo : 크립 개개별 발동 로직 수정
+	// todo : 플레이어 강화, 이동, 재조합, 버림 할 경우 인벤토리 정보 전달
 	{
 		OutputMemoryStream memoryStream(1024);
 		cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCreepStage);

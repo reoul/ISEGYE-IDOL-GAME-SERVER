@@ -72,6 +72,8 @@ enum class EPacketType : uint8_t
 	sc_CreepStageInfo,
 	/// <summary> 전투 아바타 정보 패킷 타입 </summary>
 	sc_BattleAvatarInfo,
+	/// <summary> 인벤토리 정보 패킷 타입 </summary>
+	sc_InventoryInfo,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -755,6 +757,51 @@ struct sc_BattleAvatarInfoPacket : private Packet
 		: Packet(sizeof(sc_BattleAvatarInfoPacket), EPacketType::sc_BattleAvatarInfo)
 	{
 		avatar.ApplyBattleAvatarInfoPacket(*this);
+	}
+};
+
+struct sc_InventoryInfoPacket : protected Packet
+{
+	const_wrapper<int32_t> networkID;
+	SlotItemInfo usingInventoryInfos[MAX_USING_ITEM_COUNT];
+	SlotItemInfo unUsingInventoryInfos[MAX_UN_USING_ITEM_COUNT];
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(networkID.get());
+
+		for (SlotItemInfo usingInventoryInfo : usingInventoryInfos)
+		{
+			memoryStream.Write(usingInventoryInfo.type);
+			memoryStream.Write(usingInventoryInfo.upgrade);
+		}
+
+		for (SlotItemInfo unUsingInventoryInfo : unUsingInventoryInfos)
+		{
+			memoryStream.Write(unUsingInventoryInfo.type);
+			memoryStream.Write(unUsingInventoryInfo.upgrade);
+		}
+	}
+
+	sc_InventoryInfoPacket(const Client& client)
+		: Packet(sizeof(sc_InventoryInfoPacket), EPacketType::sc_InventoryInfo)
+		, networkID(client.GetNetworkID())
+	{
+		const vector<Item> usingItems = client.GetUsingItems();
+		const vector<Item> unUsingItems = client.GetUnUsingItems();
+
+		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+		{
+			usingInventoryInfos[i].type = usingItems[i].GetType();
+			usingInventoryInfos[i].upgrade = usingItems[i].GetUpgrade();
+		}
+
+		for (int i = 0; i < MAX_UN_USING_ITEM_COUNT; ++i)
+		{
+			unUsingInventoryInfos[i].type = unUsingItems[i].GetType();
+			unUsingInventoryInfos[i].upgrade = unUsingItems[i].GetUpgrade();
+		}
 	}
 };
 

@@ -425,7 +425,8 @@ void Server::ProcessPacket(int networkID, char* buf)
 		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
 			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
-			sClients[networkID].SendPacketInAllRoomClients(pPacket);
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 		}
 		else
 		{
@@ -483,8 +484,9 @@ void Server::ProcessPacket(int networkID, char* buf)
 			{
 				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
-				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
-				addItemPacket.Write(memoryStream);
+
+				sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+				inventoryInfoPacket.Write(memoryStream);
 
 				client.SetNormalItemTicketCount(client.GetNormalItemTicketCount() - 1);
 				sc_SetItemTicketPacket setItemTicketPacket(client.GetNetworkID(), EItemTicketType::Normal, client.GetNormalItemTicketCount());
@@ -513,8 +515,9 @@ void Server::ProcessPacket(int networkID, char* buf)
 			{
 				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
-				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
-				client.SendPacketInAllRoomClients(&addItemPacket);
+
+				sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+				inventoryInfoPacket.Write(memoryStream);
 
 				client.SetAdvancedItemTicketCount(client.GetAdvancedItemTicketCount() - 1);
 				sc_SetItemTicketPacket setItemTicketPacket(client.GetNetworkID(), EItemTicketType::Advanced, client.GetAdvancedItemTicketCount());
@@ -543,8 +546,9 @@ void Server::ProcessPacket(int networkID, char* buf)
 			{
 				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
-				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
-				client.SendPacketInAllRoomClients(&addItemPacket);
+
+				sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+				inventoryInfoPacket.Write(memoryStream);
 
 				client.SetTopItemTicketCount(client.GetTopItemTicketCount() - 1);
 				sc_SetItemTicketPacket setItemTicketPacket(client.GetNetworkID(), EItemTicketType::Top, client.GetTopItemTicketCount());
@@ -573,8 +577,9 @@ void Server::ProcessPacket(int networkID, char* buf)
 			{
 				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
-				sc_AddNewItemPacket addItemPacket(client.GetNetworkID(), slot, newItemType);
-				client.SendPacketInAllRoomClients(&addItemPacket);
+				
+				sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+				inventoryInfoPacket.Write(memoryStream);
 
 				client.SetSupremeItemTicketCount(client.GetSupremeItemTicketCount() - 1);
 				sc_SetItemTicketPacket setItemTicketPacket(client.GetNetworkID(), EItemTicketType::Supreme, client.GetSupremeItemTicketCount());
@@ -628,16 +633,15 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		item.SetEmptyItem();
 
-		sClients[pPacket->networkID].SendPacketInAllRoomClients(pPacket);
+
+		sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+		sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 
 		LogWrite("log", "[EPacketType::cs_sc_dropItem] 네트워크 {0}번 클라이언트 {1}번 아이템 버림}", pPacket->networkID, pPacket->index.get());
 	}
 	break;
 	case EPacketType::cs_requestCombinationItem:
 	{
-		constexpr size_t bufferSize = sizeof(cs_sc_DropItemPacket) * 3 + sizeof(sc_AddNewItemPacket) + sizeof(sc_UpgradeItemPacket);
-		OutputMemoryStream memoryStream(bufferSize);
-
 		cs_RequestCombinationItemPacket* pPacket = reinterpret_cast<cs_RequestCombinationItemPacket*>(buf);
 		Client& client = sClients[pPacket->networkID];
 
@@ -655,14 +659,6 @@ void Server::ProcessPacket(int networkID, char* buf)
 		if (item2.GetType() == EMPTY_ITEM) return;
 		if (item3.GetType() == EMPTY_ITEM) return;
 
-		const cs_sc_DropItemPacket packet1(pPacket->networkID, pPacket->index1);
-		packet1.Write(memoryStream);
-		const cs_sc_DropItemPacket packet2(pPacket->networkID, pPacket->index2);
-		packet2.Write(memoryStream);
-		const cs_sc_DropItemPacket packet3(pPacket->networkID, pPacket->index3);
-		packet3.Write(memoryStream);
-
-
 		uint8_t tier1 = static_cast<uint8_t>(sItems[item1.GetType()]->TIER_TYPE);
 		uint8_t tier2 = static_cast<uint8_t>(sItems[item2.GetType()]->TIER_TYPE);
 		uint8_t tier3 = static_cast<uint8_t>(sItems[item3.GetType()]->TIER_TYPE);
@@ -675,17 +671,13 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		uint8_t newItemType = client.GetRandomItemTypeByCombination(maxTier);
 		uint8_t findEmptyItemSlot = client.FindEmptyItemSlotIndex();
-		sc_AddNewItemPacket addNewItemPacket(pPacket->networkID, findEmptyItemSlot, newItemType);
-		addNewItemPacket.Write(memoryStream);
-
-		sc_UpgradeItemPacket upgradeItemPacket(pPacket->networkID, findEmptyItemSlot, 1);
-		upgradeItemPacket.Write(memoryStream);
 
 		Item& newItem = client.GetItem(findEmptyItemSlot);
 		newItem.SetType(newItemType);
 		newItem.SetUpgrade(1);
 
-		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+		sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+		sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 		Log("log", "cs_requestCombinationItem 재조합 완료 {0}번 클라이언트 {1}슬롯 {2} 아이템 {3} 강화", pPacket->networkID, newItem.GetSlot(), newItem.GetType(), newItem.GetUpgrade());
 	}
 	break;
@@ -738,15 +730,11 @@ void Server::ProcessPacket(int networkID, char* buf)
 		}
 
 		uint8_t upgrade = upgradeItem.GetUpgrade() + 1;
-		constexpr int bufferSize = sizeof(cs_sc_DropItemPacket) + sizeof(sc_UpgradeItemPacket);
-		OutputMemoryStream memoryStream(bufferSize);
-		cs_sc_DropItemPacket dropItemPacket(pPacket->networkID, pPacket->slot2);
-		sc_UpgradeItemPacket upgradeItemPacket(pPacket->networkID, pPacket->slot1, upgrade);
 		upgradeItem.SetUpgrade(upgrade);
 		materialItem.SetEmptyItem();
-		dropItemPacket.Write(memoryStream);
-		upgradeItemPacket.Write(memoryStream);
-		client.GetRoomPtr()->SendPacketToAllClients(memoryStream.GetBufferPtr(), bufferSize);
+
+		sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+		sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 		Log("log", "cs_RequestUpgradeItemPacket 업그레이드 완료 {0}번 클라이언트 {1}슬롯 {2}수치", pPacket->networkID, pPacket->slot1, upgrade);
 	}
 	break;
