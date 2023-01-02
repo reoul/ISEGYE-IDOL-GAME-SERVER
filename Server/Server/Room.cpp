@@ -601,7 +601,7 @@ bool Room::BattleStage(Room& room)
 	{
 		const int networkID = battleOpponents[i] >= 0 ? battleOpponents[i] : ~battleOpponents[i];
 		Client& client = Server::GetClients(networkID);
-		avatars[i].SetAvatar(client, networkID, battleOpponents[i] < 0);
+		avatars[i].SetAvatar(client, networkID, battleOpponents[i] < 0, room.GetRound());
 	}
 
 	{
@@ -1127,12 +1127,12 @@ bool Room::CreepStage(Room& room)
 	int clientIndex = 0;
 	for (int i = 0; i < avatarCount; i += 2)
 	{
-		avatars[i].SetAvatar(*clients[clientIndex], clients[clientIndex]->GetNetworkID(), false);
+		avatars[i].SetAvatar(*clients[clientIndex], clients[clientIndex]->GetNetworkID(), false, room.GetRound());
 		avatars[i + 1] = creepMonster;
 		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 1000000);	// 크립 몬스터는 따로 인덱스 할 수 있는 번호가 없기 때문에 일정 숫자를 더해준다.
 		++clientIndex;
 	}
-
+	// todo : 크립 개개별 발동 로직 수정
 	{
 		OutputMemoryStream memoryStream(1024);
 		cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCreepStage);

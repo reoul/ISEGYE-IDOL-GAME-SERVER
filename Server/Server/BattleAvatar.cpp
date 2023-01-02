@@ -40,11 +40,11 @@ BattleAvatar::BattleAvatar()
 {
 }
 
-void BattleAvatar::SetAvatar(Client& client, int networkID, bool isGhost)
+void BattleAvatar::SetAvatar(Client& client, int networkID, bool isGhost, int round)
 {
 	mClient = &client;
 	mNetworkID = networkID;
-	mMaxHp = 50 + 10 * min(5, client.GetRoomPtr()->GetRound());
+	mMaxHp = 50 + 10 * min(5, round);
 	mHp = mMaxHp;
 	mDefensive = 0;
 	mOffensePower = 0;
