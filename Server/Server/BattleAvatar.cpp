@@ -276,7 +276,7 @@ int BattleAvatar::IncreaseItemTicket(EItemTicketType ticketType, int count)
 {
 	if (mIsGhost)
 	{
-		return;
+		return 0;
 	}
 
 	switch (ticketType)

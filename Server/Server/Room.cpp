@@ -1264,10 +1264,6 @@ bool Room::CreepStage(Room& room)
 					}
 
 					{
-						sc_ActiveItemPacket packet(playerAvatar.GetNetworkID(), activeSlot);
-						packet.Write(memoryStream);
-						packetSize += sizeof(sc_ActiveItemPacket);
-
 						sc_BattleAvatarInfoPacket packet1(playerAvatar);
 						packet1.Write(memoryStream);
 						packetSize += sizeof(sc_BattleAvatarInfoPacket);
@@ -1382,6 +1378,10 @@ bool Room::CreepStage(Room& room)
 					}
 
 					{
+						sc_ActiveItemPacket packet(creepAvatar.GetNetworkID(), activeSlot);
+						packet.Write(memoryStream);
+						packetSize += sizeof(sc_ActiveItemPacket);
+
 						sc_BattleAvatarInfoPacket packet1(creepAvatar);
 						packet1.Write(memoryStream);
 						packetSize += sizeof(sc_BattleAvatarInfoPacket);
