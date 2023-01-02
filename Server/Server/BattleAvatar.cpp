@@ -38,6 +38,10 @@ BattleAvatar::BattleAvatar()
 	, mIsCharacterDamage(false)
 	, mFirstAttackState(0)
 {
+	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
+	{
+		mActiveQueue[i] = i;
+	}
 }
 
 void BattleAvatar::SetAvatar(Client& client, int networkID, bool isGhost, int round)
