@@ -222,7 +222,7 @@ void Server::WorkerThread()
 void Server::NewClientEvent(int networkID, char* ipAdress)
 {
 	Log("log", "네트워크 {0}번 클라이언트 서버 접속 (ip주소: {1}) (소켓 번호 : {2})", networkID, ipAdress, sClients[networkID].GetSocket() / 4);
-	if (connectCount++ / 100 == 0)
+	if ((connectCount++ % 100) == 0)
 	{
 		LogByRelease("ConnectionCount", "누적 접속 횟수 : {0}", connectCount);
 	}
