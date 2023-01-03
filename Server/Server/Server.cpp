@@ -494,7 +494,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 				room->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 
-				Log("log", "[ENotificationType::UseNormalItemTicket] 네트워크 {0}번 클라이언트 일반 뽑기권 요청 / {1} 아이템 지급 / 현재 {1}개", pPacket->networkID, newItemType, client.GetNormalItemTicketCount());
+				Log("log", "[ENotificationType::UseNormalItemTicket] 네트워크 {0}번 클라이언트 일반 뽑기권 요청 / {1} 아이템 지급 / 현재 {2}개", pPacket->networkID, newItemType, client.GetNormalItemTicketCount());
 			}
 			else
 			{
@@ -525,7 +525,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 				room->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 
-				Log("log", "[ENotificationType::UseAdvancedItemTicket] 네트워크 {0}번 클라이언트 고급 뽑기권 요청 / {1} 아이템 지급 / 현재 {1}개", pPacket->networkID, newItemType, client.GetAdvancedItemTicketCount());
+				Log("log", "[ENotificationType::UseAdvancedItemTicket] 네트워크 {0}번 클라이언트 고급 뽑기권 요청 / {1} 아이템 지급 / 현재 {2}개", pPacket->networkID, newItemType, client.GetAdvancedItemTicketCount());
 			}
 			else
 			{
@@ -556,7 +556,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 				room->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 
-				Log("log", "[ENotificationType::UseTopItemTicket] 네트워크 {0}번 클라이언트 최고급 뽑기권 요청 / {1} 아이템 지급 / 현재 {1}개", pPacket->networkID, newItemType, client.GetTopItemTicketCount());
+				Log("log", "[ENotificationType::UseTopItemTicket] 네트워크 {0}번 클라이언트 최고급 뽑기권 요청 / {1} 아이템 지급 / 현재 {2}개", pPacket->networkID, newItemType, client.GetTopItemTicketCount());
 			}
 			else
 			{
@@ -587,7 +587,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 				room->SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 
-				Log("log", "[ENotificationType::UseSupremeItemTicket] 네트워크 {0}번 클라이언트 지존 뽑기권 요청 / {1} 아이템 지급 / 현재 {1}개", pPacket->networkID, newItemType, client.GetSupremeItemTicketCount());
+				Log("log", "[ENotificationType::UseSupremeItemTicket] 네트워크 {0}번 클라이언트 지존 뽑기권 요청 / {1} 아이템 지급 / 현재 {2}개", pPacket->networkID, newItemType, client.GetSupremeItemTicketCount());
 			}
 			else
 			{
