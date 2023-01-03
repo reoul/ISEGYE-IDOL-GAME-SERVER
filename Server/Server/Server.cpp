@@ -11,7 +11,7 @@ Client Server::sClients[MAX_USER];
 RoomManager Server::sRoomManager;
 bool Server::sIsRunningServer = true;
 ServerQueue Server::sServerQueue;
-
+size_t connectCount = 0;
 
 
 void Server::Start()
@@ -222,7 +222,10 @@ void Server::WorkerThread()
 void Server::NewClientEvent(int networkID, char* ipAdress)
 {
 	Log("log", "네트워크 {0}번 클라이언트 서버 접속 (ip주소: {1}) (소켓 번호 : {2})", networkID, ipAdress, sClients[networkID].GetSocket() / 4);
-
+	if (connectCount++ / 100 == 0)
+	{
+		LogByRelease("ConnectionCount", "누적 접속 횟수 : {0}", connectCount);
+	}
 	cs_sc_NotificationPacket packet(networkID, ENotificationType::ConnectServer);
 	SendPacket(networkID, &packet);
 }

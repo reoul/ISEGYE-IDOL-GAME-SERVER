@@ -22,6 +22,7 @@ int main()
 	Logger::AddLogger("FinishBattleResultInfo", "/FinishBattleResultInfo.txt");
 	Logger::AddLogger("PacketSendRecive", "/PacketSendRecive.txt");
 	Logger::AddLogger("Connection", "/Connection.txt");
+	Logger::AddLogger("ConnectionCount", "/ConnectionCount.txt");
 
 	//Client aa;
 	//Client bb;
