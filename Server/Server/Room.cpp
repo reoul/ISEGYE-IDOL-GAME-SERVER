@@ -387,27 +387,45 @@ unsigned Room::ProgressThread(void* pArguments)
 	Log("log", "기본 템 지급 완료");
 
 	// 처음 크립 3판
-	ReadyStage(room, false);
+	if (!ReadyStage(room, false))
+	{
+		goto loopOut;
+	}
 
 	Sleep(1000);
 
-	CreepStage(room);
+	if (!CreepStage(room))
+	{
+		goto loopOut;
+	}
 
 	Sleep(1000);
 
-	ReadyStage(room, false);
+	if (!ReadyStage(room, false))
+	{
+		goto loopOut;
+	}
 
 	Sleep(1000);
 
-	CreepStage(room);
+	if (!CreepStage(room))
+	{
+		goto loopOut;
+	}
 
 	Sleep(1000);
 
-	ReadyStage(room, false);
+	if (!ReadyStage(room, false))
+	{
+		goto loopOut;
+	}
 
 	Sleep(1000);
 
-	CreepStage(room);
+	if (!CreepStage(room))
+	{
+		goto loopOut;
+	}
 
 	Sleep(1000);
 
