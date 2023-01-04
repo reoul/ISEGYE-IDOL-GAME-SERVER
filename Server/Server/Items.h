@@ -466,34 +466,26 @@ me.SetFirstAttackState(me.GetFirstAttackState() + upgrade + 1);
 
 // 선량한 시민의 빠루
 ITEM(Item023, 24, EItemTierType::Three, EItemType::Attack,
-	{ int a = 0; }
+	{
+	const int tenPercentHp = opponents.GetMaxHP() / 10;
+	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / tenPercentHp;
+		opponents.ToDamage(5 + damage, me);
+	}
 	,
-	{ int b = 0; }
-	,
-	{ int c = 0; }
-	,
-	{ int fitmentEffectEmpty = 0; }
+{
+	const int tenPercentHp = opponents.GetMaxHP() / 10;
+	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / tenPercentHp;
+	opponents.ToDamage(6 + damage, me);
+}
+,
+{
+	const int tenPercentHp = opponents.GetMaxHP() / 10;
+	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / tenPercentHp;
+	opponents.ToDamage(8 + damage, me);
+}
+,
+{ int fitmentEffectEmpty = 0; }
 )
-
-//// 선량한 시민의 빠루
-// todo : 구현
-//ITEM(Item023, 24, EItemTierType::Three, EItemType::Attack,
-//	{ 
-//		auto aa = opponents;
-//		const int damage = (opponents.GetMaxHP() - opponents.GetHp()) / 10;
-//		opponents.ToDamage(5 + damage, me);
-//	}
-//	,
-//{
-//	const int damage = (opponents.GetMaxHP() - opponents.GetHp()) / 10;
-//	opponents.ToDamage(6 + damage, me);
-//}
-//,
-//{
-//const int damage = (opponents.GetMaxHP() - opponents.GetHp()) / 10;
-//	opponents.ToDamage(8 + damage, me);
-//}
-//)
 
 // 노인의 틀니 : 발동 순서에 따라 공격력 버프
 ITEM(Item024, 25, EItemTierType::Four, EItemType::Effect,
