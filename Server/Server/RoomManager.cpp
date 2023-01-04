@@ -16,7 +16,7 @@ Room& RoomManager::GetUnUsedRoom()
 	Room* pRet = &mRooms[MAX_ROOM_COUNT - 1];
 	for (Room& room : mRooms)
 	{
-		if (!room.IsRun())
+		if (!room.IsRun() && room.IsFinishThread())
 		{
 			pRet = &room;
 			room.SetIsRun(true);
@@ -34,7 +34,7 @@ size_t RoomManager::GetUsingRoomCount()
 	size_t cnt = 0;
 	for (const Room& room : mRooms)
 	{
-		if (room.IsRun())
+		if (!room.IsFinishThread())
 		{
 			++cnt;
 		}

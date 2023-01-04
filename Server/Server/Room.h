@@ -70,6 +70,7 @@ public:
 	BattleAvatar GetCreepMonster();
 	ECreepType GetCurCreepType() const;
 	CreepRewardInfo GetCreepRewardTicketType() const;
+	bool IsFinishThread() const;
 private:
 	vector<Client*> mClients;
 	size_t mSize;
@@ -84,6 +85,7 @@ private:
 	int mRound;	// 진행 라운드
 	ERoomStatusType mCurRoomStatusType;	// Room 진행 상황
 	size_t mCreepRound;	// 현재 크립라운드 고멤 누구 나올지 결정해주는 변수
+	bool mIsFinishThread;	// Room 진행 스레드 종료 되었는지
 };
 
 inline const vector<Client*>& Room::GetClients() const
@@ -154,4 +156,9 @@ inline int Room::GetRound() const
 inline ERoomStatusType Room::GetCurRoomStatusType() const
 {
 	return mCurRoomStatusType;
+}
+
+inline bool Room::IsFinishThread() const
+{
+	return mIsFinishThread;
 }

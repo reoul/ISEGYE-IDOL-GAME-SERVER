@@ -21,6 +21,7 @@ Room::Room()
 	, mRound(0)
 	, mCurRoomStatusType(ERoomStatusType::ChoiceCharacter)
 	, mCreepRound(0)
+	, mIsFinishThread(true)
 {
 }
 
@@ -134,11 +135,6 @@ void Room::Init()
 	mRound = 0;
 	mCurRoomStatusType = ERoomStatusType::ChoiceCharacter;
 	mCreepRound = 0;
-
-	{
-		lock_guard<mutex> lg(Server::GetRoomManager().cLock);
-		Log("log", "{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, Server::GetRoomManager().GetUsingRoomCount());
-	}
 }
 
 void Room::TrySendEnterInGame()
@@ -174,6 +170,8 @@ unsigned Room::ProgressThread(void* pArguments)
 {
 	LogPrintf("진행 시작");
 	Room& room = *static_cast<Room*>(pArguments);
+
+	room.mIsFinishThread = false;
 
 	room.mCurRoomStatusType = ERoomStatusType::ChoiceCharacter;
 
@@ -465,6 +463,12 @@ unsigned Room::ProgressThread(void* pArguments)
 
 loopOut:
 	Log("log", "Room 진행 종료");
+	room.Init();
+	{
+		lock_guard<mutex> lg(Server::GetRoomManager().cLock);
+		Log("log", "{0}번 룸 비활성화 (현재 활성화된 방 : {1})", room.GetNumber(), Server::GetRoomManager().GetUsingRoomCount() - 1);
+	}
+	room.mIsFinishThread = true;
 	_endthreadex(0);
 	return 0;
 }
@@ -1469,7 +1473,7 @@ bool Room::CreepStage(Room& room)
 				BattleAvatar& avatar = avatars[k];
 				Log("BattleInfo", "[크립] {0}번 클라이언트 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", avatar.GetNetworkID(), avatar.GetMaxHP(), avatar.GetHP(), avatar.IsFinish(), avatar.IsGhost());
 				BattleAvatar& avatar2 = avatars[k + 1];
-				Log("BattleInfo", "[크립] {0}번 크립 몬스터 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", ((k + 1) - (k + 1) / 2) - 1 , avatar2.GetMaxHP(), avatar2.GetHP(), avatar2.IsFinish(), avatar2.IsGhost());
+				Log("BattleInfo", "[크립] {0}번 크립 몬스터 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", ((k + 1) - (k + 1) / 2) - 1, avatar2.GetMaxHP(), avatar2.GetHP(), avatar2.IsFinish(), avatar2.IsGhost());
 			}
 			Log("BattleInfo", "----------");
 
