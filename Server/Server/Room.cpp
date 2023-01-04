@@ -1245,9 +1245,9 @@ bool Room::CreepStage(Room& room)
 							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
 						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
 						{
-							EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
-							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
-							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+							CreepRewardInfo rewardInfo = room.GetCreepRewardTicketType();
+							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardInfo.itemTicketType, rewardInfo.count);
+							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardInfo.itemTicketType, currItemTicketCount);
 							packet.Write(memoryStream);
 						}
 
@@ -1283,9 +1283,9 @@ bool Room::CreepStage(Room& room)
 							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
 						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
 						{
-							EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
-							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
-							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+							CreepRewardInfo rewardInfo = room.GetCreepRewardTicketType();
+							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardInfo.itemTicketType, rewardInfo.count);
+							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardInfo.itemTicketType, currItemTicketCount);
 							packet.Write(memoryStream);
 						}
 
@@ -1358,9 +1358,9 @@ bool Room::CreepStage(Room& room)
 							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
 						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
 						{
-							EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
-							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
-							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+							CreepRewardInfo rewardInfo = room.GetCreepRewardTicketType();
+							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardInfo.itemTicketType, rewardInfo.count);
+							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardInfo.itemTicketType, currItemTicketCount);
 							packet.Write(memoryStream);
 						}
 
@@ -1401,9 +1401,9 @@ bool Room::CreepStage(Room& room)
 							disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
 						if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
 						{
-							EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
-							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
-							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+							CreepRewardInfo rewardInfo = room.GetCreepRewardTicketType();
+							int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardInfo.itemTicketType, rewardInfo.count);
+							sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardInfo.itemTicketType, currItemTicketCount);
 							packet.Write(memoryStream);
 						}
 
@@ -1500,9 +1500,9 @@ bool Room::CreepStage(Room& room)
 						disconnectNetworkIdList.emplace_back(playerAvatar.GetNetworkID());
 					if (!playerAvatar.IsFinish() && creepAvatar.GetHP() == 0)
 					{
-						EItemTicketType rewardTicketType = room.GetCreepRewardTicketType();
-						int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardTicketType, 1);
-						sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardTicketType, currItemTicketCount);
+						CreepRewardInfo rewardInfo = room.GetCreepRewardTicketType();
+						int currItemTicketCount = playerAvatar.IncreaseItemTicket(rewardInfo.itemTicketType, rewardInfo.count);
+						sc_SetItemTicketPacket packet(playerAvatar.GetNetworkID(), rewardInfo.itemTicketType, currItemTicketCount);
 						packet.Write(memoryStream);
 					}
 
@@ -1722,37 +1722,41 @@ ECreepType Room::GetCurCreepType() const
 	return static_cast<ECreepType>(mCreepRound);
 }
 
-EItemTicketType Room::GetCreepRewardTicketType() const
+CreepRewardInfo Room::GetCreepRewardTicketType() const
 {
-	EItemTicketType retTicketType;
+	EItemTicketType ticketType = EItemTicketType::Normal;
+	int count = 1;
 	const ECreepType curCreepType = GetCurCreepType();
 	switch (curCreepType)
 	{
 	case ECreepType::Shrimp:
 	case ECreepType::NegativeMan:
 	case ECreepType::Hodd:
-		retTicketType = EItemTicketType::Normal;
+		ticketType = EItemTicketType::Normal;
+		count = 1;
 		break;
 	case ECreepType::Wakpago:
-		retTicketType = EItemTicketType::Advanced;
-		break;
 	case ECreepType::ShortAnswer:
-		retTicketType = EItemTicketType::Advanced;
+		ticketType = EItemTicketType::Advanced;
+		count = 3;
 		break;
 	case ECreepType::Chunsik:
-		retTicketType = EItemTicketType::Top;
+		ticketType = EItemTicketType::Top;
+		count = 2;
 		break;
 	case ECreepType::KwonMin:
 		Random<int> gen(0, 99);
 		if (gen() < 20)
 		{
-			retTicketType = EItemTicketType::Supreme;
+			ticketType = EItemTicketType::Supreme;
+			count = 1;
 		}
 		else
 		{
-			retTicketType = EItemTicketType::Top;
+			ticketType = EItemTicketType::Top;
+			count = 3;
 		}
 		break;
 	}
-	return retTicketType;
+	return CreepRewardInfo(ticketType, count);
 }

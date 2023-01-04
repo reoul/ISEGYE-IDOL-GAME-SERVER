@@ -19,6 +19,18 @@ enum class ERoomStatusType
 
 class BattleAvatar;
 
+struct CreepRewardInfo
+{
+public:
+	EItemTicketType itemTicketType;
+	int count;
+	CreepRewardInfo(EItemTicketType ticketType, int count)
+		: itemTicketType(ticketType)
+		, count(count)
+	{
+	}
+};
+
 class Room
 {
 public:
@@ -57,7 +69,7 @@ public:
 	bool IsValidClientInThisRoom(Client* client) const;
 	BattleAvatar GetCreepMonster();
 	ECreepType GetCurCreepType() const;
-	EItemTicketType GetCreepRewardTicketType() const;
+	CreepRewardInfo GetCreepRewardTicketType() const;
 private:
 	vector<Client*> mClients;
 	size_t mSize;
