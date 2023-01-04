@@ -365,10 +365,10 @@ unsigned Room::ProgressThread(void* pArguments)
 			sc_InventoryInfoPacket inventoryInfoPacket(*client);
 			inventoryInfoPacket.Write(memoryStream);
 
-			client->SetNormalItemTicketCount(100);
-			client->SetAdvancedItemTicketCount(100);
-			client->SetTopItemTicketCount(100);
-			client->SetSupremeItemTicketCount(100);
+			client->SetNormalItemTicketCount(0);
+			client->SetAdvancedItemTicketCount(0);
+			client->SetTopItemTicketCount(0);
+			client->SetSupremeItemTicketCount(0);
 
 			const sc_SetItemTicketPacket setItemTicketPacket1(client->GetNetworkID(), EItemTicketType::Normal, client->GetNormalItemTicketCount());
 			const sc_SetItemTicketPacket setItemTicketPacket2(client->GetNetworkID(), EItemTicketType::Advanced, client->GetAdvancedItemTicketCount());
