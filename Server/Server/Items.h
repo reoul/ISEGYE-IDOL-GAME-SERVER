@@ -754,58 +754,58 @@ me.SetMaxHP(me.GetMaxHP() + 3 + 3 * upgrade);
 
 // 대학원생의 분노 : 데미지 10
 ITEM(Item037, 38, EItemTierType::One, EItemType::Attack,
-	opponents.ToDamage(10, me);
+	opponents.ToDamage(1, me);
 ,
-opponents.ToDamage(10, me);
+opponents.ToDamage(1, me);
 ,
-opponents.ToDamage(10, me);
+opponents.ToDamage(1, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
 
 // 군인의 분노 : 데미지 10
 ITEM(Item038, 39, EItemTierType::One, EItemType::Attack,
-	opponents.ToDamage(10, me);
+	opponents.ToDamage(2, me);
 ,
-opponents.ToDamage(10, me);
+opponents.ToDamage(2, me);
 ,
-opponents.ToDamage(10, me);
+opponents.ToDamage(2, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
 
 // 거지의 분노 : 데미지 10
 ITEM(Item039, 40, EItemTierType::One, EItemType::Attack,
-	opponents.ToDamage(10, me);
+	opponents.ToDamage(3, me);
 ,
-opponents.ToDamage(10, me);
+opponents.ToDamage(3, me);
 ,
-opponents.ToDamage(10, me);
+opponents.ToDamage(3, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
 
 // 충전 : 자힐 10, 데미지 5
 ITEM(Item040, 41, EItemTierType::Two, EItemType::Attack,
-	me.ToHeal(10);
-opponents.ToDamage(5, me);
+	opponents.ToDamage(2, me);
+me.ToHeal(5);
 ,
-me.ToHeal(10);
-opponents.ToDamage(5, me);
+opponents.ToDamage(2, me);
+me.ToHeal(5);
 ,
-me.ToHeal(10);
-opponents.ToDamage(5, me);
+opponents.ToDamage(2, me);
+me.ToHeal(5);
 ,
 { int fitmentEffectEmpty = 0; }
 )
 
 // 예 : 데미지 15
 ITEM(Item041, 42, EItemTierType::Three, EItemType::Attack,
-	opponents.ToDamage(15, me);
+	opponents.ToDamage(10, me);
 ,
-opponents.ToDamage(15, me);
+opponents.ToDamage(10, me);
 ,
-opponents.ToDamage(15, me);
+opponents.ToDamage(10, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -823,11 +823,11 @@ me.ToDefensive(10);
 
 // 프레스기 떨구기 : 데미지 30
 ITEM(Item043, 44, EItemTierType::Four, EItemType::Attack,
-	opponents.ToDamage(30, me);
+	opponents.ToDamage(20, me);
 ,
-opponents.ToDamage(30, me);
+opponents.ToDamage(20, me);
 ,
-opponents.ToDamage(30, me);
+opponents.ToDamage(20, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
