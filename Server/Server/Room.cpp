@@ -131,15 +131,14 @@ void Room::Init()
 	mSize = 0;
 	mIsRun = false;
 	mIsFinishChoiceCharacter = false;
+	mRound = 0;
+	mCurRoomStatusType = ERoomStatusType::ChoiceCharacter;
+	mCreepRound = 0;
 
 	{
 		lock_guard<mutex> lg(Server::GetRoomManager().cLock);
 		Log("log", "{0}번 룸 비활성화 (현재 활성화된 방 : {1})", mNumber, Server::GetRoomManager().GetUsingRoomCount());
 	}
-
-	mRound = 0;
-	mCurRoomStatusType = ERoomStatusType::ChoiceCharacter;
-	mCreepRound = 0;
 }
 
 void Room::TrySendEnterInGame()
