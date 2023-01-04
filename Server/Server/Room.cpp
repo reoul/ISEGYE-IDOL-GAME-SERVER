@@ -463,12 +463,12 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 
 	const size_t roomOpenCount = room.GetOpenCount();
 
-	LogPrintf("준비시간 시작");
-
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
+
+	LogPrintf("준비시간 시작");
 
 	{
 		OutputMemoryStream memoryStream(1024);
@@ -580,12 +580,12 @@ bool Room::BattleStage(Room& room)
 
 	const size_t roomOpenCount = room.GetOpenCount();
 
-	LogPrintf("전투 스테이지 시작");
-
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
 		return false;
 	}
+
+	LogPrintf("전투 스테이지 시작");
 
 	const vector<int32_t>& battleOpponents = room.GetBattleOpponents();
 
@@ -1111,6 +1111,11 @@ bool Room::CreepStage(Room& room)
 	room.mCurRoomStatusType = ERoomStatusType::CreepStage;
 
 	const size_t roomOpenCount = room.GetOpenCount();
+
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
+	{
+		return false;
+	}
 
 	LogPrintf("크립 스테이지 시작");
 
