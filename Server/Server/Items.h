@@ -65,7 +65,7 @@ ITEM(ItemEmpty, 0, EItemTierType::One, EItemType::Empty,
 ITEM(Item000, 1, EItemTierType::One, EItemType::Attack,
 	opponents.ToDamage(5, me);
 ,
-opponents.ToDamage(7, me);
+opponents.ToDamage(8, me);
 ,
 opponents.ToDamage(12, me);
 ,
@@ -85,25 +85,25 @@ me.ToDefensive(7);
 
 // 귀상어두 가면 : 상대방 약화
 ITEM(Item002, 3, EItemTierType::One, EItemType::Effect,
-	opponents.ToWeakening(2);
+	opponents.ToWeakening(1);
+,
+opponents.ToWeakening(2);
 ,
 opponents.ToWeakening(3);
-,
-opponents.ToWeakening(4);
 ,
 { int fitmentEffectEmpty = 0; }
 )
 
 // 왁엔터 사장 명패 : X 데미지를 두번 줍니다. (여러번 공격)
 ITEM(Item003, 4, EItemTierType::One, EItemType::Attack,
-	opponents.ToDamage(2, me);
-opponents.ToDamage(2, me);
-,
-opponents.ToDamage(3, me);
+	opponents.ToDamage(3, me);
 opponents.ToDamage(3, me);
 ,
 opponents.ToDamage(5, me);
 opponents.ToDamage(5, me);
+,
+opponents.ToDamage(7, me);
+opponents.ToDamage(7, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -156,7 +156,7 @@ ITEM(Item006, 7, EItemTierType::Two, EItemType::Effect,
 switch (me.GetHamburgerType())
 {
 case EHamburgerType::Fillet:
-	opponents.ToWeakening(4);
+	opponents.ToWeakening(3);
 	break;
 case EHamburgerType::Guinness:
 	opponents.ToDamage(6, me);
@@ -172,7 +172,7 @@ case EHamburgerType::Rice:
 switch (me.GetHamburgerType())
 {
 case EHamburgerType::Fillet:
-	opponents.ToWeakening(6);
+	opponents.ToWeakening(4);
 	break;
 case EHamburgerType::Guinness:
 	opponents.ToDamage(9, me);
@@ -190,7 +190,7 @@ me.ToDefensive(3 + 3 * upgrade);
 
 // 악질안경 : 공격력 상승
 ITEM(Item007, 8, EItemTierType::One, EItemType::Effect,
-	me.ToOffensePower(1);
+	me.ToOffensePower(2);
 ,
 me.ToOffensePower(3);
 ,
@@ -251,11 +251,11 @@ me.SetEffectHeal(6);
 
 // 언니의 마음 : 사이클이 종료되면 폭발하는 폭탄을 설치, 폭발시 X 데미지
 ITEM(Item012, 13, EItemTierType::Three, EItemType::Attack,
-	opponents.SetInstallBomb(20);
+	opponents.SetInstallBomb(10);
 ,
-opponents.SetInstallBomb(25);
+opponents.SetInstallBomb(15);
 ,
-opponents.SetInstallBomb(30);
+opponents.SetInstallBomb(20);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -343,11 +343,11 @@ opponents.ToDamage(sumTicket * 2, me);
 
 // 광대의 권총 : X 데미지 (상대방에게 방어력이 있을 시 2배 데미지)
 ITEM(Item017, 18, EItemTierType::Four, EItemType::Attack,
-	opponents.ToDamage(5 * (opponents.GetDefensive() == 0 ? 1 : 2), me);
-,
-opponents.ToDamage(10 * (opponents.GetDefensive() == 0 ? 1 : 2), me);
+	opponents.ToDamage(10 * (opponents.GetDefensive() == 0 ? 1 : 2), me);
 ,
 opponents.ToDamage(15 * (opponents.GetDefensive() == 0 ? 1 : 2), me);
+,
+opponents.ToDamage(20 * (opponents.GetDefensive() == 0 ? 1 : 2), me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -361,7 +361,7 @@ opponents.ToWeakening(1);
 opponents.ToDamage(9, me);
 ,
 opponents.ToWeakening(1);
-opponents.ToDamage(12, me);
+opponents.ToDamage(13, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -369,13 +369,12 @@ opponents.ToDamage(12, me);
 // 부정적인 드롭스 : 상대방에게 X+1, 나에게 X만큼 약화
 ITEM(Item019, 20, EItemTierType::Two, EItemType::Effect,
 	opponents.ToWeakening(2);
-me.ToWeakening(1);
 ,
 opponents.ToWeakening(3);
-me.ToWeakening(2);
+me.ToWeakening(1);
 ,
 opponents.ToWeakening(4);
-me.ToWeakening(3);
+me.ToWeakening(2);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -392,7 +391,7 @@ cl->SendPacketInAllRoomClients(&packet);
 
 if (isDamage)
 {
-	opponents.ToDamage(4, me);
+	opponents.ToDamage(6, me);
 }
 else
 {
@@ -410,7 +409,7 @@ cl->SendPacketInAllRoomClients(&packet);
 
 	if (gen() == 0)
 	{
-		opponents.ToDamage(6, me);
+		opponents.ToDamage(9, me);
 	}
 	else
 	{
@@ -428,7 +427,7 @@ cl->SendPacketInAllRoomClients(&packet);
 
 if (gen() == 0)
 {
-	opponents.ToDamage(9, me);
+	opponents.ToDamage(13, me);
 }
 else
 {
@@ -440,12 +439,12 @@ else
 // 귀족의 상현딸 : 매턴 적 출혈 2뎀 + X 데미지
 ITEM(Item021, 22, EItemTierType::Two, EItemType::Attack,
 	opponents.ToBleeding(2);
-opponents.ToDamage(3, me);
+opponents.ToDamage(5, me);
 ,
-opponents.ToBleeding(2);
-opponents.ToDamage(4, me);
+opponents.ToBleeding(3);
+opponents.ToDamage(5, me);
 ,
-opponents.ToBleeding(2);
+opponents.ToBleeding(5);
 opponents.ToDamage(5, me);
 ,
 { int fitmentEffectEmpty = 0; }
@@ -477,8 +476,9 @@ ITEM(Item023, 24, EItemTierType::Three, EItemType::Attack,
 )
 
 //// 선량한 시민의 빠루
+// todo : 구현
 //ITEM(Item023, 24, EItemTierType::Three, EItemType::Attack,
-//	{
+//	{ 
 //		auto aa = opponents;
 //		const int damage = (opponents.GetMaxHP() - opponents.GetHp()) / 10;
 //		opponents.ToDamage(5 + damage, me);
@@ -557,14 +557,14 @@ me.ToDefensive(5 + 5 * upgrade);
 
 // 오니의 카타나 : 매턴 적 출혈 4뎀 + X 데미지
 ITEM(Item027, 28, EItemTierType::Three, EItemType::Attack,
-	opponents.ToBleeding(4);
+	opponents.ToBleeding(3);
 opponents.ToDamage(5, me);
 ,
-opponents.ToBleeding(4);
-opponents.ToDamage(6, me);
-,
-opponents.ToBleeding(4);
+opponents.ToBleeding(3);
 opponents.ToDamage(10, me);
+,
+opponents.ToBleeding(3);
+opponents.ToDamage(15, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -619,11 +619,11 @@ me.ToDefensive(3 + 3 * upgrade);
 
 // 관심병사의 K2 : 방어력 관통 X 데미지
 ITEM(Item030, 31, EItemTierType::Two, EItemType::Attack,
-	opponents.ToPiercingDamage(4, me);
-,
-opponents.ToPiercingDamage(6, me);
+	opponents.ToPiercingDamage(6, me);
 ,
 opponents.ToPiercingDamage(9, me);
+,
+opponents.ToPiercingDamage(13, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -685,13 +685,13 @@ for (int i = 0; i < me.GetUseKeyCapCount(); ++i)
 me.UseKeyCap();
 for (int i = 0; i < me.GetUseKeyCapCount(); ++i)
 {
-	opponents.ToDamage(5, me);
+	opponents.ToDamage(4, me);
 }
 ,
 me.UseKeyCap();
 for (int i = 0; i < me.GetUseKeyCapCount(); ++i)
 {
-	opponents.ToDamage(9, me);
+	opponents.ToDamage(6, me);
 }
 ,
 { int fitmentEffectEmpty = 0; }
@@ -788,13 +788,13 @@ opponents.ToDamage(3, me);
 // 충전 : 자힐 10, 데미지 5
 ITEM(Item040, 41, EItemTierType::Two, EItemType::Attack,
 	opponents.ToDamage(2, me);
-me.ToHeal(5);
+me.ToHeal(3);
 ,
 opponents.ToDamage(2, me);
-me.ToHeal(5);
+me.ToHeal(3);
 ,
 opponents.ToDamage(2, me);
-me.ToHeal(5);
+me.ToHeal(3);
 ,
 { int fitmentEffectEmpty = 0; }
 )

@@ -1129,7 +1129,7 @@ bool Room::CreepStage(Room& room)
 		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 1000000);	// 크립 몬스터는 따로 인덱스 할 수 있는 번호가 없기 때문에 일정 숫자를 더해준다.
 		++clientIndex;
 	}
-	// todo : 플레이어 강화, 이동, 재조합, 버림 할 경우 인벤토리 정보 전달
+
 	{
 		OutputMemoryStream memoryStream(1024);
 		cs_sc_NotificationPacket notificationPacket(0, ENotificationType::EnterCreepStage);
@@ -1634,7 +1634,6 @@ BattleAvatar Room::GetCreepMonster()
 {
 	BattleAvatar monster;
 	monster.SetIsGhost(true);
-	monster.SetMaxHP(100);
 	const ECreepType curCreepType = GetCurCreepType();
 	switch (curCreepType)
 	{
@@ -1646,7 +1645,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
-		monster.SetMaxHP(30);
+		monster.SetMaxHP(20);
 		break;
 	case ECreepType::NegativeMan:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -1656,7 +1655,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
-		monster.SetMaxHP(30);
+		monster.SetMaxHP(20);
 		break;
 	case ECreepType::Hodd:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -1666,7 +1665,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
-		monster.SetMaxHP(30);
+		monster.SetMaxHP(20);
 		break;
 	case ECreepType::Wakpago:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -1676,6 +1675,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
+		monster.SetMaxHP(30);
 		break;
 	case ECreepType::ShortAnswer:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; i += 2)
@@ -1688,6 +1688,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i + 1, item);
 		}
+		monster.SetMaxHP(30);
 		break;
 	case ECreepType::Chunsik:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -1697,6 +1698,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
+		monster.SetMaxHP(20);
 		break;
 	case ECreepType::KwonMin:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -1706,6 +1708,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
+		monster.SetMaxHP(70);
 		break;
 	}
 	++mCreepRound;
