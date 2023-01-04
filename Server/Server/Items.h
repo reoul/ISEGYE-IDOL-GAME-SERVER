@@ -886,7 +886,7 @@ static ItemBase* sItems[]
 	&sItem010, &sItem011, &sItem012, &sItem013, &sItem014, &sItem015, &sItem016, &sItem017, &sItem018, &sItem019,
 	&sItem020, &sItem021, &sItem022, &sItem023, &sItem024, &sItem025, &sItem026, &sItem027, &sItem028, &sItem029,
 	&sItem030, &sItem031, &sItem032, &sItem033, &sItem034, &sItem035, &sItem036, &sItem037, &sItem038, &sItem039,
-	&sItem040, &sItem041, &sItem042, &sItem043
+	&sItem040, &sItem041, &sItem042, &sItem043, &sItem044
 };
 
 // 각 티어마다의 아이템 벡터
