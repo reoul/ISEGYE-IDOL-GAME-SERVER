@@ -1473,7 +1473,7 @@ bool Room::CreepStage(Room& room)
 				BattleAvatar& avatar = avatars[k];
 				Log("BattleInfo", "[크립] {0}번 클라이언트 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", avatar.GetNetworkID(), avatar.GetMaxHP(), avatar.GetHP(), avatar.IsFinish(), avatar.IsGhost());
 				BattleAvatar& avatar2 = avatars[k + 1];
-				Log("BattleInfo", "[크립] {0}번 크립 몬스터 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", ((k + 1) - (k + 1) / 2) - 1, avatar2.GetMaxHP(), avatar2.GetHP(), avatar2.IsFinish(), avatar2.IsGhost());
+				Log("BattleInfo", "[크립] {0}번 크립 몬스터 maxHp:{1}, hp:{2}, isFinish:{3}, mIsGhost:{4}", avatar2.GetNetworkID(), avatar2.GetMaxHP(), avatar2.GetHP(), avatar2.IsFinish(), avatar2.IsGhost());
 			}
 			Log("BattleInfo", "----------");
 
