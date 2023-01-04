@@ -1732,7 +1732,7 @@ CreepRewardInfo Room::GetCreepRewardTicketType() const
 	case ECreepType::Shrimp:
 	case ECreepType::NegativeMan:
 	case ECreepType::Hodd:
-		ticketType = EItemTicketType::Normal;
+		ticketType = EItemTicketType::Advanced;
 		count = 1;
 		break;
 	case ECreepType::Wakpago:

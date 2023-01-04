@@ -287,15 +287,15 @@ int BattleAvatar::IncreaseItemTicket(EItemTicketType ticketType, int count)
 	{
 	case EItemTicketType::Normal:
 		mClient->SetNormalItemTicketCount(mClient->GetNormalItemTicketCount() + count);
-		return mClient->GetNormalItemTicketCount() + count;
+		return mClient->GetNormalItemTicketCount();
 	case EItemTicketType::Advanced:
 		mClient->SetAdvancedItemTicketCount(mClient->GetAdvancedItemTicketCount() + count);
-		return mClient->GetAdvancedItemTicketCount() + count;
+		return mClient->GetAdvancedItemTicketCount();
 	case EItemTicketType::Top:
 		mClient->SetTopItemTicketCount(mClient->GetTopItemTicketCount() + count);
-		return mClient->GetTopItemTicketCount() + count;
+		return mClient->GetTopItemTicketCount();
 	case EItemTicketType::Supreme:
 		mClient->SetSupremeItemTicketCount(mClient->GetSupremeItemTicketCount() + count);
-		return mClient->GetSupremeItemTicketCount() + count;
+		return mClient->GetSupremeItemTicketCount();
 	}
 }

@@ -417,24 +417,25 @@ void Server::ProcessPacket(int networkID, char* buf)
 		cs_sc_ChangeItemSlotPacket* pPacket = reinterpret_cast<cs_sc_ChangeItemSlotPacket*>(buf);
 
 		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
-		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		if (room == nullptr)
 		{
+			return;
+		}
+
+		if (room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		{
+			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
 		sClients[networkID].SwapItem(pPacket->slot1, pPacket->slot2);
 		Log("log", "[cs_sc_changeItemSlot] 네트워크 {0}번 클라이언트 아이템 슬롯 {1} <-> {2} 교체", pPacket->networkID, pPacket->slot1, pPacket->slot2);
 
-		if (sClients[networkID].GetRoomPtr() != nullptr)
-		{
-			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
-			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
-			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
-		}
-		else
-		{
-			log_assert(false);
-		}
+		lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
+		sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+		sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 	}
 	break;
 	case EPacketType::cs_sc_useEmoticon:
@@ -580,7 +581,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 			{
 				OutputMemoryStream memoryStream;
 				uint8_t slot = client.AddItem(newItemType);
-				
+
 				sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
 				inventoryInfoPacket.Write(memoryStream);
 
@@ -622,8 +623,15 @@ void Server::ProcessPacket(int networkID, char* buf)
 		cs_sc_DropItemPacket* pPacket = reinterpret_cast<cs_sc_DropItemPacket*>(buf);
 
 		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
-		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		if (room == nullptr)
 		{
+			return;
+		}
+
+		if (room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		{
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
@@ -631,6 +639,8 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		if (item.GetType() == EMPTY_ITEM)
 		{
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
@@ -649,18 +659,27 @@ void Server::ProcessPacket(int networkID, char* buf)
 		Client& client = sClients[pPacket->networkID];
 
 		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
-		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		if (room == nullptr)
 		{
 			return;
+		}
+
+		if (room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		{
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 		}
 
 		Item& item1 = client.GetItem(pPacket->index1);
 		Item& item2 = client.GetItem(pPacket->index2);
 		Item& item3 = client.GetItem(pPacket->index3);
 
-		if (item1.GetType() == EMPTY_ITEM) return;
-		if (item2.GetType() == EMPTY_ITEM) return;
-		if (item3.GetType() == EMPTY_ITEM) return;
+		if (item1.GetType() == EMPTY_ITEM || item2.GetType() == EMPTY_ITEM || item3.GetType() == EMPTY_ITEM)
+		{
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
+			return;
+		}
 
 		uint8_t tier1 = static_cast<uint8_t>(sItems[item1.GetType()]->TIER_TYPE);
 		uint8_t tier2 = static_cast<uint8_t>(sItems[item2.GetType()]->TIER_TYPE);
@@ -691,8 +710,15 @@ void Server::ProcessPacket(int networkID, char* buf)
 		Log("log", "cs_RequestUpgradeItemPacket {0}번 클라이언트 {1}/{2}", pPacket->networkID, pPacket->slot1, pPacket->slot2);
 
 		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
-		if (room == nullptr || room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		if (room == nullptr)
 		{
+			return;
+		}
+
+		if (room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
+		{
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
@@ -703,6 +729,8 @@ void Server::ProcessPacket(int networkID, char* buf)
 		if (pPacket->slot1 == pPacket->slot2)
 		{
 			Log("log", "cs_RequestUpgradeItemPacket pPacket->slot1 == pPacket->slot2");
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
@@ -710,12 +738,16 @@ void Server::ProcessPacket(int networkID, char* buf)
 		{
 			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetType() != materialItem.GetType()");
 			Log("log", "{0}번 자리 : {1}번 아이템, {2}번 자리 : {3}번 아이템", upgradeItem.GetSlot(), upgradeItem.GetType(), materialItem.GetSlot(), materialItem.GetType());
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
 		if (upgradeItem.GetType() == 0)
 		{
 			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetType() == 0");
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
@@ -723,12 +755,16 @@ void Server::ProcessPacket(int networkID, char* buf)
 		{
 			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetUpgrade() != materialItem.GetUpgrade()");
 			Log("log", "{0}번 자리 : {1}강화, {2}번 자리 : {3}강화", upgradeItem.GetSlot(), upgradeItem.GetUpgrade(), materialItem.GetSlot(), materialItem.GetUpgrade());
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
 		if (upgradeItem.GetUpgrade() >= 2)
 		{
 			Log("log", "cs_RequestUpgradeItemPacket upgradeItem.GetUpgrade() >= 2");
+			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
+			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
