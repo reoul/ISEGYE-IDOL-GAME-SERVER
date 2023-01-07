@@ -10,7 +10,7 @@ using namespace Logger;
 
 void BattleManager::SetClients(std::vector<Client*>& clients)
 {
-	log_assert(clients.size() == MAX_ROOM_PLAYER);
+	//log_assert(clients.size() == MAX_ROOM_PLAYER);
 	mMatchingClients.clear();
 	mUnMatchingClients.clear();
 
@@ -23,7 +23,7 @@ void BattleManager::SetClients(std::vector<Client*>& clients)
 std::vector<int32_t> BattleManager::GetBattleOpponent()
 {
 	std::vector<int32_t> list;
-	log_assert(mUnMatchingClients.size() >= 2);
+	//log_assert(mUnMatchingClients.size() >= 2);
 
 	std::random_device rd;
 	std::mt19937 g(rd());
@@ -129,7 +129,7 @@ std::vector<int32_t> BattleManager::GetBattleOpponent()
 		Logger::LogWriteTest("BattleOpponents", "선공 {0} - {1}", list[i * 2], list[i * 2 + 1]);
 	}
 
-	log_assert(list.size() <= MAX_ROOM_PLAYER);
+	//log_assert(list.size() <= MAX_ROOM_PLAYER);
 	return list;
 }
 

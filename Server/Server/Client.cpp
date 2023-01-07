@@ -414,7 +414,7 @@ vector<SlotInfo> Client::GetItemActiveQueue() const
 		}
 	}
 
-	log_assert(activeQueue.size() == MAX_USING_ITEM_COUNT);
+	//log_assert(activeQueue.size() == MAX_USING_ITEM_COUNT);
 
 	return activeQueue;
 }

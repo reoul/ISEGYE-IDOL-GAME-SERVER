@@ -23,6 +23,7 @@ int main()
 	Logger::AddLogger("PacketSendRecive", "/PacketSendRecive.txt");
 	Logger::AddLogger("Connection", "/Connection.txt");
 	Logger::AddLogger("ConnectionCount", "/ConnectionCount.txt");
+	Logger::AddLogger("PacketWrite", "/PacketWrite.txt");
 
 	//Client aa;
 	//Client bb;

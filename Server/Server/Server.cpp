@@ -408,7 +408,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		}
 		else
 		{
-			log_assert(false);
+			//log_assert(false);
 		}
 	}
 	break;

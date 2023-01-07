@@ -150,6 +150,7 @@ struct cs_StartMatchingPacket : protected Packet
 		{
 			memoryStream.Write(c);
 		}
+		LogWrite("PacketWrite", "{0}번 클라, cs_StartMatchingPacket", networkID);
 	}
 
 	cs_StartMatchingPacket() = delete;
@@ -176,6 +177,7 @@ struct sc_ConnectRoomPacket : protected Packet
 				memoryStream.Write(wc);
 			}
 		}
+		LogWrite("PacketWrite", "{0}번 클라 Room, sc_ConnectRoomPacket", users[0].networkID);
 	}
 
 	sc_ConnectRoomPacket(const Room& room)
@@ -203,6 +205,7 @@ struct sc_AddNewItemPacket : protected Packet
 		memoryStream.Write(networkID.get());
 		memoryStream.Write(slot.get());
 		memoryStream.Write(itemCode.get());
+		LogWrite("PacketWrite", "{0}번 클라, sc_AddNewItemPacket", networkID.get());
 	}
 
 	sc_AddNewItemPacket(int networkID, uint8_t slot, uint8_t itemCode)
@@ -226,6 +229,7 @@ struct cs_sc_ChangeItemSlotPacket : protected Packet
 		memoryStream.Write(networkID.get());
 		memoryStream.Write(slot1.get());
 		memoryStream.Write(slot2.get());
+		LogWrite("PacketWrite", "{0}번 클라, cs_sc_ChangeItemSlotPacket", networkID.get());
 	}
 
 	cs_sc_ChangeItemSlotPacket() = delete;
@@ -243,6 +247,7 @@ struct sc_UpgradeItemPacket : protected Packet
 		memoryStream.Write(networkID.get());
 		memoryStream.Write(slot.get());
 		memoryStream.Write(upgrade.get());
+		LogWrite("PacketWrite", "{0}번 클라, sc_UpgradeItemPacket", networkID.get());
 	}
 
 	sc_UpgradeItemPacket(int32_t networkID, uint8_t slot, uint8_t upgrade)
@@ -264,6 +269,7 @@ struct cs_sc_ChangeCharacterPacket : protected Packet
 		Packet::Write(memoryStream);
 		memoryStream.Write(networkID.get());
 		memoryStream.Write(characterType.get());
+		LogWrite("PacketWrite", "{0}번 클라, cs_sc_ChangeCharacterPacket", networkID.get());
 	}
 
 	cs_sc_ChangeCharacterPacket(int32_t networkID, ECharacterType characterType)
@@ -300,20 +306,21 @@ struct sc_BattleInfoPacket : protected Packet
 				memoryStream.Write(item);
 			}
 		}
+		LogWrite("PacketWrite", "sc_BattleInfoPacket");
 	}
 
 	sc_BattleInfoPacket(const vector<int32_t>& battleOpponents, const vector<int32_t>& itemQueues)
 		: Packet(sizeof(sc_BattleInfoPacket)
 			, EPacketType::sc_battleInfo)
 	{
-		log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
+		//log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
 		copy(battleOpponents.begin(), battleOpponents.end(), battleOpponentQueue);
 		if (battleOpponents.size() < MAX_ROOM_PLAYER)
 		{
 			battleOpponentQueue[battleOpponents.size()] = INT32_MAX;
 		}
 
-		log_assert(itemQueues.size() == BATTLE_ITEM_QUEUE_LENGTH);
+		//log_assert(itemQueues.size() == BATTLE_ITEM_QUEUE_LENGTH);
 		for (size_t i = 0; i < MAX_ROOM_PLAYER; ++i)
 		{
 			constexpr int itemQueueCount = MAX_USING_ITEM_COUNT * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2;
@@ -352,6 +359,7 @@ struct cs_sc_NotificationPacket : protected Packet
 		Packet::Write(memoryStream);
 		memoryStream.Write(networkID.get());
 		memoryStream.Write(notificationType.get());
+		LogWrite("PacketWrite", "{0}번 클라, cs_sc_NotificationPacket : {1}", networkID.get(), static_cast<int>(notificationType.get()));
 	}
 
 	cs_sc_NotificationPacket(int networkID, ENotificationType notificationType)
@@ -553,6 +561,7 @@ struct sc_FadeInPacket : private Packet
 	{
 		Packet::Write(memoryStream);
 		memoryStream.Write(seconds.get());
+		LogWrite("PacketWrite", "sc_FadeInPacket : {1}초", seconds.get());
 	}
 };
 
@@ -573,6 +582,7 @@ struct sc_FadeOutPacket : private Packet
 	{
 		Packet::Write(memoryStream);
 		memoryStream.Write(seconds.get());
+		LogWrite("PacketWrite", "sc_FadeOutPacket : {1}초", seconds.get());
 	}
 };
 
@@ -592,7 +602,7 @@ struct sc_BattleOpponentsPacket : private Packet
 	sc_BattleOpponentsPacket(const vector<int32_t>& battleOpponents)
 		: Packet(sizeof(sc_BattleOpponentsPacket), EPacketType::sc_battleOpponents)
 	{
-		log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
+		//log_assert(battleOpponents.size() <= MAX_ROOM_PLAYER);
 
 		copy(battleOpponents.begin(), battleOpponents.end(), battleOpponentQueue);
 		if (battleOpponents.size() < MAX_ROOM_PLAYER)

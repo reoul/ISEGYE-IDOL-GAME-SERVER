@@ -195,9 +195,7 @@ unsigned Room::ProgressThread(void* pArguments)
 
 		if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 		{
-			Log("log", "Room 진행 종료");
-			_endthreadex(0);
-			return 0;
+			goto loopOut;
 		}
 	}
 
@@ -227,9 +225,7 @@ unsigned Room::ProgressThread(void* pArguments)
 
 		if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 		{
-			Log("log", "Room 진행 종료");
-			_endthreadex(0);
-			return 0;
+			goto loopOut;
 		}
 
 		{
@@ -298,6 +294,11 @@ unsigned Room::ProgressThread(void* pArguments)
 
 		Sleep(3000);
 
+		if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
+		{
+			goto loopOut;
+		}
+
 		{
 			constexpr size_t bufferSize = sizeof(cs_sc_NotificationPacket) + sizeof(sc_SetReadyTimePacket) + sizeof(sc_FadeOutPacket);
 			OutputMemoryStream memoryStream(bufferSize);
@@ -319,13 +320,16 @@ unsigned Room::ProgressThread(void* pArguments)
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
-		Log("log", "Room 진행 종료");
-		_endthreadex(0);
-		return 0;
+		goto loopOut;
 	}
 
 	// CutScene 연출
 	Sleep(9000);
+
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
+	{
+		goto loopOut;
+	}
 
 	{
 		sc_FadeInPacket packet(1);
@@ -336,9 +340,7 @@ unsigned Room::ProgressThread(void* pArguments)
 
 	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
 	{
-		LogPrintf("Room 진행 종료");
-		_endthreadex(0);
-		return 0;
+		goto loopOut;
 	}
 
 	{
@@ -378,11 +380,25 @@ unsigned Room::ProgressThread(void* pArguments)
 			setItemTicketPacket4.Write(memoryStream);
 		}
 
+		if (memoryStream.GetLength() == 1024)
+		{
+			int a = memoryStream.GetLength();
+			a += 20;
+		}
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 	}
 
 	room.mCurRoomStatusType = ERoomStatusType::ReadyStage;
 	Log("log", "기본 템 지급 완료");
+
+	if (!room.mIsRun || room.GetSize() < 2 || room.GetOpenCount() != roomOpenCount)
+	{
+		Log("log", "Room 진행 종료");
+		_endthreadex(0);
+		return 0;
+	}
+
+	Sleep(2000);
 
 	// 처음 크립 3판
 	if (!ReadyStage(room, false))
@@ -519,6 +535,13 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 			client->SetNormalItemTicketCount(currNormalItemTicketCount + 3);
 			sc_SetItemTicketPacket setItemTicketPacket(client->GetNetworkID(), EItemTicketType::Normal, client->GetNormalItemTicketCount());
 			setItemTicketPacket.Write(memoryStream);
+		}
+
+
+		if (memoryStream.GetLength() == 1024)
+		{
+			int a = memoryStream.GetLength();
+			a += 20;
 		}
 
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());

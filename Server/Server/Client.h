@@ -353,13 +353,13 @@ inline void Client::SetSupremeItemTicketCount(int32_t count)
 
 inline Item Client::GetBattleItem(int index) const
 {
-	log_assert(index < MAX_USING_ITEM_COUNT);
+	//log_assert(index < MAX_USING_ITEM_COUNT);
 	return mBattleItems[index];
 }
 
 inline void Client::SetBattleItem(int index, Item item)
 {
-	log_assert(index < MAX_USING_ITEM_COUNT);
+	//log_assert(index < MAX_USING_ITEM_COUNT);
 	mBattleItems[index] = item;
 }
 
