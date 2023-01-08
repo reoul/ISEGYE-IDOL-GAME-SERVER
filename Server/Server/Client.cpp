@@ -367,12 +367,9 @@ uint8_t Client::FindEmptyItemSlotIndex() const
 	return MAX_UN_USING_ITEM_COUNT + MAX_USING_ITEM_COUNT;
 }
 
-uint8_t Client::GetRandomItemTypeByCombination(EItemTierType topTier)
+uint8_t Client::GetRandomItemTypeByCombination(EItemTierType minTier, EItemTierType maxTier)
 {
-	const int top = static_cast<int>(topTier);
-	const int maxTier = min(top + 1, 4);
-
-	Random<int> gen(top, maxTier);
+	Random<int> gen(static_cast<int>(minTier), static_cast<int>(maxTier));
 
 	const vector<const ItemBase*>* pItemVec = sTierItems[gen()];
 

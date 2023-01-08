@@ -83,7 +83,7 @@ public:
 	void						SetTopItemTicketCount(int32_t count);
 	int32_t						GetSupremeItemTicketCount() const;
 	void						SetSupremeItemTicketCount(int32_t count);
-	uint8_t						GetRandomItemTypeByCombination(EItemTierType topTier);
+	uint8_t						GetRandomItemTypeByCombination(EItemTierType minTier, EItemTierType maxTier);
 	vector<SlotInfo>			GetItemActiveQueue() const;
 	Item						GetBattleItem(int index) const;
 	void						SetBattleItem(int index, Item item);

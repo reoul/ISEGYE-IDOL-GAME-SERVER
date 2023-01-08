@@ -530,9 +530,9 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 			sc_UpdateCharacterInfoPacket packet(*client);
 			packet.Write(memoryStream);
 
-			// 매번 3개씩 지급
+			// 매번 2개씩 지급
 			const int currNormalItemTicketCount = client->GetNormalItemTicketCount();
-			client->SetNormalItemTicketCount(currNormalItemTicketCount + 3);
+			client->SetNormalItemTicketCount(currNormalItemTicketCount + 2);
 			sc_SetItemTicketPacket setItemTicketPacket(client->GetNetworkID(), EItemTicketType::Normal, client->GetNormalItemTicketCount());
 			setItemTicketPacket.Write(memoryStream);
 		}
@@ -642,8 +642,8 @@ bool Room::BattleStage(Room& room)
 	for (int i = 0; i < battleOpponents.size(); ++i)
 	{
 		const int networkID = battleOpponents[i] >= 0 ? battleOpponents[i] : ~battleOpponents[i];
-		Client& client = Server::GetClients(networkID);
-		avatars[i].SetAvatar(client, networkID, battleOpponents[i] < 0, room.GetRound());
+		Client& client = Server::GetClient(networkID);
+		avatars[i].SetAvatar(client, &room, networkID, battleOpponents[i] < 0, room.GetRound());
 	}
 
 	{
@@ -711,8 +711,8 @@ bool Room::BattleStage(Room& room)
 	{
 		int networkID1 = avatars[i].GetNetworkID();
 		int networkID2 = avatars[i + 1].GetNetworkID();
-		if (!room.IsValidClientInThisRoom(&Server::GetClients(networkID1))
-			|| !room.IsValidClientInThisRoom(&Server::GetClients(networkID2)))
+		if (!room.IsValidClientInThisRoom(&Server::GetClient(networkID1))
+			|| !room.IsValidClientInThisRoom(&Server::GetClient(networkID2)))
 		{
 			Logger::Log("BattleInfo", "[전투] {0}, {1} 전투 끝남", networkID1, networkID2);
 			avatars[i].SetFinish();
@@ -727,13 +727,13 @@ bool Room::BattleStage(Room& room)
 		}
 	}
 
-	for (size_t battleLoop = 0; battleLoop < 20; ++battleLoop)
+	for (size_t battleLoop = 0; battleLoop < 10; ++battleLoop)
 	{
 		for (int j = 0; j < battleOpponents.size(); ++j)
 		{
 			if (avatars[j].IsFinish() == false)
 			{
-				const vector<SlotInfo> itemQueue = Server::GetClients(avatars[j].GetNetworkID()).GetItemActiveQueue();
+				const vector<SlotInfo> itemQueue = Server::GetClient(avatars[j].GetNetworkID()).GetItemActiveQueue();
 				avatars[j].SetActiveQueue(itemQueue);
 			}
 		}
@@ -1174,7 +1174,7 @@ bool Room::CreepStage(Room& room)
 	int clientIndex = 0;
 	for (int i = 0; i < avatarCount; i += 2)
 	{
-		avatars[i].SetAvatar(*clients[clientIndex], clients[clientIndex]->GetNetworkID(), false, room.GetRound());
+		avatars[i].SetAvatar(*clients[clientIndex], &room, clients[clientIndex]->GetNetworkID(), false, room.GetRound());
 		avatars[i + 1] = creepMonster;
 		avatars[i + 1].SetNetworkID(clients[clientIndex]->GetNetworkID() + 1000000);	// 크립 몬스터는 따로 인덱스 할 수 있는 번호가 없기 때문에 일정 숫자를 더해준다.
 		++clientIndex;
@@ -1235,11 +1235,11 @@ bool Room::CreepStage(Room& room)
 	}
 
 
-	for (size_t battleLoop = 0; battleLoop < 20; ++battleLoop)
+	for (size_t battleLoop = 0; battleLoop < 10; ++battleLoop)
 	{
 		for (int j = 0; j < avatarCount; j += 2)
 		{
-			const vector<SlotInfo> itemQueue = Server::GetClients(avatars[j].GetNetworkID()).GetItemActiveQueue();
+			const vector<SlotInfo> itemQueue = Server::GetClient(avatars[j].GetNetworkID()).GetItemActiveQueue();
 			avatars[j].SetActiveQueue(itemQueue);
 		}
 
@@ -1674,6 +1674,7 @@ FinishBattle:
 
 bool Room::IsValidClientInThisRoom(Client* client) const
 {
+	if (client == nullptr) { return false; }
 	if (client->GetSocket() == INVALID_SOCKET) { return false; }
 	if (client->GetRoomPtr() != this) { return false; }
 	if (client->GetRoomOpenCount() != mOpenCount) { return false; }
@@ -1789,13 +1790,16 @@ CreepRewardInfo Room::GetCreepRewardTicketType() const
 		count = 1;
 		break;
 	case ECreepType::Wakpago:
-	case ECreepType::ShortAnswer:
 		ticketType = EItemTicketType::Advanced;
 		count = 3;
 		break;
-	case ECreepType::Chunsik:
+	case ECreepType::ShortAnswer:
 		ticketType = EItemTicketType::Top;
 		count = 2;
+		break;
+	case ECreepType::Chunsik:
+		ticketType = EItemTicketType::Top;
+		count = 3;
 		break;
 	case ECreepType::KwonMin:
 		Random<int> gen(0, 99);
@@ -1807,7 +1811,7 @@ CreepRewardInfo Room::GetCreepRewardTicketType() const
 		else
 		{
 			ticketType = EItemTicketType::Top;
-			count = 3;
+			count = 4;
 		}
 		break;
 	}

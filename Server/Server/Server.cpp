@@ -685,18 +685,18 @@ void Server::ProcessPacket(int networkID, char* buf)
 		uint8_t tier2 = static_cast<uint8_t>(sItems[item2.GetType()]->TIER_TYPE);
 		uint8_t tier3 = static_cast<uint8_t>(sItems[item3.GetType()]->TIER_TYPE);
 
+		const EItemTierType minTier = static_cast<EItemTierType>(min(min(tier1, tier2), tier3));
 		const EItemTierType maxTier = static_cast<EItemTierType>(max(max(tier1, tier2), tier3));
 
 		item1.SetEmptyItem();
 		item2.SetEmptyItem();
 		item3.SetEmptyItem();
 
-		uint8_t newItemType = client.GetRandomItemTypeByCombination(maxTier);
+		uint8_t newItemType = client.GetRandomItemTypeByCombination(minTier, maxTier);
 		uint8_t findEmptyItemSlot = client.FindEmptyItemSlotIndex();
 
 		Item& newItem = client.GetItem(findEmptyItemSlot);
 		newItem.SetType(newItemType);
-		newItem.SetUpgrade(1);
 
 		sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
 		sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);

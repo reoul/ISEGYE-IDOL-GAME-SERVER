@@ -6,10 +6,13 @@
 #include "Items.h"
 #include "Server.h"
 #include "ServerStruct.h"
+#include "Server.h"
+
 using namespace Logger;
 
 BattleAvatar::BattleAvatar()
 	: mClient(nullptr)
+	, mRoom(nullptr)
 	, mNetworkID(0)
 	, mMaxHp(0)
 	, mHp(0)
@@ -44,9 +47,10 @@ BattleAvatar::BattleAvatar()
 	}
 }
 
-void BattleAvatar::SetAvatar(Client& client, int networkID, bool isGhost, int round)
+void BattleAvatar::SetAvatar(Client& client, Room* room, int networkID, bool isGhost, int round)
 {
 	mClient = &client;
+	mRoom = room;
 	mNetworkID = networkID;
 	mMaxHp = 50 + 10 * min(5, round);
 	mHp = mMaxHp;
@@ -233,7 +237,7 @@ void BattleAvatar::ToDamageCharacter(int damage)
 		return;
 	}
 
-	if (mClient->GetNetworkID() != mNetworkID)
+	if (!IsValidBattleAvatarInRoom())
 	{
 		return;
 	}
@@ -246,7 +250,7 @@ void BattleAvatar::ToDamageCharacter(int damage)
 void BattleAvatar::ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet) const
 {
 	packet.networkID = mNetworkID;
-	if (mClient != nullptr)
+	if (IsValidBattleAvatarInRoom())
 	{
 		packet.playerHp = mClient->GetHp();
 	}
@@ -283,6 +287,11 @@ int BattleAvatar::IncreaseItemTicket(EItemTicketType ticketType, int count)
 		return 0;
 	}
 
+	if (!IsValidBattleAvatarInRoom())
+	{
+		return 0;
+	}
+
 	switch (ticketType)
 	{
 	case EItemTicketType::Normal:
@@ -298,4 +307,19 @@ int BattleAvatar::IncreaseItemTicket(EItemTicketType ticketType, int count)
 		mClient->SetSupremeItemTicketCount(mClient->GetSupremeItemTicketCount() + count);
 		return mClient->GetSupremeItemTicketCount();
 	}
+}
+
+bool BattleAvatar::IsValidBattleAvatarInRoom() const
+{
+	if (mRoom == nullptr)
+	{
+		return false;
+	}
+
+	if (mRoom->IsValidClientInThisRoom(mClient))
+	{
+		return true;
+	}
+
+	return false;
 }

@@ -15,7 +15,7 @@ constexpr int CONNECT_CHECK_INTERVAL = 30;	// 접속 체크 간격
 constexpr int BATTLE_ITEM_QUEUE_LENGTH = MAX_ROOM_PLAYER * MAX_USING_ITEM_COUNT * BATTLE_ITEM_QUEUE_LOOP_COUNT * 2 + MAX_ROOM_PLAYER;
 constexpr int MAX_ROOM_COUNT = MAX_USER / MAX_ROOM_PLAYER;	// 최대 Room 개수
 constexpr int MAX_ITEM_UPGRADE = 5;	// 아이템 최대 강화 수치
-constexpr int DEFAULT_ITEM_TICKET_COUNT = 100;	// 아이템 최대 강화 수치
+constexpr int DEFAULT_ITEM_TICKET_COUNT = 0;	// 아이템 최대 강화 수치
 
 
 // 전투

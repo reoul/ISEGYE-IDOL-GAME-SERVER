@@ -720,7 +720,7 @@ struct sc_BattleAvatarInfoPacket : private Packet
 	uint16_t hp;
 	uint8_t firstAttackState;
 	uint8_t offensePower;
-	uint16_t defensive;
+	uint32_t defensive;
 	uint8_t additionDefensive;
 	uint8_t weakening;
 	uint16_t bleeding;

@@ -18,7 +18,7 @@ public:
 	static RoomManager& GetRoomManager();
 	static void SendPacket(int networkID, void* pPacket);
 	static void SendPacket(int networkID, void* pPacket, ULONG size);
-	static Client& GetClients(int networkID);
+	static Client& GetClient(int networkID);
 	static void SendDisconnect(int networkID);
 	static void SendDisconnectDelay(int networkID);	// 해당 플레이어 연결 해제와 소속 Room에게 접속 해제 보냄
 	static void Disconnect(int networkID, bool isSendAnotherRoomClient);
@@ -41,7 +41,7 @@ inline RoomManager& Server::GetRoomManager()
 	return sRoomManager;
 }
 
-inline Client& Server::GetClients(int networkID)
+inline Client& Server::GetClient(int networkID)
 {
 	return sClients[networkID];
 }
