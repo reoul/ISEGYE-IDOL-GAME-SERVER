@@ -402,7 +402,6 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		if (sClients[networkID].GetRoomPtr() != nullptr)
 		{
-			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
 			sClients[networkID].SetCharacterType(pPacket->characterType);
 			sClients[networkID].SendPacketInAllRoomClients(pPacket);
 		}
@@ -424,7 +423,6 @@ void Server::ProcessPacket(int networkID, char* buf)
 
 		if (room->GetCurRoomStatusType() != ERoomStatusType::ReadyStage)
 		{
-			lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
 			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
 			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
@@ -433,7 +431,6 @@ void Server::ProcessPacket(int networkID, char* buf)
 		sClients[networkID].SwapItem(pPacket->slot1, pPacket->slot2);
 		Log("log", "[cs_sc_changeItemSlot] 네트워크 {0}번 클라이언트 아이템 슬롯 {1} <-> {2} 교체", pPacket->networkID, pPacket->slot1, pPacket->slot2);
 
-		lock_guard<mutex> lg(sClients[networkID].GetRoomPtr()->cLock);
 		sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
 		sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 	}
@@ -454,7 +451,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::cs_sc_notification:
 	{
 		cs_sc_NotificationPacket* pPacket = reinterpret_cast<cs_sc_NotificationPacket*>(buf);
-		const Room* room = sClients[pPacket->networkID].GetRoomPtr();
+		Room* room = sClients[pPacket->networkID].GetRoomPtr();
 		switch (pPacket->notificationType.get())
 		{
 		case ENotificationType::ChoiceCharacter:

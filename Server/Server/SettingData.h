@@ -3,7 +3,7 @@
 constexpr int MAX_ROOM_PLAYER = 8;	// Room 최대 플레이어 수
 constexpr int MAX_BUF_SIZE = 1300;	// 버퍼 최대 크기
 constexpr int MAX_PACKET_SIZE = 1300;	// 패킷 최대 크기
-constexpr int MAX_USER = 10000;	// 최대 유저
+constexpr int MAX_USER = 20000;	// 최대 유저
 constexpr int SERVER_PORT = 51341;	// 서버 포트
 constexpr int MAX_USER_NAME_LENGTH = 11;	// 유저 닉네임 최대 길이
 constexpr int MAX_USING_ITEM_COUNT = 6;	// 최대 필드 유물 개수

@@ -13,6 +13,8 @@ int main()
 	SocketUtil::StaticInit();
 
 	Logger::LogInit();
+
+#ifndef HIDE_LOG
 	Logger::AddLogger("log", "/log.txt");
 	Logger::AddLogger("test", "/testLog.txt");
 	Logger::AddLogger("SetDefaultUsingItem", "/SetDefaultUsingItem.txt");
@@ -21,18 +23,11 @@ int main()
 	Logger::AddLogger("BattleInfo", "/BattleInfo.txt");
 	Logger::AddLogger("FinishBattleResultInfo", "/FinishBattleResultInfo.txt");
 	Logger::AddLogger("PacketSendRecive", "/PacketSendRecive.txt");
+	Logger::AddLogger("PacketWrite", "/PacketWrite.txt");
+#endif // HIDE_LOG
 	Logger::AddLogger("Connection", "/Connection.txt");
 	Logger::AddLogger("ConnectionCount", "/ConnectionCount.txt");
-	Logger::AddLogger("PacketWrite", "/PacketWrite.txt");
 
-	//Client aa;
-	//Client bb;
-	//sItems[0]->Use(aa, bb, 0);
-	//sItems[5]->Use(aa, bb, 0);
-	//sItems[5]->Use(aa, bb, 1);
-	//sItems[5]->Use(aa, bb, 2);
-	//sItems[5]->Use(aa, bb, 3);
-	//LogPrintf("{0}", _countof(sItems));
 	Server::Start();
 	
 	return 0;

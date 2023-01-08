@@ -72,24 +72,27 @@ void Room::RemoveClient(const Client& client)
 	}
 }
 
-void Room::SendPacketToAllClients(void* pPacket) const
+void Room::SendPacketToAllClients(void* pPacket)
 {
+	lock_guard<mutex> lg(cLock);
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
 		Server::SendPacket((*it)->GetNetworkID(), pPacket);
 	}
 }
 
-void Room::SendPacketToAllClients(void* pPacket, ULONG size) const
+void Room::SendPacketToAllClients(void* pPacket, ULONG size)
 {
+	lock_guard<mutex> lg(cLock);
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
 		Server::SendPacket((*it)->GetNetworkID(), pPacket, size);
 	}
 }
 
-void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
+void Room::SendPacketToAnotherClients(const Client& client, void* pPacket)
 {
+	lock_guard<mutex> lg(cLock);
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
 		if (&client == *it)
@@ -101,8 +104,9 @@ void Room::SendPacketToAnotherClients(const Client& client, void* pPacket) const
 	}
 }
 
-void Room::SendPacketToAnotherClients(const Client& client, void* pPacket, ULONG size) const
+void Room::SendPacketToAnotherClients(const Client& client, void* pPacket, ULONG size)
 {
+	lock_guard<mutex> lg(cLock);
 	for (auto it = mClients.begin(); it != mClients.end(); ++it)
 	{
 		if (&client == *it)
@@ -181,10 +185,7 @@ unsigned Room::ProgressThread(void* pArguments)
 	{
 		Sleep(1000);
 
-		{
-			lock_guard<mutex> lg(room.cLock);
-			room.TrySendEnterInGame();
-		}
+		room.TrySendEnterInGame();
 
 		// 모두 선택 완료했을 때
 		if (room.mIsFinishChoiceCharacter)

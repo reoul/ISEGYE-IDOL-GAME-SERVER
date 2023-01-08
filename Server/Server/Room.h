@@ -41,10 +41,10 @@ public:
 	Room& operator=(const Room&) = delete;
 	void AddClients(vector<Client*>& clients);
 	void RemoveClient(const Client& client);
-	void SendPacketToAllClients(void* pPacket) const;
-	void SendPacketToAllClients(void* pPacket, ULONG size) const;
-	void SendPacketToAnotherClients(const Client& client, void* pPacket) const;
-	void SendPacketToAnotherClients(const Client& client, void* pPacket, ULONG size) const;
+	void SendPacketToAllClients(void* pPacket);
+	void SendPacketToAllClients(void* pPacket, ULONG size);
+	void SendPacketToAnotherClients(const Client& client, void* pPacket);
+	void SendPacketToAnotherClients(const Client& client, void* pPacket, ULONG size);
 	void ApplyRandomBattleOpponent();
 	const vector<Client*>& GetClients() const;
 	vector<Client*>& GetClients();
