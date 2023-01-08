@@ -99,11 +99,11 @@ ITEM(Item004, 4, EItemTierType::One, EItemType::Attack,
 	opponents.ToDamage(3, me);
 opponents.ToDamage(3, me);
 ,
-opponents.ToDamage(5, me);
-opponents.ToDamage(5, me);
+opponents.ToDamage(4, me);
+opponents.ToDamage(4, me);
 ,
-opponents.ToDamage(7, me);
-opponents.ToDamage(7, me);
+opponents.ToDamage(6, me);
+opponents.ToDamage(6, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -240,11 +240,11 @@ me.ToAdditionDefensive(7);
 
 // 슈크림 붕어빵 : 자신의 유물을 사용할 때 마다 체력 회복, 사이클 끝나면 효과 끝
 ITEM(Item012, 12, EItemTierType::Two, EItemType::Heal,
-	me.SetEffectHeal(2);
+	me.SetEffectHeal(1);
+,
+me.SetEffectHeal(3);
 ,
 me.SetEffectHeal(4);
-,
-me.SetEffectHeal(6);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -746,29 +746,29 @@ me.ToDefensive(15);
 ITEM(Item036, 36, EItemTierType::Three, EItemType::Defense,
 	if (me.GetEffectItemCount() < 4)
 	{
-		me.ToDefensive(3);
+		me.ToDefensive(4);
 	}
 	else
 	{
-		me.ToDefensive(4);
+		me.ToDefensive(7);
 	}
 ,
 if (me.GetEffectItemCount() < 4)
 {
-	me.ToDefensive(3);
+	me.ToDefensive(4);
 }
 else
 {
-	me.ToDefensive(5);
+	me.ToDefensive(9);
 }
 ,
 if (me.GetEffectItemCount() < 4)
 {
-	me.ToDefensive(3);
+	me.ToDefensive(4);
 }
 else
 {
-	me.ToDefensive(6);
+	me.ToDefensive(11);
 }
 ,
 me.SetMaxHP(me.GetMaxHP() + 5 + 5 * upgrade);

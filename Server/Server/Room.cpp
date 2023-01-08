@@ -1750,7 +1750,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
-		monster.SetMaxHP(20);
+		monster.SetMaxHP(40);
 		break;
 	case ECreepType::KwonMin:
 		for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
@@ -1760,7 +1760,7 @@ BattleAvatar Room::GetCreepMonster()
 			item.SetUpgrade(0);
 			monster.SetUsingItem(i, item);
 		}
-		monster.SetMaxHP(70);
+		monster.SetMaxHP(100);
 		break;
 	}
 	++mCreepRound;
