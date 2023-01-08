@@ -639,47 +639,20 @@ opponents.ToPiercingDamage(13, me);
 ITEM(Item032, 32, EItemTierType::Five, EItemType::Heal,
 	{
 		int lostHp = me.GetMaxHP() - me.GetHP();
-	lostHp *= 0.3f;
+	lostHp *= 0.25f;
 	me.ToHeal(lostHp);
-
-	if (!me.IsValidBattleAvatarInRoom())
-	{
-		return;
-	}
-
-	Client* client = me.GetClient();
-	int hp = min(100, client->GetHp() + 1);
-	client->SetHp(hp);
 	}
 	,
 {
 	int lostHp = me.GetMaxHP() - me.GetHP();
 	lostHp *= 0.4f;
 	me.ToHeal(lostHp);
-
-	if (!me.IsValidBattleAvatarInRoom())
-	{
-		return;
-	}
-
-	Client* client = me.GetClient();
-	int hp = min(100, client->GetHp() + 1);
-	client->SetHp(hp);
 }
 ,
 {
 	int lostHp = me.GetMaxHP() - me.GetHP();
 	lostHp *= 0.5f;
 	me.ToHeal(lostHp);
-
-	if (!me.IsValidBattleAvatarInRoom())
-	{
-		return;
-	}
-
-	Client* client = me.GetClient();
-	int hp = min(100, client->GetHp() + 1);
-	client->SetHp(hp);
 }
 ,
 switch (upgrade)
