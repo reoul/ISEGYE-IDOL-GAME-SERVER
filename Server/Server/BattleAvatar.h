@@ -394,13 +394,6 @@ inline void BattleAvatar::EffectBleeding()
 	mBleeding = 0;
 }
 
-inline void BattleAvatar::EffectBomb()
-{
-	mHp = max(0, mHp - mInstallBombDamage);
-	mInstallBombDamage = 0;
-	mIsInstallBomb = false;
-}
-
 inline void BattleAvatar::SetMaxHP(int maxHp)
 {
 	mMaxHp = maxHp;

@@ -185,6 +185,24 @@ Item BattleAvatar::GetRandomCopyItem()
 	return retItem;
 }
 
+void BattleAvatar::EffectBomb()
+{
+	if (mIsIgnoreNextDamage)
+	{
+		mIsIgnoreNextDamage = false;
+		return;
+	}
+
+	const int oldDefensive = mDefensive;
+	mDefensive = max(0, mDefensive - mInstallBombDamage);
+
+	mInstallBombDamage = max(0, mInstallBombDamage - oldDefensive);
+	mHp = max(0, mHp - mInstallBombDamage);
+
+	mInstallBombDamage = 0;
+	mIsInstallBomb = false;
+}
+
 void BattleAvatar::EffectCounter(BattleAvatar& opponent)
 {
 	if (mIsFinish)
