@@ -229,13 +229,6 @@ inline Client* BattleAvatar::GetClient()
 	return mClient;
 }
 
-inline void BattleAvatar::ToPiercingDamage(int damage, const BattleAvatar& opponent)
-{
-	damage += opponent.mOffensePower;
-	damage = max(0, damage - opponent.mWeakening);
-	mHp = max(0, mHp - damage);
-}
-
 inline int BattleAvatar::GetMaxHP() const
 {
 	return mMaxHp;

@@ -156,6 +156,19 @@ void BattleAvatar::InitCycle()
 	mIsIgnoreNextDamage = false;
 }
 
+void BattleAvatar::ToPiercingDamage(int damage, const BattleAvatar& opponent)
+{
+	if (mIsIgnoreNextDamage)
+	{
+		mIsIgnoreNextDamage = false;
+		return;
+	}
+
+	damage += opponent.mOffensePower;
+	damage = max(0, damage - opponent.mWeakening);
+	mHp = max(0, mHp - damage);
+}
+
 Item BattleAvatar::GetRandomCopyItem()
 {
 	vector<Item> validItems;
