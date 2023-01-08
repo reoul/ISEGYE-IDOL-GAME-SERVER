@@ -105,8 +105,8 @@ private:
 	ECharacterType				mCharacterType;							// 플레이어 캐릭터
 	Room*						mRoomPtr;								// 클라이언트가 속한 룸
 	wchar_t						mName[MAX_USER_NAME_LENGTH];			// 플레이어 이름
-	Item						mUsingItems[MAX_USING_ITEM_COUNT];			// 전투시에 사용되는 인벤토리
-	Item						mUnUsingItems[MAX_UN_USING_ITEM_COUNT];		// 보유 유물 보관 인벤토리
+	Item						mUsingItems[MAX_USING_ITEM_COUNT];		// 전투시에 사용되는 인벤토리
+	Item						mUnUsingItems[MAX_UN_USING_ITEM_COUNT];	// 보유 유물 보관 인벤토리
 	int16_t						mFirstAttackState;						// 선공 스텟
 	bool						mIsChoiceCharacter;						// 캐릭터를 선택했는지
 	system_clock::time_point	mLastConnectCheckPacketTime;			// 마지막으로 연결 체크 패킷 받은 시간
@@ -123,8 +123,8 @@ private:
 		{75,	25,		0,		0,		0},		// 2라운드 
 		{55,	30,		15,		0,		0},		// 3라운드 
 		{25,	40,		30,		5,		0},		// 4라운드 
-		{16,	20,		35,		25,		4},		// 5라운드 
-		{9,		15,		36,		30,		10}		// 6라운드부터
+		{19,	44,		27,		9,		1},		// 5라운드 
+		{11,	30,		40,		15,		4}		// 6라운드부터
 	};
 };
 
