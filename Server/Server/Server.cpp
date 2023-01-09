@@ -671,25 +671,38 @@ void Server::ProcessPacket(int networkID, char* buf)
 		Item& item2 = client.GetItem(pPacket->index2);
 		Item& item3 = client.GetItem(pPacket->index3);
 
-		if (item1.GetType() == EMPTY_ITEM || item2.GetType() == EMPTY_ITEM || item3.GetType() == EMPTY_ITEM)
+		const uint8_t type1 = item1.GetType();
+		const uint8_t type2 = item2.GetType();
+		const uint8_t type3 = item3.GetType();
+
+		if (type1 == EMPTY_ITEM || type2 == EMPTY_ITEM || type3 == EMPTY_ITEM)
 		{
 			sc_InventoryInfoPacket inventoryInfoPacket(sClients[pPacket->networkID]);
 			sClients[networkID].SendPacketInAllRoomClients(&inventoryInfoPacket);
 			return;
 		}
 
-		uint8_t tier1 = static_cast<uint8_t>(sItems[item1.GetType()]->TIER_TYPE);
-		uint8_t tier2 = static_cast<uint8_t>(sItems[item2.GetType()]->TIER_TYPE);
-		uint8_t tier3 = static_cast<uint8_t>(sItems[item3.GetType()]->TIER_TYPE);
-
-		const EItemTierType minTier = static_cast<EItemTierType>(min(min(tier1, tier2), tier3));
-		const EItemTierType maxTier = static_cast<EItemTierType>(max(max(tier3, tier2), tier1));
+		const uint8_t tier1 = static_cast<uint8_t>(sItems[type1]->TIER_TYPE);
+		const uint8_t tier2 = static_cast<uint8_t>(sItems[type2]->TIER_TYPE);
+		const uint8_t tier3 = static_cast<uint8_t>(sItems[type3]->TIER_TYPE);
 
 		item1.SetEmptyItem();
 		item2.SetEmptyItem();
 		item3.SetEmptyItem();
 
-		uint8_t newItemType = client.GetRandomItemTypeByCombination(minTier, maxTier);
+		const EItemTierType minTier = static_cast<EItemTierType>(min(min(tier1, tier2), tier3));
+		const EItemTierType maxTier = static_cast<EItemTierType>(max(max(tier3, tier2), tier1));
+
+		uint8_t newItemType;
+		for (int i = 0; i < 10; ++i)
+		{
+			newItemType = client.GetRandomItemTypeByCombination(minTier, maxTier);
+			if (type1 != newItemType && type2 != newItemType && type3 != newItemType)
+			{
+				break;
+			}
+		}
+
 		uint8_t findEmptyItemSlot = client.FindEmptyItemSlotIndex();
 
 		Item& newItem = client.GetItem(findEmptyItemSlot);

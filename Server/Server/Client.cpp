@@ -48,12 +48,14 @@ Client::Client()
 		sItemProbability[5][3] + sItemProbability[5][4] == 100, "Sum is Not 100");
 
 	// UsingItems 자리에 선공 확률 지정
-	mUsingItems[0].SetActivePercent(40);
-	mUsingItems[1].SetActivePercent(40);
+	mUsingItems[0].SetActivePercent(45);
+	mUsingItems[1].SetActivePercent(45);
 	mUsingItems[2].SetActivePercent(33);
 	mUsingItems[3].SetActivePercent(33);
-	mUsingItems[4].SetActivePercent(27);
-	mUsingItems[5].SetActivePercent(27);
+	mUsingItems[4].SetActivePercent(23);
+	mUsingItems[5].SetActivePercent(23);
+
+	// todo : 전투 안끝날시 데미지 주는 거 체크
 
 	// 아이템 슬롯 캐싱
 	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)

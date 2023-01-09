@@ -142,6 +142,7 @@ void BattleAvatar::InitCycle()
 	mOffensePower = 0;
 	mAdditionDefensive = 0;
 	mWeakening = 0;
+	mBleeding = 0;
 	mReducedHealing = 0;
 	mIsCounterAttack = false;
 	mCounterAttackDamage = 0;

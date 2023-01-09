@@ -384,7 +384,6 @@ inline EHamburgerType BattleAvatar::GetRandomHamburgerType() const
 inline void BattleAvatar::EffectBleeding()
 {
 	mHp = max(0, mHp - mBleeding);
-	mBleeding = 0;
 }
 
 inline void BattleAvatar::SetMaxHP(int maxHp)
