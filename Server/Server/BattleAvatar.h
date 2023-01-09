@@ -79,7 +79,7 @@ public:
 	void EffectBomb();
 	void EffectCounter(BattleAvatar& opponent);
 	int GetDamage() const;
-	void ToDamageCharacter(int damage);
+	void ToDamageCharacter(int damage, bool isNotFinishBattle);
 	void SetMaxHP(int maxHp);
 	void SetFirstAttackState(int firstAttackState);
 	int	GetFirstAttackState() const;

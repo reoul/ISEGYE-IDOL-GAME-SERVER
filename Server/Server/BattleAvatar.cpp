@@ -252,7 +252,7 @@ int BattleAvatar::GetDamage() const
 	return sum;
 }
 
-void BattleAvatar::ToDamageCharacter(int damage)
+void BattleAvatar::ToDamageCharacter(int damage, bool isNotFinishBattle)
 {
 	if (mIsGhost)
 	{
@@ -264,7 +264,7 @@ void BattleAvatar::ToDamageCharacter(int damage)
 		return;
 	}
 
-	if (mHp > 0)
+	if (!isNotFinishBattle && mHp > 0)
 	{
 		return;
 	}
