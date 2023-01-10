@@ -448,7 +448,7 @@ unsigned Room::ProgressThread(void* pArguments)
 
 	while (true)
 	{
-		for (int i = 0; i < 4; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			// 대기 시간
 			if (!ReadyStage(room, true))
@@ -538,13 +538,6 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 			setItemTicketPacket.Write(memoryStream);
 		}
 
-
-		if (memoryStream.GetLength() == 1024)
-		{
-			int a = memoryStream.GetLength();
-			a += 20;
-		}
-
 		room.SendPacketToAllClients(memoryStream.GetBufferPtr(), memoryStream.GetLength());
 	}
 
@@ -560,7 +553,7 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 	Sleep(1000);
 
 
-	for (size_t i = 0; i < BATTLE_READY_TIME + 1; ++i)
+	for (size_t i = 0; i < BATTLE_READY_TIME; ++i)
 	{
 		Sleep(1000);
 

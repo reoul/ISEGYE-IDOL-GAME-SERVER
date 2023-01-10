@@ -808,7 +808,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 		break;
 	default:
 		LogWarning("log", "미정의 패킷 받음");
-		DebugBreak();
+		//DebugBreak();
 		//exit(-1);
 		break;
 	}
