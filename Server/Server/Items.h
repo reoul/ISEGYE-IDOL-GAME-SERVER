@@ -143,13 +143,13 @@ ITEM(Item007, 7, EItemTierType::Two, EItemType::Effect,
 		opponents.ToWeakening(2);
 		break;
 	case EHamburgerType::Guinness:
-		opponents.ToDamage(4, me);
+		opponents.ToDamage(7, me);
 		break;
 	case EHamburgerType::WhiteGarlic:
-		me.ToHeal(5);
+		me.ToHeal(4);
 		break;
 	case EHamburgerType::Rice:
-		me.ToDefensive(5);
+		me.ToDefensive(4);
 		break;
 	}
 ,
@@ -159,13 +159,13 @@ case EHamburgerType::Fillet:
 	opponents.ToWeakening(3);
 	break;
 case EHamburgerType::Guinness:
-	opponents.ToDamage(6, me);
+	opponents.ToDamage(9, me);
 	break;
 case EHamburgerType::WhiteGarlic:
-	me.ToHeal(7);
+	me.ToHeal(6);
 	break;
 case EHamburgerType::Rice:
-	me.ToDefensive(7);
+	me.ToDefensive(6);
 	break;
 }
 ,
@@ -175,13 +175,13 @@ case EHamburgerType::Fillet:
 	opponents.ToWeakening(4);
 	break;
 case EHamburgerType::Guinness:
-	opponents.ToDamage(9, me);
+	opponents.ToDamage(12, me);
 	break;
 case EHamburgerType::WhiteGarlic:
-	me.ToHeal(10);
+	me.ToHeal(9);
 	break;
 case EHamburgerType::Rice:
-	me.ToDefensive(10);
+	me.ToDefensive(9);
 	break;
 }
 ,
@@ -201,13 +201,13 @@ me.ToOffensePower(5);
 
 // 전투 메이드복 : 방어도 + 5, 장착 후 공격 당할시 1회성 반격 X 데미지
 ITEM(Item009, 9, EItemTierType::Two, EItemType::Defense,
-	me.ToDefensive(5);
+	me.ToDefensive(4);
 me.SetCounterAttack(5);
 ,
-me.ToDefensive(5);
+me.ToDefensive(4);
 me.SetCounterAttack(7);
 ,
-me.ToDefensive(5);
+me.ToDefensive(4);
 me.SetCounterAttack(10);
 ,
 { int fitmentEffectEmpty = 0; }
@@ -215,13 +215,13 @@ me.SetCounterAttack(10);
 
 // 수녀복 : 방어도 + 5, 장착 후 공격 당할시 1회성 회복 X
 ITEM(Item010, 10, EItemTierType::Two, EItemType::Defense,
-	me.ToDefensive(5);
+	me.ToDefensive(4);
 me.SetCounterHeal(6);
 ,
-me.ToDefensive(5);
+me.ToDefensive(4);
 me.SetCounterHeal(8);
 ,
-me.ToDefensive(5);
+me.ToDefensive(4);
 me.SetCounterHeal(11);
 ,
 { int fitmentEffectEmpty = 0; }
@@ -229,11 +229,11 @@ me.SetCounterHeal(11);
 
 // 매우 큰 리본 : 추가방어력 X 제공
 ITEM(Item011, 11, EItemTierType::Three, EItemType::Effect,
-	me.ToAdditionDefensive(3);
+	me.ToAdditionDefensive(2);
 ,
-me.ToAdditionDefensive(5);
+me.ToAdditionDefensive(4);
 ,
-me.ToAdditionDefensive(7);
+me.ToAdditionDefensive(6);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -305,7 +305,7 @@ me.SetFirstAttackState(me.GetFirstAttackState() + 2 + upgrade);
 
 // 박사의 만능툴
 // 번호를 바꿀시 아이템 체크하는 부분 번호 수정해야함
-ITEM(Item016, 16, EItemTierType::Three, EItemType::Effect,
+ITEM(Item016, 16, EItemTierType::Two, EItemType::Effect,
 	opponents.ToDamage(5, me);
 ,
 opponents.ToDamage(5, me);
@@ -316,26 +316,26 @@ me.SetMaxHP(me.GetMaxHP() + 5 + 5 * upgrade);
 )
 
 // 여고생의 헤어롤 : 뽑기권 * X의 데미지를 줍니다
-ITEM(Item017, 17, EItemTierType::Three, EItemType::Effect,
+ITEM(Item017, 17, EItemTierType::Four, EItemType::Effect,
 	{
 	const Client * client = me.GetClient();
 const int sumTicket = client->GetNormalItemTicketCount() + client->GetAdvancedItemTicketCount()
 						+ client->GetTopItemTicketCount() + client->GetSupremeItemTicketCount();
-opponents.ToDamage(sumTicket, me);
+opponents.ToDamage(sumTicket * 0.5f, me);
 	}
 	,
 {
 	const Client * client = me.GetClient();
 const int sumTicket = client->GetNormalItemTicketCount() + client->GetAdvancedItemTicketCount()
 						+ client->GetTopItemTicketCount() + client->GetSupremeItemTicketCount();
-opponents.ToDamage(sumTicket * 2, me);
+opponents.ToDamage(sumTicket, me);
 }
 ,
 {
 	const Client * client = me.GetClient();
 const int sumTicket = client->GetNormalItemTicketCount() + client->GetAdvancedItemTicketCount()
 						+ client->GetTopItemTicketCount() + client->GetSupremeItemTicketCount();
-opponents.ToDamage(sumTicket * 3, me);
+opponents.ToDamage(sumTicket * 2, me);
 }
 ,
 { int fitmentEffectEmpty = 0; }
@@ -434,24 +434,26 @@ else
 	me.ToHeal(14);
 }
 }
+,
+{ int fitmentEffectEmpty = 0; }
 )
 
 // 귀족의 상현딸 : 매턴 적 출혈 2뎀 + X 데미지
 ITEM(Item022, 22, EItemTierType::Two, EItemType::Attack,
 	opponents.ToBleeding(2);
-opponents.ToDamage(5, me);
+opponents.ToDamage(3, me);
 ,
-opponents.ToBleeding(3);
-opponents.ToDamage(5, me);
+opponents.ToBleeding(2);
+opponents.ToDamage(6, me);
 ,
-opponents.ToBleeding(5);
-opponents.ToDamage(5, me);
+opponents.ToBleeding(2);
+opponents.ToDamage(11, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
 
 // 대학원생의 USB : 상대방에게 걸린 공격력 상승과 내게 걸린 약화를 지움
-ITEM(Item023, 23, EItemTierType::Four, EItemType::Effect,
+ITEM(Item023, 23, EItemTierType::Three, EItemType::Effect,
 	opponents.SetOffensePower(0);
 me.SetWeakening(0);
 ,
@@ -467,21 +469,21 @@ me.SetFirstAttackState(me.GetFirstAttackState() + upgrade + 1);
 // 선량한 시민의 빠루
 ITEM(Item024, 24, EItemTierType::Three, EItemType::Attack,
 	{
-	const int tenPercentHp = opponents.GetMaxHP() / 10;
-	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / tenPercentHp;
-		opponents.ToDamage(5 + damage, me);
+	const int percentHp = opponents.GetMaxHP() / 5;
+	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / percentHp;
+		opponents.ToDamage(7 + damage, me);
 	}
 	,
 {
-	const int tenPercentHp = opponents.GetMaxHP() / 10;
-	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / tenPercentHp;
-	opponents.ToDamage(6 + damage, me);
+	const int percentHp = opponents.GetMaxHP() / 5;
+	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / percentHp;
+	opponents.ToDamage(11 + damage, me);
 }
 ,
 {
-	const int tenPercentHp = opponents.GetMaxHP() / 10;
-	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / tenPercentHp;
-	opponents.ToDamage(8 + damage, me);
+	const int percentHp = opponents.GetMaxHP() / 5;
+	const int damage = (opponents.GetMaxHP() - opponents.GetHP()) / percentHp;
+	opponents.ToDamage(15 + damage, me);
 }
 ,
 { int fitmentEffectEmpty = 0; }
@@ -521,13 +523,13 @@ else
 
 // 마법사의 스테프 : 5 데미지 + 적 치유력 감소 X
 ITEM(Item026, 26, EItemTierType::Two, EItemType::Attack,
-	opponents.ToDamage(5, me);
+	opponents.ToDamage(10, me);
 opponents.ToReducedHealing(2);
 ,
-opponents.ToDamage(5, me);
+opponents.ToDamage(10, me);
 opponents.ToReducedHealing(4);
 ,
-opponents.ToDamage(5, me);
+opponents.ToDamage(10, me);
 opponents.ToReducedHealing(6);
 ,
 { int fitmentEffectEmpty = 0; }
@@ -549,14 +551,14 @@ me.ToDefensive(5 + 5 * upgrade);
 
 // 오니의 카타나 : 매턴 적 출혈 4뎀 + X 데미지
 ITEM(Item028, 28, EItemTierType::Three, EItemType::Attack,
-	opponents.ToBleeding(3);
-opponents.ToDamage(5, me);
+	opponents.ToBleeding(2);
+opponents.ToDamage(6, me);
 ,
 opponents.ToBleeding(3);
-opponents.ToDamage(10, me);
+opponents.ToDamage(6, me);
 ,
-opponents.ToBleeding(3);
-opponents.ToDamage(15, me);
+opponents.ToBleeding(5);
+opponents.ToDamage(6, me);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -708,9 +710,9 @@ for (int i = 0; i < me.GetUseKeyCapCount(); ++i)
 ITEM(Item035, 35, EItemTierType::Three, EItemType::Defense,
 	me.ToDefensive(5);
 ,
-me.ToDefensive(10);
+me.ToDefensive(9);
 ,
-me.ToDefensive(15);
+me.ToDefensive(13);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -756,7 +758,7 @@ me.SetDefendNegativeEffect(true);
 ,
 me.SetDefendNegativeEffect(true);
 ,
-me.SetMaxHP(me.GetMaxHP() + 3 + 3 * upgrade);
+me.ToDefensive(3 + 3 * upgrade);
 )
 
 // 대학원생의 분노 : 데미지 10
@@ -819,11 +821,11 @@ opponents.ToDamage(10, me);
 
 // 아니요 : 방어도 10
 ITEM(Item043, 43, EItemTierType::Three, EItemType::Defense,
-	me.ToDefensive(10);
+	me.ToDefensive(8);
 ,
-me.ToDefensive(10);
+me.ToDefensive(8);
 ,
-me.ToDefensive(10);
+me.ToDefensive(8);
 ,
 { int fitmentEffectEmpty = 0; }
 )
@@ -899,8 +901,8 @@ static ItemBase* sItems[]
 //각 티어마다의 아이템 벡터
 static const vector<const ItemBase*> _sOneTierItems{ &sItem001, &sItem002, &sItem003, &sItem004, &sItem008, &sItem033 };
 static const vector<const ItemBase*> _sTwoTierItems{ &sItem007, &sItem009, &sItem010, &sItem012, &sItem014, &sItem016, &sItem019, &sItem020, &sItem021, &sItem022, &sItem026, &sItem030, &sItem031, &sItem037 };
-static const vector<const ItemBase*> _sThreeTierItems{ &sItem006, &sItem011, &sItem017, &sItem023, &sItem024, &sItem028, &sItem029, &sItem034, &sItem035, &sItem036 };
-static const vector<const ItemBase*> _sFourTierItems{ &sItem005, &sItem013, &sItem018, &sItem025 };
+static const vector<const ItemBase*> _sThreeTierItems{ &sItem006, &sItem011, &sItem023, &sItem024, &sItem028, &sItem029, &sItem034, &sItem035, &sItem036 };
+static const vector<const ItemBase*> _sFourTierItems{ &sItem005, &sItem013, &sItem017, &sItem018, &sItem025 };
 static const vector<const ItemBase*> _sFiveTierItems{ &sItem015, &sItem027, &sItem032 };
 
 // 각 티어 아이템 벡터를 가진 배열

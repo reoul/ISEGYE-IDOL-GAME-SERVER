@@ -55,8 +55,6 @@ Client::Client()
 	mUsingItems[4].SetActivePercent(23);
 	mUsingItems[5].SetActivePercent(23);
 
-	// todo : 전투 안끝날시 데미지 주는 거 체크
-
 	// 아이템 슬롯 캐싱
 	for (int i = 0; i < MAX_USING_ITEM_COUNT; ++i)
 	{
