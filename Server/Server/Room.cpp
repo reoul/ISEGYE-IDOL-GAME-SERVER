@@ -504,7 +504,7 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 
 	LogPrintf("준비시간 시작");
 
-	const int readyTime = max(20, BATTLE_READY_TIME - room.GetRound() * 5) + 2;
+	const int readyTime = max(20, BATTLE_READY_TIME - room.GetRound() * 5) + 1;
 
 	{
 		OutputMemoryStream memoryStream(1024);
@@ -551,9 +551,6 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 		sc_FadeOutPacket packet(1);
 		room.SendPacketToAllClients(&packet);
 	}
-
-	Sleep(1000);
-
 
 	for (int i = 0; i < readyTime; ++i)
 	{

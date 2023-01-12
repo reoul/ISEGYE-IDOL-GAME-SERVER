@@ -281,7 +281,15 @@ void BattleAvatar::ToDamageCharacter(int damage, bool isNotFinishBattle)
 
 void BattleAvatar::ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet) const
 {
-	packet.networkID = mIsGhost ? ~mNetworkID : mNetworkID;
+	if (packet.networkID > 100000)
+	{
+		packet.networkID = mNetworkID;
+	}
+	else
+	{
+		packet.networkID = mIsGhost ? ~mNetworkID : mNetworkID;
+	}
+
 	if (IsValidBattleAvatarInRoom())
 	{
 		packet.playerHp = mClient->GetHp();
