@@ -281,7 +281,7 @@ void BattleAvatar::ToDamageCharacter(int damage, bool isNotFinishBattle)
 
 void BattleAvatar::ApplyBattleAvatarInfoPacket(sc_BattleAvatarInfoPacket& packet) const
 {
-	if (packet.networkID > 100000)
+	if (mNetworkID > 100000)
 	{
 		packet.networkID = mNetworkID;
 	}
