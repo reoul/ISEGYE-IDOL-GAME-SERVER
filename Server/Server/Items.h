@@ -900,7 +900,7 @@ static ItemBase* sItems[]
 
 //각 티어마다의 아이템 벡터
 static const vector<const ItemBase*> _sOneTierItems{ &sItem001, &sItem002, &sItem003, &sItem004, &sItem008, &sItem033 };
-static const vector<const ItemBase*> _sTwoTierItems{ &sItem007, &sItem009, &sItem010, &sItem012, &sItem014, &sItem019, &sItem020, &sItem021, &sItem022, &sItem026, &sItem030, &sItem031, &sItem037 };
+static const vector<const ItemBase*> _sTwoTierItems{ &sItem007, &sItem009, &sItem010, &sItem012, &sItem014, &sItem016, &sItem019, &sItem020, &sItem021, &sItem022, &sItem026, &sItem030, &sItem031, &sItem037 };
 static const vector<const ItemBase*> _sThreeTierItems{ &sItem006, &sItem011, &sItem023, &sItem024, &sItem028, &sItem029, &sItem034, &sItem035, &sItem036 };
 static const vector<const ItemBase*> _sFourTierItems{ &sItem005, &sItem013, &sItem017, &sItem018, &sItem025 };
 static const vector<const ItemBase*> _sFiveTierItems{ &sItem015, &sItem027, &sItem032 };
