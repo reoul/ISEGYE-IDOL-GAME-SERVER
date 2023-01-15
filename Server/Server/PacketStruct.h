@@ -74,6 +74,8 @@ enum class EPacketType : uint8_t
 	sc_BattleAvatarInfo,
 	/// <summary> 인벤토리 정보 패킷 타입 </summary>
 	sc_InventoryInfo,
+	/// <summary> 현재 매칭 정보 패킷 타입 </summary>
+	sc_matchingInfo,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -812,6 +814,24 @@ struct sc_InventoryInfoPacket : protected Packet
 			unUsingInventoryInfos[i].type = unUsingItems[i].GetType();
 			unUsingInventoryInfos[i].upgrade = unUsingItems[i].GetUpgrade();
 		}
+	}
+};
+
+struct sc_MatchingInfoPacket : protected Packet
+{
+	uint8_t matchingQueueCount;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(matchingQueueCount);
+
+	}
+
+	sc_MatchingInfoPacket(uint8_t matchingQueueCount)
+		: Packet(sizeof(sc_MatchingInfoPacket), EPacketType::sc_matchingInfo)
+		, matchingQueueCount(matchingQueueCount)
+	{
 	}
 };
 

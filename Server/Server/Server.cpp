@@ -69,7 +69,12 @@ void Server::Start()
 
 	while (sIsRunningServer)
 	{
-		Sleep(CONNECT_CHECK_INTERVAL * 1000);
+		for (int i = 0; i < CONNECT_CHECK_INTERVAL; ++i)
+		{
+			Sleep(1000);
+			Server::sServerQueue.SendMatchingQueueInfo();
+		}
+
 		int connCount = 0;
 		lastConnectCheckTime = system_clock::now();
 		for (Client& client : sClients)
@@ -804,6 +809,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::sc_magicStickInfo:
 	case EPacketType::sc_DoctorToolInfo:
 	case EPacketType::sc_CreepStageInfo:
+	case EPacketType::sc_matchingInfo:
 		LogWarning("log", "{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
 		break;
 	default:

@@ -5,6 +5,7 @@
 #include "SettingData.h"
 #include "Server.h"
 #include "reoul/logger.h"
+#include "PacketStruct.h"
 
 using namespace Logger;
 
@@ -94,4 +95,30 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 		return &room;
 	}
 	return nullptr;
+}
+
+void ServerQueue::SendMatchingQueueInfo()
+{
+	auto node = mClientQueue;
+
+	if (mSize <= 0)
+	{
+		return;
+	}
+
+	vector<Client*> clients;
+	lock_guard<mutex> lg(mLock);
+
+	for (size_t i = 0; i < mSize; ++i)
+	{
+		Client& client = *node->GetClient();
+		clients.emplace_back(&client);
+		node = node->Next;
+	}
+
+	for (Client* client : clients)
+	{
+		sc_MatchingInfoPacket packet(mSize);
+		Server::SendPacket(client->GetNetworkID(), &packet);
+	}
 }
