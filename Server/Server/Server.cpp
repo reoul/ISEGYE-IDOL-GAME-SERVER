@@ -12,6 +12,7 @@ RoomManager Server::sRoomManager;
 bool Server::sIsRunningServer = true;
 ServerQueue Server::sServerQueue;
 size_t connectCount = 0;
+size_t currConnectionCount = 0;	// 현재 접속중인 사람 수
 
 
 void Server::Start()
@@ -72,10 +73,10 @@ void Server::Start()
 		for (int i = 0; i < CONNECT_CHECK_INTERVAL; ++i)
 		{
 			Sleep(1000);
-			Server::sServerQueue.SendMatchingQueueInfo();
+			Server::sServerQueue.SendMatchingQueueInfo(currConnectionCount);
 		}
 
-		int connCount = 0;
+		currConnectionCount = 0;
 		lastConnectCheckTime = system_clock::now();
 		for (Client& client : sClients)
 		{
@@ -87,10 +88,10 @@ void Server::Start()
 					Disconnect(client.GetNetworkID(), true);
 					continue;
 				}
-				++connCount;
+				++currConnectionCount;
 			}
 		}
-		LogByRelease("Connection", "현재 유저 : {0}명", connCount);
+		LogByRelease("Connection", "현재 유저 : {0}명", currConnectionCount);
 	}
 
 	for (auto& th : workerThreads)
@@ -810,6 +811,7 @@ void Server::ProcessPacket(int networkID, char* buf)
 	case EPacketType::sc_DoctorToolInfo:
 	case EPacketType::sc_CreepStageInfo:
 	case EPacketType::sc_matchingInfo:
+	case EPacketType::sc_BattleTimeInfo:
 		LogWarning("log", "{0} 받으면 안되는 패킷을 받음", static_cast<int>(packetType));
 		break;
 	default:

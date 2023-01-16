@@ -97,7 +97,7 @@ Room* ServerQueue::TryCreateRoomOrNullPtr()
 	return nullptr;
 }
 
-void ServerQueue::SendMatchingQueueInfo()
+void ServerQueue::SendMatchingQueueInfo(uint16_t connectionCount)
 {
 	auto node = mClientQueue;
 
@@ -118,7 +118,7 @@ void ServerQueue::SendMatchingQueueInfo()
 
 	for (Client* client : clients)
 	{
-		sc_MatchingInfoPacket packet(mSize);
+		sc_MatchingInfoPacket packet(mSize, connectionCount);
 		Server::SendPacket(client->GetNetworkID(), &packet);
 	}
 }

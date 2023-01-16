@@ -18,7 +18,7 @@ public:
 	void RemoveClient(Client& client);
 	Room* TryCreateRoomOrNullPtr();
 	std::mutex& GetMutex();
-	void SendMatchingQueueInfo();
+	void SendMatchingQueueInfo(uint16_t connectionCount);
 private:
 	std::mutex mLock;
 	std::shared_ptr<ServerQueueNode> mClientQueue;

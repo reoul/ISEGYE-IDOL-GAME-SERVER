@@ -76,6 +76,8 @@ enum class EPacketType : uint8_t
 	sc_InventoryInfo,
 	/// <summary> 현재 매칭 정보 패킷 타입 </summary>
 	sc_matchingInfo,
+	/// <summary> 현재 전투 시간 정보 패킷 타입 </summary>
+	sc_BattleTimeInfo,
 };
 
 /// <summary> cs_sc_notification의 알림 타입 </summary>
@@ -762,7 +764,6 @@ struct sc_BattleAvatarInfoPacket : private Packet
 		memoryStream.Write(counterAttackDamage);
 		memoryStream.Write(isCounterHeal);
 		memoryStream.Write(counterHeal);
-
 	}
 
 	sc_BattleAvatarInfoPacket(const BattleAvatar& avatar)
@@ -820,17 +821,36 @@ struct sc_InventoryInfoPacket : protected Packet
 struct sc_MatchingInfoPacket : protected Packet
 {
 	uint8_t matchingQueueCount;
+	uint16_t connectionCount;
 
 	void Write(OutputMemoryStream& memoryStream) const
 	{
 		Packet::Write(memoryStream);
 		memoryStream.Write(matchingQueueCount);
-
+		memoryStream.Write(connectionCount);
 	}
 
-	sc_MatchingInfoPacket(uint8_t matchingQueueCount)
+	sc_MatchingInfoPacket(uint8_t matchingQueueCount, uint16_t connectionCount)
 		: Packet(sizeof(sc_MatchingInfoPacket), EPacketType::sc_matchingInfo)
 		, matchingQueueCount(matchingQueueCount)
+		, connectionCount(connectionCount)
+	{
+	}
+};
+
+struct sc_BattleTimeInfoPacket : protected Packet
+{
+	uint8_t time;
+
+	void Write(OutputMemoryStream& memoryStream) const
+	{
+		Packet::Write(memoryStream);
+		memoryStream.Write(time);
+	}
+
+	sc_BattleTimeInfoPacket(uint8_t time)
+		: Packet(sizeof(sc_BattleTimeInfoPacket), EPacketType::sc_BattleTimeInfo)
+		, time(time)
 	{
 	}
 };

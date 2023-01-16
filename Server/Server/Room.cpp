@@ -504,7 +504,7 @@ bool Room::ReadyStage(Room& room, bool isNextStageBattle)
 
 	LogPrintf("준비시간 시작");
 
-	const int readyTime = max(20, BATTLE_READY_TIME - room.GetRound() * 5) + 1;
+	const int readyTime = max(30, BATTLE_READY_TIME - room.GetRound() * 3) + 1;
 
 	{
 		OutputMemoryStream memoryStream(1024);
@@ -720,6 +720,8 @@ bool Room::BattleStage(Room& room)
 		}
 	}
 
+	size_t effectItemCount = 0;	//남은 시간 계산 용도로
+
 	for (size_t battleLoop = 0; battleLoop < 10; ++battleLoop)
 	{
 		for (int j = 0; j < battleOpponents.size(); ++j)
@@ -764,6 +766,7 @@ bool Room::BattleStage(Room& room)
 				vector<int> disconnectNetworkIdList;
 
 				int packetSize = 0;
+				++effectItemCount;
 				for (int k = 0; k < avatarCount; k += 2)
 				{
 					if (avatars[k].IsFinish())
@@ -772,6 +775,7 @@ bool Room::BattleStage(Room& room)
 					}
 
 					const uint8_t activeSlot = avatars[k].ActiveItem(activeItemIndex, avatars[k + 1]);
+					
 
 					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
 					{
@@ -810,6 +814,7 @@ bool Room::BattleStage(Room& room)
 						sc_BattleAvatarInfoPacket packet2(avatars[k + 1]);
 						packet2.Write(memoryStream);
 						packetSize += sizeof(sc_BattleAvatarInfoPacket);
+
 					}
 
 					if (avatars[k].GetHP() == 0 || avatars[k + 1].GetHP() == 0)
@@ -826,6 +831,10 @@ bool Room::BattleStage(Room& room)
 						avatars[k + 1].SetFinish();
 					}
 				}
+
+				uint8_t remainTime = 60 - 0.5f * effectItemCount;
+				sc_BattleTimeInfoPacket packet3(remainTime);
+				packet3.Write(memoryStream);
 
 				// 중복 제거
 				if (disconnectNetworkIdList.size() > 0)
@@ -871,6 +880,7 @@ bool Room::BattleStage(Room& room)
 				vector<int> disconnectNetworkIdList;
 
 				int packetSize = 0;
+				++effectItemCount;
 				for (int k = 1; k < avatarCount; k += 2)
 				{
 					if (avatars[k].IsFinish())
@@ -933,6 +943,10 @@ bool Room::BattleStage(Room& room)
 						avatars[k - 1].SetFinish();
 					}
 				}
+
+				uint8_t remainTime = 60 - 0.5f * effectItemCount;
+				sc_BattleTimeInfoPacket packet3(remainTime);
+				packet3.Write(memoryStream);
 
 				// 중복 제거
 				if (disconnectNetworkIdList.size() > 0)
@@ -1228,6 +1242,7 @@ bool Room::CreepStage(Room& room)
 	}
 
 
+	int effectItemCount = 0;
 	for (size_t battleLoop = 0; battleLoop < 10; ++battleLoop)
 	{
 		for (int j = 0; j < avatarCount; j += 2)
@@ -1268,6 +1283,7 @@ bool Room::CreepStage(Room& room)
 				vector<int> disconnectNetworkIdList;
 
 				int packetSize = 0;
+				++effectItemCount;
 				for (int k = 0; k < avatarCount; k += 2)
 				{
 					BattleAvatar& playerAvatar = avatars[k];
@@ -1337,6 +1353,10 @@ bool Room::CreepStage(Room& room)
 					}
 				}
 
+				uint8_t remainTime = 60 - 0.5f * effectItemCount;
+				sc_BattleTimeInfoPacket packet3(remainTime);
+				packet3.Write(memoryStream);
+
 				// 중복 제거
 				if (disconnectNetworkIdList.size() > 0)
 				{
@@ -1377,6 +1397,7 @@ bool Room::CreepStage(Room& room)
 
 			{
 				int packetSize = 0;
+				++effectItemCount;
 				OutputMemoryStream memoryStream(1024);
 
 				vector<int> disconnectNetworkIdList;
@@ -1454,6 +1475,11 @@ bool Room::CreepStage(Room& room)
 						playerAvatar.SetFinish();
 					}
 				}
+
+
+				uint8_t remainTime = 60 - 0.5f * effectItemCount;
+				sc_BattleTimeInfoPacket packet3(remainTime);
+				packet3.Write(memoryStream);
 
 				// 중복 제거
 				if (disconnectNetworkIdList.size() > 0)
